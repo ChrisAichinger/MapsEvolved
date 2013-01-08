@@ -1,0 +1,91 @@
+diff -Nur libjpeg.orig/jmorecfg.h libjpeg/jmorecfg.h
+--- libjpeg.orig/jmorecfg.h	Sat May 14 15:17:40 2005
++++ libjpeg/jmorecfg.h	Thu Nov 15 19:07:46 2012
+@@ -24,8 +24,8 @@
+ 
+ #if (defined (_MSC_VER) && (_MSC_VER >= 800))
+ #define HAVE_UNSIGNED_CHAR
+-#define HAVE_ALL_INTS
+-#define EXTERN(type)  extern type __cdecl
++//#define HAVE_ALL_INTS
++//#define EXTERN(type)  extern type __cdecl
+ #endif
+ 
+ /*
+@@ -163,7 +163,7 @@
+ 
+ /* INT32 must hold at least signed 32-bit values. */
+ 
+-#if !defined(XMD_H) && !defined(_WIN32)			/* X11/xmd.h correctly defines INT32 */
++#if !defined(XMD_H)			/* X11/xmd.h correctly defines INT32 */
+ typedef long INT32;
+ #endif
+ 
+diff -Nur libjpeg.orig/makefile.vc libjpeg/makefile.vc
+--- libjpeg.orig/makefile.vc	Sat Mar 21 18:08:58 1998
++++ libjpeg/makefile.vc	Thu Nov 15 19:12:58 2012
+@@ -12,13 +12,15 @@
+ !include <win32.mak>
+ 
+ # You may want to adjust these compiler options:
+-CFLAGS= $(cflags) $(cdebug) $(cvars) -I.
++CFLAGS= $(cflags) $(cdebug) $(cvars) -I. -DJPEG_DLL=1
+ # Generally, we recommend defining any configuration symbols in jconfig.h,
+ # NOT via -D switches here.
+ 
+ # Link-time options:
+ LDFLAGS= $(ldebug) $(conlflags)
+ 
++LDFLAGS_DLL= /dll /manifest $(ldebug)
++
+ # To link any special libraries, add the necessary commands here.
+ LDLIBS= $(conlibs)
+ 
+@@ -98,7 +100,14 @@
+ 	$(cc) $(CFLAGS) $*.c
+ 
+ 
+-all: libjpeg.lib cjpeg.exe djpeg.exe jpegtran.exe rdjpgcom.exe wrjpgcom.exe
++all: libjpeg.lib libjpeg.dll \
++     cjpeg.exe djpeg.exe jpegtran.exe rdjpgcom.exe wrjpgcom.exe
++
++libjpeg.dll: $(LIBOBJECTS)
++	$(RM) libjpeg.dll
++	$(link) $(LDFLAGS_DLL) /out:libjpeg.dll /implib:libjpeg_i.lib /pdb:libjpeg.pdb $(LIBOBJECTS)
++	if exist libjpeg.dll.manifest \
++	    mt -manifest libjpeg.dll.manifest -outputresource:libjpeg.dll;2
+ 
+ libjpeg.lib: $(LIBOBJECTS)
+ 	$(RM) libjpeg.lib
+@@ -121,7 +130,7 @@
+ 
+ 
+ clean:
+-	$(RM) *.obj *.exe libjpeg.lib
++	$(RM) *.obj *.exe *.pdb *.manifest libjpeg.lib libjpeg.dll
+ 	$(RM) testout*
+ 
+ test: cjpeg.exe djpeg.exe jpegtran.exe
+@@ -139,6 +148,22 @@
+ 	fc /b testimgp.jpg testoutp.jpg
+ 	fc /b testorig.jpg testoutt.jpg
+ 
++PREFIX=release
++install: all
++	-mkdir $(PREFIX)
++	-mkdir $(PREFIX)\bin
++	-mkdir $(PREFIX)\include
++	-mkdir $(PREFIX)\lib
++	copy *.exe $(PREFIX)\bin
++	copy *.dll $(PREFIX)\bin
++	copy jconfig.h $(PREFIX)\include
++	copy jmorecfg.h $(PREFIX)\include
++	copy jerror.h $(PREFIX)\include
++	copy jpeglib.h $(PREFIX)\include
++	copy *.lib $(PREFIX)\lib
++	copy *.dll $(PREFIX)\lib
++	copy libjpeg.pdb $(PREFIX)\lib
++        
+ 
+ jcapimin.obj: jcapimin.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+ jcapistd.obj: jcapistd.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h

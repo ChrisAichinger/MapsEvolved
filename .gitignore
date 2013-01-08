@@ -1,0 +1,16 @@
+# Ignore the libraries but include the loader and build scripts
+/libraries/*
+!/libraries/build_environ.sh
+!/libraries/run_make.js
+!/libraries/*.diff
+
+# Ignore misc visual studio files
+*.opensdf
+*.sdf
+*.suo
+*.vcxproj.user
+*.vcproj.*.user
+
+# Ignore Debug and Intellisense directories
+Debug/
+/ipch/
