@@ -51,6 +51,9 @@
     <ClCompile Include="win_maplist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="map_dhm_advanced.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="bezier.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -99,6 +102,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="win_maplist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="map_dhm_advanced.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="bezier.h">

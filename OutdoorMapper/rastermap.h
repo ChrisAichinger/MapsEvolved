@@ -12,6 +12,7 @@ class RasterMap {
         enum RasterMapType {
             TYPE_MAP = 1,
             TYPE_DHM,
+            TYPE_GRADIENT,
             TYPE_LEGEND,
             TYPE_OVERVIEW,
         };
@@ -55,7 +56,7 @@ class RasterMapCollection {
         std::vector<std::shared_ptr<RasterMap>> m_maps;
 };
 
-std::shared_ptr<class RasterMap> LoadMap(const std::wstring &fname);
+void LoadMap(RasterMapCollection &maps, const std::wstring &fname);
 
 class HeightFinder {
     public:
@@ -66,7 +67,8 @@ class HeightFinder {
         const class RasterMap *m_active_dhm;
 
         bool LatLongWithinActiveDHM(double x, double y) const;
-        void LoadBestDHM(double latitude, double longitude);
+        const class RasterMap *FindBestMap(double latitude, double longitude,
+                                           RasterMap::RasterMapType type) const;
 };
 
 #endif

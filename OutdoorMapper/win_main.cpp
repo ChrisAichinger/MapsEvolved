@@ -134,15 +134,16 @@ LRESULT RootWindow::OnCreate()
         throw std::runtime_error("Error creating map window.");
     }
 
+    LoadMap(m_maps, MAPPATH);
+    LoadMap(m_maps, DHMPATH);
+
     std::shared_ptr<DevContext> dev_ctx(new DevContext(m_hwndMap));
     std::shared_ptr<OGLContext> ogl_ctx(new OGLContext(dev_ctx));
     std::shared_ptr<DispOpenGL> display(new DispOpenGL(ogl_ctx));
 
-    m_maps.AddMap(LoadMap(MAPPATH));
-    m_maps.AddMap(LoadMap(DHMPATH));
     m_mapdisplay.reset(new MapDisplayManager(display, m_maps));
-    m_child_drag = false;
 
+    m_child_drag = false;
     return 0;
 }
 

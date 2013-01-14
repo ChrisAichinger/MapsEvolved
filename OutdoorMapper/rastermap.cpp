@@ -11,12 +11,10 @@
 #include <algorithm>
 #include <cctype>
 
-
-//#include <Windows.h>
-
 #include "util.h"
 #include "rastermap.h"
 #include "map_geotiff.h"
+#include "map_dhm_advanced.h"
 #include "bezier.h"
 
 RasterMap::~RasterMap() {};
@@ -30,18 +28,24 @@ void RasterMapCollection::AddMap(std::shared_ptr<class RasterMap> map) {
     m_main_idx = m_maps.size() - 1;
 }
 
-std::shared_ptr<class RasterMap> LoadMap(const std::wstring &fname) {
+void LoadMap(RasterMapCollection &maps, const std::wstring &fname) {
     std::wstring fname_lower(fname);
     std::transform(fname_lower.begin(), fname_lower.end(),
                    fname_lower.begin(), ::towlower);
 
+    std::shared_ptr<class RasterMap> map;
     if (ends_with(fname_lower, L".tif") || ends_with(fname_lower, L".tiff")) {
         // Geotiff file
-        return std::shared_ptr<class RasterMap>(new TiffMap(fname.c_str()));
+        map.reset(new TiffMap(fname.c_str()));
+        maps.AddMap(map);
+    } else {
+        assert(false);  // Not implemented
     }
 
-    assert(false);  // Not implemented
-    return std::shared_ptr<class RasterMap>();
+    if (map->GetType() == RasterMap::TYPE_DHM) {
+        map.reset(new GradientMap(map));
+        maps.AddMap(map);
+    }
 }
 
 HeightFinder::HeightFinder(const class RasterMapCollection &maps)
@@ -50,7 +54,7 @@ HeightFinder::HeightFinder(const class RasterMapCollection &maps)
 
 double HeightFinder::GetHeight(double latitude, double longitude) {
     if (!LatLongWithinActiveDHM(latitude, longitude)) {
-        LoadBestDHM(latitude, longitude);
+        m_active_dhm = FindBestMap(latitude, longitude, RasterMap::TYPE_DHM);
         if (!m_active_dhm)
             return 0;
     }
@@ -75,13 +79,15 @@ bool HeightFinder::LatLongWithinActiveDHM(double x, double y) const {
     return true;
 }
 
-void HeightFinder::LoadBestDHM(double latitude, double longitude) {
-    m_active_dhm = NULL;
+const class RasterMap *
+HeightFinder::FindBestMap(
+        double latitude, double longitude,
+        RasterMap::RasterMapType type) const
+{
     for (unsigned int i=0; i < m_maps.Size(); i++) {
         const RasterMap &map = m_maps.Get(i);
-        if (map.GetType() != RasterMap::TYPE_DHM)
-            continue;
-
-        m_active_dhm = &map;
+        if (map.GetType() == type)
+            return &map;
     }
+    return NULL;
 }

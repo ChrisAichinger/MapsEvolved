@@ -47,7 +47,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;$(SolutionDir)\libraries\proj4\src;$(SolutionDir)\libaries\eigen;$(SolutionDir)\libraries\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;$(SolutionDir)\libraries\proj4\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;STRICT;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -56,9 +56,10 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;opengl32.lib;glu32.lib;geotiff_i.lib;libtiff_i.lib;proj_i.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;opengl32.lib;glu32.lib;Winmm.lib;geotiff_i.lib;libtiff_i.lib;proj_i.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\libraries\proj4\src;$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -69,7 +70,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;$(SolutionDir)\libraries\proj4\src;$(SolutionDir)\libaries\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;$(SolutionDir)\libraries\proj4\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;STRICT;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -79,7 +80,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;opengl32.lib;glu32.lib;geotiff_i.lib;libtiff_i.lib;proj_i.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;opengl32.lib;glu32.lib;Winmm.lib;geotiff_i.lib;libtiff_i.lib;proj_i.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\libraries\proj4\src;$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -92,6 +93,7 @@
     <ClCompile Include="bezier.cpp" />
     <ClCompile Include="disp_ogl.cpp" />
     <ClCompile Include="mapdisplay.cpp" />
+    <ClCompile Include="map_dhm_advanced.cpp" />
     <ClCompile Include="map_geotiff.cpp" />
     <ClCompile Include="OutdoorMapper.cpp" />
     <ClCompile Include="projection.cpp" />
@@ -109,6 +111,7 @@
     <ClInclude Include="external\glext.h" />
     <ClInclude Include="geotiff_impl.h" />
     <ClInclude Include="mapdisplay.h" />
+    <ClInclude Include="map_dhm_advanced.h" />
     <ClInclude Include="map_geotiff.h" />
     <ClInclude Include="odm_config.h" />
     <ClInclude Include="win_main.h" />
