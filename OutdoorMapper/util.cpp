@@ -4,6 +4,10 @@
 #include <string>
 #include <locale>
 #include <codecvt>
+#include <iostream>
+#include <fstream>
+
+#include <Windows.h>
 
 #include "util.h"
 
@@ -49,3 +53,71 @@ std::wstring WStringFromUTF8(const std::string &string) {
     std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
     return convert.from_bytes(string);
 }
+
+unsigned int HSV_to_RGB(unsigned char H, unsigned char S, unsigned char V) {
+    unsigned char hi = H * 6 / 255;
+    unsigned char f = H * 6 - hi * 255;
+    unsigned char p = V - V*S / 255;
+    unsigned char q = V - V*S*f / (255*255);
+    unsigned char t = V - V*S / 255 + V*S*f / (255*255);
+
+    switch (hi) {
+        case 0: // fallthrough
+        case 6:
+            return makeRGB(V, t, p);
+        case 1:
+            return makeRGB(q, V, p);
+        case 2:
+            return makeRGB(p, V, t);
+        case 3:
+            return makeRGB(p, q, V);
+        case 4:
+            return makeRGB(t, p, V);
+        case 5:
+            return makeRGB(V, p, q);
+    }
+    assert(false);
+    return 0;
+}
+
+BasicBitmap LoadBufferFromBMP(const std::wstring &fname) {
+    BITMAPFILEHEADER bfh;
+    BITMAPINFOHEADER bih;
+    std::ifstream file(fname, std::ios::in | std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Error opening BMP file for reading.");
+    }
+    file.read(reinterpret_cast<char*>(&bfh), sizeof(bfh));
+    file.read(reinterpret_cast<char*>(&bih), sizeof(bih));
+    if (bih.biBitCount != 32 || bih.biCompression != BI_RGB) {
+        throw std::runtime_error("Format of  the BMP file is not supported.");
+    }
+
+    std::shared_ptr<unsigned int> buffer(
+            new unsigned int[bih.biWidth * bih.biHeight],
+            ArrayDeleter<unsigned int>());
+    file.read(reinterpret_cast<char*>(buffer.get()), bih.biWidth * bih.biHeight * bih.biBitCount / 8);
+    BasicBitmap res = { bih.biWidth, bih.biHeight, bih.biBitCount, buffer };
+    return res;
+}
+
+void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
+                     unsigned int width, unsigned int height, unsigned int bpp)
+{
+    static const unsigned short int BMP_MAGIC = 0x4D42;
+    static const unsigned int SZ_BMP_HDR = sizeof(BITMAPFILEHEADER) +
+                                           sizeof(BITMAPINFOHEADER);
+    BITMAPFILEHEADER bfh = { BMP_MAGIC, SZ_BMP_HDR + width * height * bpp / 8,
+                             0, 0, SZ_BMP_HDR };
+    BITMAPINFOHEADER bih = { sizeof(BITMAPINFOHEADER),
+                             width, height, 1, bpp, BI_RGB, 0, 0, 0, 0, 0 };
+    std::ofstream file(fname, std::ios::out | std::ios::trunc | std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Error opening BMP file for writing.");
+    }
+    file.write(reinterpret_cast<char*>(&bfh), sizeof(bfh));
+    file.write(reinterpret_cast<char*>(&bih), sizeof(bih));
+    file.write(reinterpret_cast<char*>(buffer), width * height * bpp / 8);
+    file.close();
+}
+

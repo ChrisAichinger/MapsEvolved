@@ -2,6 +2,7 @@
 #define ODM__UTIL_H
 
 #include <string>
+#include <memory>
 
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
@@ -52,5 +53,35 @@ template <size_t N> struct ArraySizeHelper { char _[N]; };
 template <typename T, size_t N>
 ArraySizeHelper<N> makeArraySizeHelper(T(&)[N]);
 #define ARRAY_SIZE(a)  sizeof(makeArraySizeHelper(a))
+
+inline
+unsigned int makeRGB(unsigned char r, unsigned char g, unsigned char b) {
+    return r + (g << 8) + (b << 16);
+}
+
+unsigned int HSV_to_RGB(unsigned char H, unsigned char S, unsigned char V);
+
+/*
+unsigned int Elem(unsigned int x, unsigned int y, unsigned int width) {
+    return x + y * width;
+}
+*/
+
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
+
+struct BasicBitmap {
+    unsigned int width, height, bpp;
+    std::shared_ptr<unsigned int> pixels;
+};
+BasicBitmap LoadBufferFromBMP(const std::wstring &fname);
+void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
+                     unsigned int width, unsigned int height,
+                     unsigned int bpp);
 
 #endif
