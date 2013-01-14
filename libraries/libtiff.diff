@@ -78,3 +78,51 @@ diff -Nur libtiff.orig/nmake.opt libtiff/nmake.opt
  
  CFLAGS  =	$(OPTFLAGS) $(INCL) $(EXTRAFLAGS)
  CXXFLAGS =	$(OPTFLAGS) $(INCL) $(EXTRAFLAGS)
+diff -Nur libtiff.orig/libtiff/tif_getimage.c libtiff/libtiff/tif_getimage.c
+--- libtiff.orig/libtiff/tif_getimage.c	Wed Jun  6 15:35:22 2012
++++ libtiff/libtiff/tif_getimage.c	Sun Jan 13 21:53:26 2013
+@@ -590,12 +590,12 @@
+ {
+     TIFF* tif = img->tif;
+     tileContigRoutine put = img->put.contig;
+-    uint32 col, row, y, rowstoread;
++    uint32 col, row, y, rowstoread, colstoread;
+     tmsize_t pos;
+     uint32 tw, th;
+     unsigned char* buf;
+     int32 fromskew, toskew;
+-    uint32 nrow;
++    uint32 nrow, npix;
+     int ret = 1, flip;
+ 
+     buf = (unsigned char*) _TIFFmalloc(TIFFTileSize(tif));
+@@ -630,15 +630,18 @@
+                 break;
+             }
+ 	    
+-	    pos = ((row+img->row_offset) % th) * TIFFTileRowSize(tif);  
++	    pos = ((row+img->row_offset) % th) * TIFFTileRowSize(tif) +
++	          ((col+img->col_offset) % tw) * TIFFTileRowSize(tif) / tw;  
+ 
+-    	    if (col + tw > w) 
++    	    colstoread = tw - (col + img->col_offset) % tw;
++    	    npix = (col + colstoread > w ? w - col : colstoread);
++
++    	    if (npix != tw)
+             {
+                 /*
+                  * Tile is clipped horizontally.  Calculate
+                  * visible portion and skewing factors.
+                  */
+-                uint32 npix = w - col;
+                 fromskew = tw - npix;
+                 (*put)(img, raster+y*w+col, col, y,
+                        npix, nrow, fromskew, toskew + fromskew, buf + pos);
+@@ -1237,6 +1240,7 @@
+     uint32** BWmap = img->BWmap;
+ 
+     (void) y;
++    fromskew *= 2 * samplesperpixel;
+     while (h-- > 0) {
+         uint16 *wp = (uint16 *) pp;
+ 

@@ -21,16 +21,15 @@
 
 static void put16bitbw_DHM(
     TIFFRGBAImage* img,
-    uint32* cp,
-    uint32 x, uint32 y,
-    uint32 w, uint32 h,
-    int32 fromskew, int32 toskew,
-    unsigned char* pp)
+    uint32* cp,                     // ptr to write target in TO (dest buf)
+    uint32 x, uint32 y,             // x,y offset of write target within TO
+    uint32 w, uint32 h,             // pixel count of one row; number of rows
+    int32 fromskew, int32 toskew,   // offsets on row change in FROM/TO
+    unsigned char* pp)              // ptr to read location in FROM
 {
     int samplesperpixel = img->samplesperpixel;
+    int16 *wp = reinterpret_cast<int16*>(pp);
     while (h-- > 0) {
-        int16 *wp = (int16 *) pp;
-
         for (x = w; x-- > 0;) {
             // Copy the 16 bit heightmap value over into the RGBA image
             // Take care to sign-extend
@@ -38,7 +37,7 @@ static void put16bitbw_DHM(
             wp += samplesperpixel;
         }
         cp += toskew;
-        pp += fromskew + w * samplesperpixel * sizeof(*wp);
+        wp += fromskew;
     }
 }
 
