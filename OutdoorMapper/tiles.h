@@ -1,6 +1,8 @@
 #ifndef ODM__TILES_H
 #define ODM__TILES_H
 
+#include <memory>
+
 class TileCode {
     public:
         TileCode(const class RasterMap &map, int x, int y, int tilesize)
@@ -12,7 +14,7 @@ class TileCode {
         int GetY() const { return m_y; };
         int GetTileSize() const { return m_tilesize; };
 
-        unsigned int *GetTile() const;
+        std::shared_ptr<unsigned int> GetTile() const;
     private:
         const RasterMap &m_map;
         int m_zoomIndex;

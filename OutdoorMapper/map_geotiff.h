@@ -9,7 +9,7 @@ class TiffMap : public RasterMap {
         virtual RasterMap::RasterMapType GetType() const;
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
-        virtual unsigned int *GetRegion(
+        virtual std::shared_ptr<unsigned int> GetRegion(
                 int x, int y,
                 unsigned int width, unsigned int height) const;
 

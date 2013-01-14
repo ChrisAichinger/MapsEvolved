@@ -61,8 +61,7 @@ double HeightFinder::GetHeight(double latitude, double longitude) {
     int ix = round_to_neg_inf(x);
     int iy = round_to_neg_inf(y);
     std::shared_ptr<unsigned int> pixels(
-            m_active_dhm->GetRegion(ix, iy, 2, 2),
-            ArrayDeleter<unsigned int>());
+            m_active_dhm->GetRegion(ix, iy, 2, 2));
 
     double row1_avg = lerp(x - ix, (int)pixels.get()[0], (int)pixels.get()[1]);
     double row2_avg = lerp(x - ix, (int)pixels.get()[2], (int)pixels.get()[3]);

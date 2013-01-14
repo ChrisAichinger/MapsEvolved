@@ -59,7 +59,7 @@ class Tiff {
         unsigned int GetHeight() const { return m_height; };
         unsigned int GetBitsPerSample() const { return m_bitspersample; };
         unsigned int GetSamplesPerPixel() const { return m_samplesperpixel; };
-        unsigned int *GetRegion(int x, int y,
+        std::shared_ptr<unsigned int> GetRegion(int x, int y,
                                 unsigned int width, unsigned int height) const;
 
         template <typename T>

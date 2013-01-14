@@ -20,7 +20,7 @@ class RasterMap {
         virtual RasterMapType GetType() const = 0;
         virtual unsigned int GetWidth() const = 0;
         virtual unsigned int GetHeight() const = 0;
-        virtual unsigned int *GetRegion(int x, int y,
+        virtual std::shared_ptr<unsigned int> GetRegion(int x, int y,
                                         unsigned int width,
                                         unsigned int height) const = 0;
 

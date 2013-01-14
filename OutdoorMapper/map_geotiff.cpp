@@ -58,14 +58,16 @@ Tiff::Tiff(const std::wstring &fname)
     }
 };
 
-unsigned int *Tiff::GetRegion(int x, int y,
-                              unsigned int width, unsigned int height) const {
+std::shared_ptr<unsigned int> Tiff::GetRegion(int x, int y,
+                              unsigned int width, unsigned int height) const
+{
 
     unsigned int ux = (x >= 0) ? x : 0;
     unsigned int uy = (y >= 0) ? y : 0;
     if (x + width < 0 || y + height < 0 || ux > m_width || uy > m_height) {
         // Return zero-initialized memory block (notice the parentheses)
-        return new unsigned int[width * height]();
+        return std::shared_ptr<unsigned int>(new unsigned int[width * height](),
+                                             ArrayDeleter<unsigned int>());
     }
 
     TIFFRGBAImage img;
@@ -81,12 +83,12 @@ unsigned int *Tiff::GetRegion(int x, int y,
     // Give derived classes a chance to influence TIFFRGBAGetImage
     Hook_TIFFRGBAImageGet(img);
 
-    unsigned int *raster = new unsigned int[width * height];
-    int ok = TIFFRGBAImageGet(&img, raster, width, height);
+    std::shared_ptr<unsigned int> raster(new unsigned int[width * height],
+                                         ArrayDeleter<unsigned int>());
+    int ok = TIFFRGBAImageGet(&img, raster.get(), width, height);
     TIFFRGBAImageEnd(&img);
 
     if (!ok) {
-        delete[] raster;
         throw std::runtime_error("Loading TIFF data failed.");
     }
     return raster;
@@ -280,7 +282,7 @@ TiffMap::TiffMap(const wchar_t *fname)
 RasterMap::RasterMapType TiffMap::GetType() const { return m_geotiff->GetType(); };
 unsigned int TiffMap::GetWidth() const { return m_geotiff->GetWidth(); };
 unsigned int TiffMap::GetHeight() const { return m_geotiff->GetHeight(); };
-unsigned int *TiffMap::GetRegion(int x, int y,
+std::shared_ptr<unsigned int> TiffMap::GetRegion(int x, int y,
     unsigned int width, unsigned int height) const
     { return m_geotiff->GetRegion(x, y, width, height); };
 void TiffMap::PixelToPCS(double *x, double *y) const
