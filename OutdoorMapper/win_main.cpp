@@ -237,7 +237,6 @@ LRESULT RootWindow::HandleMessage(
             break;
 
         case WM_DESTROY:
-            // m_display freed automatically when RootWindow goes down
             break;
 
         case WM_SIZE:
