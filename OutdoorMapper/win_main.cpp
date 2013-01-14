@@ -136,11 +136,11 @@ LRESULT RootWindow::OnCreate()
 
     std::shared_ptr<DevContext> dev_ctx(new DevContext(m_hwndMap));
     std::shared_ptr<OGLContext> ogl_ctx(new OGLContext(dev_ctx));
-    m_display.reset(new DispOpenGL(ogl_ctx));
+    std::shared_ptr<DispOpenGL> display(new DispOpenGL(ogl_ctx));
 
     m_maps.AddMap(LoadMap(MAPPATH));
     m_maps.AddMap(LoadMap(DHMPATH));
-    m_mapdisplay.reset(new MapDisplayManager(*m_display.get(), m_maps));
+    m_mapdisplay.reset(new MapDisplayManager(display, m_maps));
     m_child_drag = false;
 
     return 0;
@@ -249,8 +249,8 @@ LRESULT RootWindow::HandleMessage(
                 SetWindowPos(m_hwndMap, NULL, rect.left, rect.top,
                              rect.right - rect.left, rect.bottom - rect.top,
                              SWP_NOZORDER | SWP_NOACTIVATE);
-                m_display->Resize(rect.right - rect.left,
-                                  rect.bottom - rect.top);
+				m_mapdisplay->Resize(rect.right - rect.left,
+                                     rect.bottom - rect.top);
             }
             return 0;
 
@@ -272,7 +272,7 @@ LRESULT RootWindow::HandleMessage(
 
 RootWindow::RootWindow()
     : Window(), m_hwndMap(0), m_hwndStatus(0), m_child_drag(false),
-      m_maps(), m_heightfinder(m_maps), m_mapdisplay(), m_display(),
+      m_maps(), m_heightfinder(m_maps), m_mapdisplay(),
       m_toolbar()
 { }
 
@@ -288,6 +288,7 @@ RootWindow *RootWindow::Create() {
     return NULL;
 }
 
-void RootWindow::ForceRedraw() {
+void RootWindow::MapChange() {
+    m_mapdisplay->ChangeMap();
     InvalidateRect(m_hwndMap, NULL, false);
 }

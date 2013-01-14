@@ -7,23 +7,40 @@
 
 static const int MAX_TILES = 100;
 
-MapDisplayManager::MapDisplayManager(class DispOpenGL &display,
+MapDisplayManager::MapDisplayManager(std::shared_ptr<class DispOpenGL> &display,
                                      const class RasterMapCollection &maps) 
-    : m_display(display), m_maps(maps), m_base_map(maps.GetDefaultMap()),
-      m_center_x(m_base_map.GetWidth() * 0.5f), m_center_y(m_base_map.GetHeight() * 0.5f),
+    : m_display(display), m_maps(maps), m_base_map(&maps.GetDefaultMap()),
+      m_center_x(m_base_map->GetWidth() * 0.5f),
+      m_center_y(m_base_map->GetHeight() * 0.5f),
       m_zoom(1.0)
 { }
 
-void MapDisplayManager::Paint() {
-    unsigned int d_width = m_display.GetDisplayWidth();
-    unsigned int d_height = m_display.GetDisplayHeight();
-    double bm_width = d_width / m_zoom;
-    double bm_height = d_height / m_zoom;
+void MapDisplayManager::Resize(unsigned int width, unsigned int height) {
+    m_display->Resize(width, height);
+}
 
-    double bm_left = m_center_x - (bm_width / 2);
-    double bm_right = m_center_x + (bm_width / 2);
-    double bm_top = m_center_y - (bm_height / 2);
-    double bm_bottom = m_center_y + (bm_height / 2);
+void MapDisplayManager::ChangeMap() {
+    const RasterMap *new_map = &m_maps.GetDefaultMap();
+
+    if (new_map == m_base_map)
+        return;
+
+    m_base_map = new_map;
+    m_center_x = m_base_map->GetWidth() * 0.5f;
+    m_center_y = m_base_map->GetHeight() * 0.5f;
+    m_zoom = 1.0;
+}
+
+void MapDisplayManager::Paint() {
+    unsigned int d_width = m_display->GetDisplayWidth();
+    unsigned int d_height = m_display->GetDisplayHeight();
+    double bm_half_width = d_width / m_zoom * 0.5;
+    double bm_half_height = d_height / m_zoom * 0.5;
+
+    double bm_left = m_center_x - bm_half_width;
+    double bm_right = m_center_x + bm_half_width;
+    double bm_top = m_center_y - bm_half_height;
+    double bm_bottom = m_center_y + bm_half_height;
 
     // All values inclusive, first...last (not last+1 tile)
     int tiles_left = round_to_neg_inf(bm_left, TILE_SIZE);
@@ -43,15 +60,15 @@ void MapDisplayManager::Paint() {
             double height = TILE_SIZE * m_zoom;
             double xe = x + width;
             double ye = y + height;
-            TileCode tilecode(m_base_map, tx, ty, TILE_SIZE);
+            TileCode tilecode(*m_base_map, tx, ty, TILE_SIZE);
             orders.push_back(DisplayOrder(x, y, width, height, tilecode));
         }
     }
-    m_display.Render(orders);
+    m_display->Render(orders);
 }
 
 const class RasterMap &MapDisplayManager::GetBaseMap() const {
-    return m_base_map;
+    return *m_base_map;
 }
 
 void MapDisplayManager::StepZoom(int steps) {
@@ -65,8 +82,8 @@ void MapDisplayManager::StepZoom(int steps) {
 
             // Don't allow to zoom out too far: approximate the number of tiles
             int num_tiles = static_cast<int>(
-                    m_display.GetDisplayWidth() / (m_zoom * TILE_SIZE) *
-                    m_display.GetDisplayHeight() / (m_zoom * TILE_SIZE));
+                    m_display->GetDisplayWidth() / (m_zoom * TILE_SIZE) *
+                    m_display->GetDisplayHeight() / (m_zoom * TILE_SIZE));
             if (num_tiles > MAX_TILES) {
                 m_zoom *= 1.2f;
             }
@@ -76,8 +93,8 @@ void MapDisplayManager::StepZoom(int steps) {
 
 void MapDisplayManager::StepZoom(int steps, int mouse_x, int mouse_y) {
     double m_zoom_before = m_zoom;
-    double rel_x = mouse_x - m_display.GetDisplayWidth() / 2.0f;
-    double rel_y = mouse_y - m_display.GetDisplayHeight() / 2.0f;
+    double rel_x = mouse_x - m_display->GetDisplayWidth() / 2.0f;
+    double rel_y = mouse_y - m_display->GetDisplayHeight() / 2.0f;
 
     StepZoom(steps);
 
@@ -95,8 +112,8 @@ void MapDisplayManager::CenterToDisplayCoord(int center_x, int center_y) {
 }
 
 void MapDisplayManager::DragMap(int dx, int dy) {
-    double max_x = m_base_map.GetWidth() - 1.0f;
-    double max_y = m_base_map.GetHeight() - 1.0f;
+    double max_x = m_base_map->GetWidth() - 1.0f;
+    double max_y = m_base_map->GetHeight() - 1.0f;
     m_center_x = ValueBetween(0.0, m_center_x - dx / m_zoom, max_x);
     m_center_y = ValueBetween(0.0, m_center_y - dy / m_zoom, max_y);
 }

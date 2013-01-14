@@ -54,7 +54,7 @@ LRESULT MapListWindow::HandleMessage(
                 case NM_DBLCLK: {
                     LPNMITEMACTIVATE pnmv = (LPNMITEMACTIVATE)lParam;
                     m_maps.SetMain(pnmv->iItem);
-                    m_rootwindow.ForceRedraw();
+                    m_rootwindow.MapChange();
                     break;
                 }
                 }

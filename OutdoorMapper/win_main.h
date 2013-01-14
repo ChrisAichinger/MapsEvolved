@@ -13,7 +13,7 @@ class RootWindow : public Window
         static RootWindow *Create();
         virtual void PaintContent(PAINTSTRUCT *pps);
 
-        void ForceRedraw();
+        void MapChange();
     private:
         HWND m_hwndMap;
         HWND m_hwndStatus;
@@ -23,7 +23,6 @@ class RootWindow : public Window
         class RasterMapCollection m_maps;
         class HeightFinder m_heightfinder;
         std::shared_ptr<class MapDisplayManager> m_mapdisplay;
-        std::shared_ptr<class DispOpenGL> m_display;
 
         std::shared_ptr<class Toolbar> m_toolbar;
 
