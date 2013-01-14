@@ -51,6 +51,9 @@
     <ClCompile Include="win_maplist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bezier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="disp_ogl.h">
@@ -96,6 +99,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="win_maplist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bezier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

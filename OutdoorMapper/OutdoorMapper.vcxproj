@@ -89,6 +89,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bezier.cpp" />
     <ClCompile Include="disp_ogl.cpp" />
     <ClCompile Include="mapdisplay.cpp" />
     <ClCompile Include="map_geotiff.cpp" />
@@ -103,6 +104,7 @@
     <ClCompile Include="win_maplist.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bezier.h" />
     <ClInclude Include="disp_ogl.h" />
     <ClInclude Include="external\glext.h" />
     <ClInclude Include="geotiff_impl.h" />

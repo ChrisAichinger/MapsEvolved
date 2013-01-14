@@ -17,9 +17,9 @@
 #include "util.h"
 #include "rastermap.h"
 #include "map_geotiff.h"
+#include "bezier.h"
 
 RasterMap::~RasterMap() {};
-
 
 RasterMapCollection::RasterMapCollection()
     : m_main_idx(0), m_maps()
@@ -57,15 +57,8 @@ double HeightFinder::GetHeight(double latitude, double longitude) {
     double x = latitude;
     double y = longitude;
     m_active_dhm->LatLongToPixel(&x, &y);
-
-    int ix = round_to_neg_inf(x);
-    int iy = round_to_neg_inf(y);
-    std::shared_ptr<unsigned int> pixels(
-            m_active_dhm->GetRegion(ix, iy, 2, 2));
-
-    double row1_avg = lerp(x - ix, (int)pixels.get()[0], (int)pixels.get()[1]);
-    double row2_avg = lerp(x - ix, (int)pixels.get()[2], (int)pixels.get()[3]);
-    return lerp(y - iy, row1_avg, row2_avg);
+    MapBezier bezier(*m_active_dhm, &x, &y);
+    return bezier.GetValue(x, y);
 }
 
 bool HeightFinder::LatLongWithinActiveDHM(double x, double y) const {
