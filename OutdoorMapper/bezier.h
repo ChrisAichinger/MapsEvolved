@@ -49,7 +49,11 @@ class MapBezier : public Bezier {
         MapBezier(const unsigned int *src,
                   unsigned int width, unsigned int height,
                   unsigned int x, unsigned int y);
+        unsigned int GetCenterX() const { return m_center_x; }
+        unsigned int GetCenterY() const { return m_center_y; }
     private:
+        unsigned int m_center_x, m_center_y;
+
         void InitPoints(const unsigned int *src,
                         unsigned int width, unsigned int height,
                         unsigned int x, unsigned int y,

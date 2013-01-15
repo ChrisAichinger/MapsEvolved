@@ -84,4 +84,12 @@ void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
                      unsigned int width, unsigned int height,
                      unsigned int bpp);
 
+#ifndef RAD_TO_DEG
+#define RAD_TO_DEG 57.29577951308232
+#endif
+
+#ifndef DEG_TO_RAD
+#define DEG_TO_RAD .0174532925199432958
+#endif
+
 #endif

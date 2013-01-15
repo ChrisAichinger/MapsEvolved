@@ -62,6 +62,8 @@ class HeightFinder {
     public:
         explicit HeightFinder(const class RasterMapCollection &maps);
         double GetHeight(double latitude, double longitude);
+        bool CalcTerrain(double lat, double lon, double *height,
+                         double *slope_face, double *steepness_deg);
     private:
         const class RasterMapCollection &m_maps;
         const class RasterMap *m_active_dhm;

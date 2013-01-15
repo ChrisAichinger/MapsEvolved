@@ -1,5 +1,6 @@
 
 #include <sstream>
+#include <iomanip>
 
 #include <windows.h>
 #include <windowsx.h>
@@ -108,7 +109,7 @@ void RootWindow::CreateStatusbar() {
     }
 
     // Create status bar "compartments". Last -1 means that it fills the rest
-    int Statwidths[] = {150, 300, 400, 800, 810, -1};
+    int Statwidths[] = {200, 300, 475, 600, 750, -1};
     SendMessage(m_hwndStatus, SB_SETPARTS, sizeof(Statwidths)/sizeof(int),
                 reinterpret_cast<LPARAM>(Statwidths));
     SendMessage(m_hwndStatus, SB_SETTEXT, 0,
@@ -145,6 +146,30 @@ LRESULT RootWindow::OnCreate()
 
     m_child_drag = false;
     return 0;
+}
+
+std::wstring CompassPointFromDirection(double degree) {
+    static const double AMOUNT = 90 / 8;
+    degree = fmod(degree+360, 360);
+    assert(degree >= 0 && degree <= 360);
+
+    if (degree <=  1 * AMOUNT) return L"N";
+    if (degree <=  3 * AMOUNT) return L"NNE";
+    if (degree <=  5 * AMOUNT) return L"NE";
+    if (degree <=  7 * AMOUNT) return L"ENE";
+    if (degree <=  9 * AMOUNT) return L"E";
+    if (degree <= 11 * AMOUNT) return L"ESE";
+    if (degree <= 13 * AMOUNT) return L"SE";
+    if (degree <= 15 * AMOUNT) return L"SSE";
+    if (degree <= 17 * AMOUNT) return L"S";
+    if (degree <= 19 * AMOUNT) return L"SSW";
+    if (degree <= 21 * AMOUNT) return L"SW";
+    if (degree <= 23 * AMOUNT) return L"WSW";
+    if (degree <= 25 * AMOUNT) return L"W";
+    if (degree <= 27 * AMOUNT) return L"WNW";
+    if (degree <= 29 * AMOUNT) return L"NW";
+    if (degree <= 31 * AMOUNT) return L"NNW";
+    return L"N";
 }
 
 LRESULT RootWindow::OnNotify(struct NMHDRExtraData *nmh) {
@@ -196,14 +221,45 @@ LRESULT RootWindow::OnNotify(struct NMHDRExtraData *nmh) {
                 m_mapdisplay->GetBaseMap().PixelToLatLong(&x, &y);
 
                 std::wostringstream sStream;
-                sStream << "x/y = " << x << " / " << y;
+                sStream << std::fixed << std::setprecision(5);
+                sStream << "lat/lon = " << y << " / " << x;
                 SendMessage(m_hwndStatus, SB_SETTEXT, 0,
                         reinterpret_cast<LPARAM>(sStream.str().c_str()));
 
                 sStream.str(L"");
-                double height = m_heightfinder.GetHeight(x, y);
+                sStream << std::fixed << std::setprecision(0);
+                sStream << "Zoom: " << m_mapdisplay->GetZoom() * 100 << " %";
+                SendMessage(m_hwndStatus, SB_SETTEXT, 4,
+                        reinterpret_cast<LPARAM>(sStream.str().c_str()));
+
+                double height, orientation, steepness;
+                if (!m_heightfinder.CalcTerrain(x, y, &height,
+                                                &orientation, &steepness)) {
+                    SendMessage(m_hwndStatus, SB_SETTEXT, 1,
+                            reinterpret_cast<LPARAM>(L"Height unknown"));
+                    SendMessage(m_hwndStatus, SB_SETTEXT, 2,
+                            reinterpret_cast<LPARAM>(L"Terrain orientation unknown"));
+                    SendMessage(m_hwndStatus, SB_SETTEXT, 3,
+                            reinterpret_cast<LPARAM>(L"Steepness unknown"));
+                    return 0;
+                }
+                sStream.str(L"");
+                sStream << std::setprecision(1);
                 sStream << "Height: " << height << " m";
                 SendMessage(m_hwndStatus, SB_SETTEXT, 1,
+                        reinterpret_cast<LPARAM>(sStream.str().c_str()));
+
+                sStream.str(L"");
+                sStream << "Orientation: "
+                                  << std::setw(3)
+                                  << CompassPointFromDirection(orientation)
+                                  << " (" << orientation << "°)";
+                SendMessage(m_hwndStatus, SB_SETTEXT, 2,
+                        reinterpret_cast<LPARAM>(sStream.str().c_str()));
+
+                sStream.str(L"");
+                sStream << "Steepness: " << steepness << "°";
+                SendMessage(m_hwndStatus, SB_SETTEXT, 3,
                         reinterpret_cast<LPARAM>(sStream.str().c_str()));
                 return 0;
             }

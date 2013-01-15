@@ -27,6 +27,8 @@ class MapDisplayManager {
 
         void Resize(unsigned int width, unsigned int height);
         void ChangeMap();
+
+        double GetZoom() const;
         void StepZoom(int steps);
         // mouse_x, mouse_y are mouse coordinates relative to the map panel
         // The map location under the mouse is held constant

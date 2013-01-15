@@ -132,6 +132,8 @@ double Bezier::Bernstein(unsigned int degree, unsigned int v, double x) {
 MapBezier::MapBezier(const class RasterMap &map, unsigned int x, unsigned int y) {
     assert(x > 0 && y > 0 && x < map.GetWidth() - 1 && y < map.GetHeight() - 1);
 
+    m_center_x = x;
+    m_center_y = y;
     unsigned int center = (N_POINTS - 1) / 2;
     auto orig_data = map.GetRegion(x - center, y - center,
                                    N_POINTS, N_POINTS);
@@ -143,6 +145,8 @@ MapBezier::MapBezier(const unsigned int *src,
                      unsigned int width, unsigned int height,
                      unsigned int x, unsigned int y)
 {
+    m_center_x = x;
+    m_center_y = y;
     InitPoints(src, width, height, x, y);
     DoFitData();
 }
@@ -152,6 +156,8 @@ MapBezier::MapBezier(const class RasterMap &map, double *x, double *y) {
     PointFromDouble(x, y, &x_int, &y_int, map.GetWidth(), map.GetHeight());
     assert(x_int > 0 && y_int > 0 && x_int < map.GetWidth() - 1 && y_int < map.GetHeight() - 1);
 
+    m_center_x = x_int;
+    m_center_y = y_int;
     unsigned int center = (N_POINTS - 1) / 2;
     auto orig_data = map.GetRegion(x_int - center, y_int - center,
                                    N_POINTS, N_POINTS);
@@ -165,6 +171,8 @@ MapBezier::MapBezier(const unsigned int *src,
 {
     unsigned int x_int, y_int;
     PointFromDouble(x, y, &x_int, &y_int, width, height);
+    m_center_x = x_int;
+    m_center_y = y_int;
     InitPoints(src, width, height, x_int, y_int);
     DoFitData();
 }
@@ -176,6 +184,7 @@ void MapBezier::InitPoints(const unsigned int *src,
                            bool invert_y)
 {
     assert(x > 0 && y > 0 && x < width - 1 && y < height - 1);
+
     int sign = invert_y ? (-1) : (+1);
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {

@@ -3,7 +3,6 @@
 #include <tuple>
 #include <sstream>
 #include <stdexcept>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <wctype.h>
@@ -11,11 +10,14 @@
 #include <algorithm>
 #include <cctype>
 
+#include <GeographicLib\Geodesic.hpp>
+
 #include "util.h"
 #include "rastermap.h"
 #include "map_geotiff.h"
 #include "map_dhm_advanced.h"
 #include "bezier.h"
+#include "projection.h"
 
 RasterMap::~RasterMap() {};
 
@@ -53,16 +55,54 @@ HeightFinder::HeightFinder(const class RasterMapCollection &maps)
 { }
 
 double HeightFinder::GetHeight(double latitude, double longitude) {
-    if (!LatLongWithinActiveDHM(latitude, longitude)) {
-        m_active_dhm = FindBestMap(latitude, longitude, RasterMap::TYPE_DHM);
+    double height = 0.0;
+    // return 0.0 if CalcTerrain() fails
+    CalcTerrain(latitude, longitude, &height, NULL, NULL);
+    return height;
+}
+
+bool HeightFinder::CalcTerrain(double lat, double lon, double *height,
+                               double *slope_face, double *steepness_deg)
+{
+    if (!LatLongWithinActiveDHM(lat, lon)) {
+        m_active_dhm = FindBestMap(lat, lon, RasterMap::TYPE_DHM);
         if (!m_active_dhm)
-            return 0;
+            return false;
     }
-    double x = latitude;
-    double y = longitude;
+    double x = lat;
+    double y = lon;
     m_active_dhm->LatLongToPixel(&x, &y);
     MapBezier bezier(*m_active_dhm, &x, &y);
-    return bezier.GetValue(x, y);
+
+    unsigned int cx = bezier.GetCenterX();
+    unsigned int cy = bezier.GetCenterY();
+    unsigned int delta = (bezier.N_POINTS - 1) / 2;
+
+    double Lx = cx - delta, Ly = cy;
+    double Rx = cx + delta, Ry = cy;
+    double Tx = cx, Ty = cy - delta;
+    double Bx = cx, By = cy + delta;
+    m_active_dhm->PixelToLatLong(&Lx, &Ly);
+    m_active_dhm->PixelToLatLong(&Rx, &Ry);
+    m_active_dhm->PixelToLatLong(&Tx, &Ty);
+    m_active_dhm->PixelToLatLong(&Bx, &By);
+
+    Projection proj = m_active_dhm->GetProj();
+    double gradx = x, grady = y;
+    bezier.GetGradient(&gradx, &grady);
+    gradx /= proj.CalcDistance(Ly, Lx, Ry, Rx);
+    grady /= proj.CalcDistance(Ty, Tx, By, Bx);
+    double grad_direction = atan2(grady, gradx);
+    double grad_abs = sqrt(gradx*gradx + grady*grady);
+    double grad_steepness = atan(grad_abs);
+
+    if (height)
+        *height = bezier.GetValue(x, y);
+    if (slope_face)
+        *slope_face = fmod(270 + grad_direction * RAD_TO_DEG, 360.0);
+    if (steepness_deg)
+        *steepness_deg = grad_steepness * RAD_TO_DEG;
+    return true;
 }
 
 bool HeightFinder::LatLongWithinActiveDHM(double x, double y) const {

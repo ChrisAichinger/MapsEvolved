@@ -71,6 +71,10 @@ const class RasterMap &MapDisplayManager::GetBaseMap() const {
     return *m_base_map;
 }
 
+double MapDisplayManager::GetZoom() const {
+    return m_zoom;
+}
+
 void MapDisplayManager::StepZoom(int steps) {
     if (steps > 0) {
         for (int i = 0; i < steps; i++) {
