@@ -47,7 +47,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;$(SolutionDir)\libraries\proj4\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;$(SolutionDir)\libraries\proj4\src;$(SolutionDir)\libraries\geographiclib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;STRICT;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -59,8 +59,8 @@
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;opengl32.lib;glu32.lib;Winmm.lib;geotiff_i.lib;libtiff_i.lib;proj_i.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)\libraries\proj4\src;$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>comctl32.lib;opengl32.lib;glu32.lib;Winmm.lib;geotiff_i.lib;libtiff_i.lib;proj_i.lib;geographiclib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\libraries\proj4\src;$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;$(SolutionDir)\libraries\geographiclib\src;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -70,7 +70,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;$(SolutionDir)\libraries\proj4\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;$(SolutionDir)\libraries\proj4\src;$(SolutionDir)\libraries\geographiclib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;STRICT;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -80,8 +80,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;opengl32.lib;glu32.lib;Winmm.lib;geotiff_i.lib;libtiff_i.lib;proj_i.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)\libraries\proj4\src;$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>comctl32.lib;opengl32.lib;glu32.lib;Winmm.lib;geotiff_i.lib;libtiff_i.lib;proj_i.lib;geographiclib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\libraries\proj4\src;$(SolutionDir)\libraries\libgeotiff;$(SolutionDir)\libraries\libtiff\libtiff;$(SolutionDir)\libraries\geographiclib\src;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>

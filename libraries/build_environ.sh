@@ -15,8 +15,8 @@ GEOTIF_URL="ftp://ftp.remotesensing.org/pub/geotiff/libgeotiff/libgeotiff-1.4.0.
 PROJ4_DIR="proj4"
 PROJ4_URL="http://download.osgeo.org/proj/proj-4.8.0.tar.gz"
 
-EIGEN_DIR="eigen"
-EIGEN_URL="https://bitbucket.org/eigen/eigen/get/3.1.2.tar.gz"
+GEOGRAPHICLIB_DIR="geographiclib"
+GEOGRAPHICLIB_URL="http://heanet.dl.sourceforge.net/project/geographiclib/distrib/GeographicLib-1.28.tar.gz"
 
 
 COPY_TARGET="../Debug"
@@ -139,12 +139,14 @@ while [ -n "$1" ]; do
         download_one "$PROJ4_URL" "$PROJ4_DIR" false;
         download_one "$TIF_URL" "$TIF_DIR" false;
         download_one "$GEOTIF_URL" "$GEOTIF_DIR" true;
-        download_one "$EIGEN_URL" "$EIGEN_DIR" true;
+        download_one "$GEOGRAPHICLIB_URL" "$GEOGRAPHICLIB_DIR" false;
 
         fix_jpeg "$JPEG_DIR"
         patch -p0 --forward < jpeg.diff
         patch -p0 --forward < libtiff.diff
         patch -p0 --forward < libgeotiff.diff
+        patch -p0 --forward < proj4.diff
+        patch -p0 --forward < geographiclib.diff
 
     elif [ "x$1" = "xbuildjpeg" ]; then
         cp "$JPEG_DIR/jconfig.vc" "$JPEG_DIR/jconfig.h"
@@ -158,6 +160,12 @@ while [ -n "$1" ]; do
         dflags=`debug_flags "$2"`   # cl.exe flags: /MDd, /MD, /Zi, ...
         mtargets=`targets "$2"`     # all, clean, install, etc.
         cscript.exe run_make.js $PROJ4_DIR Makefile.vc "OPTFLAGS= $dflags" $mtargets
+        shift
+
+    elif [ "x$1" = "xbuildgeographiclib" ]; then
+        dflags=`debug_flags "$2"`   # cl.exe flags: /MDd, /MD, /Zi, ...
+        mtargets=`targets "$2"`     # all, clean, install, etc.
+        cscript.exe run_make.js $GEOGRAPHICLIB_DIR Makefile.vc "OPTFLAGS= $dflags" $mtargets
         shift
 
     elif [ "x$1" = "xbuildtiff" ]; then
@@ -178,7 +186,7 @@ while [ -n "$1" ]; do
         shift
 
     elif [ "x$1" = "xbuild" ]; then
-        "$0" buildjpeg "$2" buildproj "$2" buildtiff "$2" buildgeotiff "$2"
+        "$0" buildjpeg "$2" buildproj "$2" buildtiff "$2" buildgeotiff "$2" buildgeographiclib "$2"
         shift
 
     elif [ "x$1" = "xcopydll" ]; then
@@ -192,12 +200,12 @@ while [ -n "$1" ]; do
         rm -rf "$PROJ4_DIR"
         rm -rf "$TIF_DIR"
         rm -rf "$GEOTIF_DIR"
-        rm -rf "$EIGEN_DIR"
+        rm -rf "$GEOGRAPHICLIB_DIR"
         rm `basename "$JPEG_URL"`
         rm `basename "$PROJ4_URL"`
         rm `basename "$TIF_URL"`
         rm `basename "$GEOTIF_URL"`
-        rm `basename "$EIGEN_URL"`
+        rm `basename "$GEOGRAPHICLIB_URL"`
 
     else
         usage "Unknown command: %1"

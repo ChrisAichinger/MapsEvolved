@@ -1,0 +1,22 @@
+diff -Nur GeographicLib.orig/Makefile.vc geographiclib/Makefile.vc
+--- GeographicLib.orig/Makefile.vc	Thu Jan  1 00:00:00 1970
++++ geographiclib/Makefile.vc	Mon Jan 14 22:11:09 2013
+@@ -0,0 +1,18 @@
++OPTFLAGS=/Od /MDd /GS
++CPPFLAGS=/nologo /Iinclude /EHsc $(OPTFLAGS)
++TARGET=src\Geographiclib.lib
++PDB=src\vc.pdb
++
++OBJS=src\AlbersEqualArea.obj src\AzimuthalEquidistant.obj src\CassiniSoldner.obj src\CircularEngine.obj src\DMS.obj src\Ellipsoid.obj src\EllipticFunction.obj src\GeoCoords.obj src\Geocentric.obj src\Geodesic.obj src\GeodesicExact.obj src\GeodesicLine.obj src\GeodesicLineExact.obj src\Geohash.obj src\Geoid.obj src\Gnomonic.obj src\GravityCircle.obj src\GravityModel.obj src\LambertConformalConic.obj src\LocalCartesian.obj src\MGRS.obj src\MagneticCircle.obj src\MagneticModel.obj src\NormalGravity.obj src\OSGB.obj src\PolarStereographic.obj src\PolygonArea.obj src\SphericalEngine.obj src\TransverseMercator.obj src\TransverseMercatorExact.obj src\UTMUPS.obj src\Utility.obj
++
++all: $(TARGET)
++
++src\Geographiclib.lib: $(OBJS)
++	lib /out:$@ $(OBJS)
++
++.cpp.obj:
++	$(CPP) $(CPPFLAGS) /c /Fo$*.obj /Fd$(PDB) $*.cpp
++
++clean:
++	del $(OBJS)
++	del src\Geographiclib.lib
