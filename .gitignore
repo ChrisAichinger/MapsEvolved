@@ -15,3 +15,8 @@
 Debug/
 Release/
 /ipch/
+
+# Ignore the various stuff we need for testing
+tests/*.dll
+tests/*.exe
+tests/build
