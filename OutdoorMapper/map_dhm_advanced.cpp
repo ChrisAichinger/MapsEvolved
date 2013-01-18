@@ -49,7 +49,7 @@ static std::vector<unsigned int> TimeCounter;
 std::shared_ptr<unsigned int> GradientMap::GetRegion(
         int x, int y, unsigned int width, unsigned int height) const
 {
-    auto orig_data = m_orig_map->GetRegion(x, y, width, height);
+    auto orig_data = m_orig_map->GetRegion(x-1, y-1, width+2, height+2);
     //auto orig_data = LoadBufferFromBMP(L"example.bmp");
     std::shared_ptr<unsigned int> data(new unsigned int[width * height],
                                        ArrayDeleter<unsigned int>());
@@ -59,20 +59,16 @@ std::shared_ptr<unsigned int> GradientMap::GetRegion(
     DWORD tmStart = timeGetTime();
     for (unsigned int x=0; x < width; x++) {
         for (unsigned int y=0; y < height; y++) {
-            if (x == 0 || y == 0 || x == width - 1 || y == height - 1) {
-                DEST(x, y) = 0;
-                continue;
-            }
-
-            MapBezier bezier(src, width, height, x, y);
+            MapBezier bezier(src, width+2, height+2, x+1, y+1);
 
             double xa = 0.5;
             double ya = 0.5;
             bezier.GetGradient(&xa, &ya);
+            unsigned int elevation = src[x+1 + (width+2)*(y+1)];
             DEST(x, y) = static_cast<unsigned int>(HSV_to_RGB(
-                          (unsigned char)(255*240/360 - SRC(x,y)*255/4000),
+                          (unsigned char)(255*240/360 - elevation*255/4000),
                           255,
-                          (unsigned char)min(255, 128 + 1.5*(xa-ya))));
+                          (unsigned char)min(255, max(0, 128 + 1.25*(xa-ya)))));
         }
     }
     DWORD diff = timeGetTime() - tmStart;
