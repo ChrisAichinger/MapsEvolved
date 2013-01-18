@@ -19,7 +19,8 @@ GEOGRAPHICLIB_DIR="geographiclib"
 GEOGRAPHICLIB_URL="http://heanet.dl.sourceforge.net/project/geographiclib/distrib/GeographicLib-1.28.tar.gz"
 
 
-COPY_TARGET="../Debug"
+COPY_TARGET1="../Debug"
+COPY_TARGET2="../tests"
 
 abspath () { 
     case "$1" in 
@@ -190,10 +191,12 @@ while [ -n "$1" ]; do
         shift
 
     elif [ "x$1" = "xcopydll" ]; then
-        cp "$JPEG_DIR/libjpeg.dll" "$COPY_TARGET"
-        cp "$PROJ4_DIR/src/proj.dll" "$COPY_TARGET"
-        cp "$TIF_DIR/libtiff/libtiff.dll" "$COPY_TARGET"
-        cp "$GEOTIF_DIR/geotiff.dll" "$COPY_TARGET"
+        for target in "$COPY_TARGET1" "$COPY_TARGET2"; do
+            cp "$JPEG_DIR/libjpeg.dll" "$target"
+            cp "$PROJ4_DIR/src/proj.dll" "$target"
+            cp "$TIF_DIR/libtiff/libtiff.dll" "$target"
+            cp "$GEOTIF_DIR/geotiff.dll" "$target"
+        done
 
     elif [ "x$1" = "xdelete" ]; then
         rm -rf "$JPEG_DIR"
