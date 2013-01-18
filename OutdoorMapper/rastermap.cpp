@@ -57,12 +57,13 @@ HeightFinder::HeightFinder(const class RasterMapCollection &maps)
 double HeightFinder::GetHeight(double latitude, double longitude) {
     double height = 0.0;
     // return 0.0 if CalcTerrain() fails
-    CalcTerrain(latitude, longitude, &height, NULL, NULL);
+    CalcTerrain(latitude, longitude, &height, NULL, NULL, NULL);
     return height;
 }
 
 bool HeightFinder::CalcTerrain(double lat, double lon, double *height,
-                               double *slope_face, double *steepness_deg)
+                               double *slope_face, double *steepness_deg,
+                               double *meter_per_pixel)
 {
     if (!LatLongWithinActiveDHM(lat, lon)) {
         m_active_dhm = FindBestMap(lat, lon, RasterMap::TYPE_DHM);
@@ -90,8 +91,10 @@ bool HeightFinder::CalcTerrain(double lat, double lon, double *height,
     Projection proj = m_active_dhm->GetProj();
     double gradx = x, grady = y;
     bezier.GetGradient(&gradx, &grady);
-    gradx /= proj.CalcDistance(Ly, Lx, Ry, Rx);
-    grady /= proj.CalcDistance(Ty, Tx, By, Bx);
+    double distance_x = proj.CalcDistance(Ly, Lx, Ry, Rx);
+    double distance_y = proj.CalcDistance(Ty, Tx, By, Bx);
+    gradx /= distance_x;
+    grady /= distance_y;
     double grad_direction = atan2(grady, gradx);
     double grad_abs = sqrt(gradx*gradx + grady*grady);
     double grad_steepness = atan(grad_abs);
@@ -99,9 +102,13 @@ bool HeightFinder::CalcTerrain(double lat, double lon, double *height,
     if (height)
         *height = bezier.GetValue(x, y);
     if (slope_face)
-        *slope_face = fmod(270 + grad_direction * RAD_TO_DEG, 360.0);
+        *slope_face = normalize_direction(270 + grad_direction * RAD_to_DEG);
     if (steepness_deg)
-        *steepness_deg = grad_steepness * RAD_TO_DEG;
+        *steepness_deg = grad_steepness * RAD_to_DEG;
+    if (meter_per_pixel) {
+        // distance_x and _y are between pixel (n - delta) and (n + delta)
+        *meter_per_pixel = 0.5 * (distance_x + distance_y) / (2*delta);
+    }
     return true;
 }
 

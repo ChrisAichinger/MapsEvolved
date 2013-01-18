@@ -7,6 +7,10 @@
 #include <iostream>
 #include <fstream>
 
+#include <stdio.h>
+#include <stdarg.h>
+#include <wchar.h>
+
 #include <Windows.h>
 
 #include "util.h"
@@ -121,3 +125,58 @@ void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
     file.close();
 }
 
+double normalize_direction(double degrees) {
+    degrees = fmod(degrees + FULL_CIRCLE, FULL_CIRCLE);
+    if (degrees == FULL_CIRCLE)
+        degrees = 0.0;
+
+    assert(degrees >= 0 && degrees < FULL_CIRCLE);
+    return degrees;
+}
+
+std::wstring CompassPointFromDirection(double degree) {
+    static const double AMOUNT = FULL_CIRCLE / 32;
+    degree = normalize_direction(degree);
+
+    if (degree <=  1 * AMOUNT) return L"N";
+    if (degree <=  3 * AMOUNT) return L"NNE";
+    if (degree <=  5 * AMOUNT) return L"NE";
+    if (degree <=  7 * AMOUNT) return L"ENE";
+    if (degree <=  9 * AMOUNT) return L"E";
+    if (degree <= 11 * AMOUNT) return L"ESE";
+    if (degree <= 13 * AMOUNT) return L"SE";
+    if (degree <= 15 * AMOUNT) return L"SSE";
+    if (degree <= 17 * AMOUNT) return L"S";
+    if (degree <= 19 * AMOUNT) return L"SSW";
+    if (degree <= 21 * AMOUNT) return L"SW";
+    if (degree <= 23 * AMOUNT) return L"WSW";
+    if (degree <= 25 * AMOUNT) return L"W";
+    if (degree <= 27 * AMOUNT) return L"WNW";
+    if (degree <= 29 * AMOUNT) return L"NW";
+    if (degree <= 31 * AMOUNT) return L"NNW";
+    return L"N";
+}
+
+// From: http://stackoverflow.com/a/8098080/25097
+// See the comments for the answer, too
+std::wstring string_format(const std::wstring fmt, ...) {
+    int size = 256;
+    va_list ap;
+    while (1) {
+        std::unique_ptr<wchar_t[]> buf(new wchar_t[size]);
+
+        va_start(ap, fmt);
+        int n = _vsnwprintf_s(buf.get(), size, _TRUNCATE, fmt.c_str(), ap);
+        va_end(ap);
+        if (n <= -1) {
+            // Not enough memory available
+            size *= 2;
+        } else if (n < size) {
+            // Complete string written, success
+            return std::wstring(buf.get());
+        } else {
+            // String written except for final \0; make space for that
+            size = n + 1;
+        }
+    }
+}

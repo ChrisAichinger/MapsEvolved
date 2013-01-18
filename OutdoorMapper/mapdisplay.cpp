@@ -6,6 +6,9 @@
 #include "tiles.h"
 
 static const int MAX_TILES = 100;
+// ZOOM_STEP ** 4 == 2
+const double MapDisplayManager::ZOOM_STEP =
+                    1.189207115002721066717499970560475915;
 
 MapDisplayManager::MapDisplayManager(std::shared_ptr<class DispOpenGL> &display,
                                      const class RasterMapCollection &maps) 
@@ -78,18 +81,18 @@ double MapDisplayManager::GetZoom() const {
 void MapDisplayManager::StepZoom(int steps) {
     if (steps > 0) {
         for (int i = 0; i < steps; i++) {
-            m_zoom *= 1.2f;
+            m_zoom *= ZOOM_STEP;
         }
     } else {
         for (int i = 0; i > steps; i--) {
-            m_zoom /= 1.2f;
+            m_zoom /= ZOOM_STEP;
 
             // Don't allow to zoom out too far: approximate the number of tiles
             int num_tiles = static_cast<int>(
                     m_display->GetDisplayWidth() / (m_zoom * TILE_SIZE) *
                     m_display->GetDisplayHeight() / (m_zoom * TILE_SIZE));
             if (num_tiles > MAX_TILES) {
-                m_zoom *= 1.2f;
+                m_zoom *= ZOOM_STEP;
             }
         }
     }

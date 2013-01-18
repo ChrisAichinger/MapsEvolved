@@ -33,12 +33,12 @@ void Projection::PCSToLatLong(double &x, double &y) const {
     if (latlong.u == HUGE_VAL || latlong.v == HUGE_VAL) {
         throw std::runtime_error("Can't convert projected CS to Lat/Long.");
     }
-    x = latlong.u * RAD_TO_DEG;
-    y = latlong.v * RAD_TO_DEG;
+    x = latlong.u * RAD_to_DEG;
+    y = latlong.v * RAD_to_DEG;
 }
 
 void Projection::LatLongToPCS(double &x, double &y) const {
-    projLP latlong = {x * DEG_TO_RAD, y * DEG_TO_RAD};
+    projLP latlong = {x * DEG_to_RAD, y * DEG_to_RAD};
     projXY pcs = pj_fwd(latlong, m_proj->Get());
     if (pcs.u == HUGE_VAL || pcs.v == HUGE_VAL) {
         throw std::runtime_error("Can't convert projected CS to Lat/Long.");

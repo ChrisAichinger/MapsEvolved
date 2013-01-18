@@ -31,6 +31,9 @@ class RootWindow : public Window
         LRESULT OnNotify(struct NMHDRExtraData *nmh);
         void CalcMapSize(RECT &rect);
         void CreateStatusbar();
+        void UpdateStatusbar();
+        void SetSBText(int idx, const std::wstring &str);
+        void SetSBText(int idx, const std::wostringstream &sstr);
 };
 
 #endif

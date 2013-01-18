@@ -60,6 +60,7 @@ class MapDisplayManager {
         DISALLOW_COPY_AND_ASSIGN(MapDisplayManager);
 
         static const int TILE_SIZE = 512;
+        static const double ZOOM_STEP;
 
         std::shared_ptr<class DispOpenGL> m_display;
         const class RasterMapCollection &m_maps;

@@ -148,30 +148,6 @@ LRESULT RootWindow::OnCreate()
     return 0;
 }
 
-std::wstring CompassPointFromDirection(double degree) {
-    static const double AMOUNT = 90 / 8;
-    degree = fmod(degree+360, 360);
-    assert(degree >= 0 && degree <= 360);
-
-    if (degree <=  1 * AMOUNT) return L"N";
-    if (degree <=  3 * AMOUNT) return L"NNE";
-    if (degree <=  5 * AMOUNT) return L"NE";
-    if (degree <=  7 * AMOUNT) return L"ENE";
-    if (degree <=  9 * AMOUNT) return L"E";
-    if (degree <= 11 * AMOUNT) return L"ESE";
-    if (degree <= 13 * AMOUNT) return L"SE";
-    if (degree <= 15 * AMOUNT) return L"SSE";
-    if (degree <= 17 * AMOUNT) return L"S";
-    if (degree <= 19 * AMOUNT) return L"SSW";
-    if (degree <= 21 * AMOUNT) return L"SW";
-    if (degree <= 23 * AMOUNT) return L"WSW";
-    if (degree <= 25 * AMOUNT) return L"W";
-    if (degree <= 27 * AMOUNT) return L"WNW";
-    if (degree <= 29 * AMOUNT) return L"NW";
-    if (degree <= 31 * AMOUNT) return L"NNW";
-    return L"N";
-}
-
 LRESULT RootWindow::OnNotify(struct NMHDRExtraData *nmh) {
     switch (nmh->nmhdr.idFrom) {
     case IDC_MAP:
@@ -190,6 +166,7 @@ LRESULT RootWindow::OnNotify(struct NMHDRExtraData *nmh) {
                 POINT point = GetClientMousePos(m_hwndMap);
                 int step = GET_WHEEL_DELTA_WPARAM(nmh->data) / WHEEL_DELTA;
                 m_mapdisplay->StepZoom(step, point.x, point.y);
+                UpdateStatusbar();
                 InvalidateRect(m_hwndMap, NULL, false);
                 return 0;
                 }
@@ -210,59 +187,9 @@ LRESULT RootWindow::OnNotify(struct NMHDRExtraData *nmh) {
                 InvalidateRect(m_hwndMap, NULL, false);
                 return 0;
             }
-            case MW_MOUSEMOVE: {
-                POINT point = GetClientMousePos(m_hwndMap);
-                Point<int> disp_point(point.x, point.y);
-                Point<double> base_point(
-                    m_mapdisplay->BaseCoordFromDisplayCoord(disp_point));
-
-                double x = base_point.GetX();
-                double y = base_point.GetY();
-                m_mapdisplay->GetBaseMap().PixelToLatLong(&x, &y);
-
-                std::wostringstream sStream;
-                sStream << std::fixed << std::setprecision(5);
-                sStream << "lat/lon = " << y << " / " << x;
-                SendMessage(m_hwndStatus, SB_SETTEXT, 0,
-                        reinterpret_cast<LPARAM>(sStream.str().c_str()));
-
-                sStream.str(L"");
-                sStream << std::fixed << std::setprecision(0);
-                sStream << "Zoom: " << m_mapdisplay->GetZoom() * 100 << " %";
-                SendMessage(m_hwndStatus, SB_SETTEXT, 4,
-                        reinterpret_cast<LPARAM>(sStream.str().c_str()));
-
-                double height, orientation, steepness;
-                if (!m_heightfinder.CalcTerrain(x, y, &height,
-                                                &orientation, &steepness)) {
-                    SendMessage(m_hwndStatus, SB_SETTEXT, 1,
-                            reinterpret_cast<LPARAM>(L"Height unknown"));
-                    SendMessage(m_hwndStatus, SB_SETTEXT, 2,
-                            reinterpret_cast<LPARAM>(L"Terrain orientation unknown"));
-                    SendMessage(m_hwndStatus, SB_SETTEXT, 3,
-                            reinterpret_cast<LPARAM>(L"Steepness unknown"));
-                    return 0;
-                }
-                sStream.str(L"");
-                sStream << std::setprecision(1);
-                sStream << "Height: " << height << " m";
-                SendMessage(m_hwndStatus, SB_SETTEXT, 1,
-                        reinterpret_cast<LPARAM>(sStream.str().c_str()));
-
-                sStream.str(L"");
-                sStream << "Orientation: "
-                                  << std::setw(3)
-                                  << CompassPointFromDirection(orientation)
-                                  << " (" << orientation << "°)";
-                SendMessage(m_hwndStatus, SB_SETTEXT, 2,
-                        reinterpret_cast<LPARAM>(sStream.str().c_str()));
-
-                sStream.str(L"");
-                sStream << "Steepness: " << steepness << "°";
-                SendMessage(m_hwndStatus, SB_SETTEXT, 3,
-                        reinterpret_cast<LPARAM>(sStream.str().c_str()));
+            case MW_MOUSEMOVE:
+                UpdateStatusbar();
                 return 0;
-            }
         }
     }
     return 0;
@@ -347,4 +274,42 @@ RootWindow *RootWindow::Create() {
 void RootWindow::MapChange() {
     m_mapdisplay->ChangeMap();
     InvalidateRect(m_hwndMap, NULL, false);
+}
+
+void RootWindow::UpdateStatusbar() {
+    POINT point = GetClientMousePos(m_hwndMap);
+    Point<int> disp_point(point.x, point.y);
+    Point<double> base_point(
+            m_mapdisplay->BaseCoordFromDisplayCoord(disp_point));
+
+    double x = base_point.GetX();
+    double y = base_point.GetY();
+    m_mapdisplay->GetBaseMap().PixelToLatLong(&x, &y);
+
+    SetSBText(0, string_format(L"lat/lon = %.5f / %.5f", y, x));
+    SetSBText(5, string_format(L"Zoom: %.0f %%", m_mapdisplay->GetZoom()*100));
+
+    double height, orientation, steepness, mpp;
+    if (!m_heightfinder.CalcTerrain(x, y, &height, &orientation, &steepness, &mpp)) {
+        SetSBText(1, L"Height unknown");
+        SetSBText(2, L"Terrain orientation unknown");
+        SetSBText(3, L"Steepness unknown");
+        SetSBText(4, L"Steepness unknown");
+        return;
+    }
+    SetSBText(1, string_format(L"Height: %.1f m", height));
+    SetSBText(2, string_format(L"Orientation: %3s (%.1f°)",
+                 CompassPointFromDirection(orientation).c_str(), orientation));
+    SetSBText(3, string_format(L"Steepness: %.1f°", steepness));
+    SetSBText(4, string_format(L"DHM: %.1f m/pix", mpp));
+}
+
+void RootWindow::SetSBText(int idx, const std::wstring &str) {
+    SendMessage(m_hwndStatus, SB_SETTEXT, idx,
+                reinterpret_cast<LPARAM>(str.c_str()));
+}
+
+void RootWindow::SetSBText(int idx, const std::wostringstream &sStream) {
+    SendMessage(m_hwndStatus, SB_SETTEXT, idx,
+                reinterpret_cast<LPARAM>(sStream.str().c_str()));
 }

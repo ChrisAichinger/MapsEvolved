@@ -12,25 +12,25 @@ IMapWindow::~IMapWindow() {};
 
 class MapWindow : public IMapWindow {
     public:
-	MapWindow(HWND hwnd);
+        MapWindow(HWND hwnd);
 
-	static ATOM RegisterControl();
+        static ATOM RegisterControl();
 
-	virtual void GetSize(int& w, int& h);
-	virtual void Resize();
+        virtual void GetSize(int& w, int& h);
+        virtual void Resize();
 
     private:
-	HWND m_hwnd;
-	HMENU m_hmenu;
+        HWND m_hwnd;
+        HMENU m_hmenu;
 
         bool m_child_drag;
         MW_DragStruct m_dragstr;
 
-	static LRESULT CALLBACK s_WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+        static LRESULT CALLBACK s_WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
         LRESULT HandleMessage(UINT msg, WPARAM wParam, LPARAM lParam);
 
-	//void OnCommand(int cmd);
-	//void OnContextMenu(int x, int y);
+        //void OnCommand(int cmd);
+        //void OnContextMenu(int x, int y);
 
         LRESULT NotifyParent(UINT code, UINT_PTR data = 0);
 };
@@ -50,16 +50,16 @@ ATOM RegisterMapWindow() {
 ATOM MapWindow::RegisterControl() {
     WNDCLASS wc;
 
-    wc.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS;
-    wc.lpfnWndProc		= MapWindow::s_WndProc;
-    wc.cbClsExtra		= 0;
-    wc.cbWndExtra		= sizeof(MapWindow *);
-    wc.hInstance		= g_hinst;
-    wc.hIcon			= NULL;
-    wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground	        = NULL; //(HBRUSH)(COLOR_3DFACE+1);
-    wc.lpszMenuName		= NULL;
-    wc.lpszClassName	        = g_MapWndClass;
+    wc.style                    = CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS;
+    wc.lpfnWndProc              = MapWindow::s_WndProc;
+    wc.cbClsExtra               = 0;
+    wc.cbWndExtra               = sizeof(MapWindow *);
+    wc.hInstance                = g_hinst;
+    wc.hIcon                    = NULL;
+    wc.hCursor                  = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground            = NULL; //(HBRUSH)(COLOR_3DFACE+1);
+    wc.lpszMenuName             = NULL;
+    wc.lpszClassName            = g_MapWndClass;
 
     return RegisterClass(&wc);
 }
@@ -69,13 +69,13 @@ LRESULT CALLBACK MapWindow::s_WndProc(
 {
     if (msg == WM_NCCREATE) {
         MapWindow *pmapwindow = new MapWindow(hwnd);
-        if (!pmapwindow)
+        if (!pmapwindow) {
             return FALSE;
-
-	SetWindowLongPtr(hwnd, 0, (LONG_PTR)pmapwindow);
+        }
+        SetWindowLongPtr(hwnd, 0, (LONG_PTR)pmapwindow);
     } else if (msg == WM_NCDESTROY) {
         delete reinterpret_cast<MapWindow *>(GetWindowLongPtr(hwnd, 0));
-	SetWindowLongPtr(hwnd, 0, NULL);
+        SetWindowLongPtr(hwnd, 0, NULL);
         return DefWindowProc(hwnd, msg, wParam, lParam);
     }
 

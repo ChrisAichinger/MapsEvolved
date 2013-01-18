@@ -61,11 +61,6 @@ unsigned int makeRGB(unsigned char r, unsigned char g, unsigned char b) {
 
 unsigned int HSV_to_RGB(unsigned char H, unsigned char S, unsigned char V);
 
-/*
-unsigned int Elem(unsigned int x, unsigned int y, unsigned int width) {
-    return x + y * width;
-}
-*/
 
 #ifndef max
 #define max(a,b)            (((a) > (b)) ? (a) : (b))
@@ -84,12 +79,16 @@ void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
                      unsigned int width, unsigned int height,
                      unsigned int bpp);
 
-#ifndef RAD_TO_DEG
-#define RAD_TO_DEG 57.29577951308232
-#endif
+static const int FULL_CIRCLE = 360;
+static const double RAD_to_DEG = 57.29577951308232;
+static const double DEG_to_RAD = .0174532925199432958;
 
-#ifndef DEG_TO_RAD
-#define DEG_TO_RAD .0174532925199432958
-#endif
+// return degrees normalized to [0.0, 360.0)
+double normalize_direction(double degrees);
+
+// 0.3 -> N; 114.2 -> ESE; 174.0 -> S; 348 -> NNW; 349 -> N
+std::wstring CompassPointFromDirection(double degrees);
+
+std::wstring string_format(const std::wstring fmt, ...);
 
 #endif
