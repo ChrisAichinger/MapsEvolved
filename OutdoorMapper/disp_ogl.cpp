@@ -69,6 +69,10 @@ void DispOpenGL::Resize(unsigned int width, unsigned int height) {
     glViewport(0, 0, width, height);
 }
 
+void DispOpenGL::ForceRepaint() {
+    m_opengl->GetDevContext()->ForceRepaint();
+}
+
 void DispOpenGL::Render(std::vector<class DisplayOrder> &orders) {
     unsigned int target_width = GetDisplayWidth();
     unsigned int target_height = GetDisplayHeight();

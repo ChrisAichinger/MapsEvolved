@@ -12,7 +12,7 @@ const double MapDisplayManager::ZOOM_STEP =
 
 MapDisplayManager::MapDisplayManager(std::shared_ptr<class DispOpenGL> &display,
                                      const class RasterMapCollection &maps) 
-    : m_display(display), m_maps(maps), m_base_map(&maps.GetDefaultMap()),
+    : m_display(display), m_maps(maps), m_base_map(&maps.Get(0)),
       m_center_x(m_base_map->GetWidth() * 0.5f),
       m_center_y(m_base_map->GetHeight() * 0.5f),
       m_zoom(1.0)
@@ -22,16 +22,34 @@ void MapDisplayManager::Resize(unsigned int width, unsigned int height) {
     m_display->Resize(width, height);
 }
 
-void MapDisplayManager::ChangeMap() {
-    const RasterMap *new_map = &m_maps.GetDefaultMap();
-
+void MapDisplayManager::ChangeMap(const RasterMap *new_map,
+                                  bool try_preserve_pos)
+{
     if (new_map == m_base_map)
         return;
 
+    if (try_preserve_pos) {
+        double x = m_center_x;
+        double y = m_center_y;
+        m_base_map->PixelToLatLong(&x, &y);
+        new_map->LatLongToPixel(&x, &y);
+        // Check if old map position is within new map
+        if (IsInRect(x, y, new_map->GetWidth(), new_map->GetHeight())) {
+            m_center_x = x;
+            m_center_y = y;
+        } else {
+            try_preserve_pos = false;
+        }
+    }
+
+    if (!try_preserve_pos) {
+        m_center_x = m_base_map->GetWidth() * 0.5f;
+        m_center_y = m_base_map->GetHeight() * 0.5f;
+    }
+
     m_base_map = new_map;
-    m_center_x = m_base_map->GetWidth() * 0.5f;
-    m_center_y = m_base_map->GetHeight() * 0.5f;
     m_zoom = 1.0;
+    m_display->ForceRepaint();
 }
 
 void MapDisplayManager::Paint() {
@@ -96,6 +114,7 @@ void MapDisplayManager::StepZoom(int steps) {
             }
         }
     }
+    m_display->ForceRepaint();
 }
 
 void MapDisplayManager::StepZoom(int steps, int mouse_x, int mouse_y) {
@@ -116,6 +135,7 @@ void MapDisplayManager::CenterToDisplayCoord(int center_x, int center_y) {
     Point<double> base = BaseCoordFromDisplayCoord(disp);
     m_center_x = base.GetX();
     m_center_y = base.GetY();
+    m_display->ForceRepaint();
 }
 
 void MapDisplayManager::DragMap(int dx, int dy) {
@@ -123,4 +143,5 @@ void MapDisplayManager::DragMap(int dx, int dy) {
     double max_y = m_base_map->GetHeight() - 1.0f;
     m_center_x = ValueBetween(0.0, m_center_x - dx / m_zoom, max_x);
     m_center_y = ValueBetween(0.0, m_center_y - dy / m_zoom, max_y);
+    m_display->ForceRepaint();
 }

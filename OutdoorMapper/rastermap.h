@@ -37,9 +37,6 @@ class RasterMap {
 class RasterMapCollection {
     public:
         RasterMapCollection();
-        const RasterMap &GetDefaultMap() const { 
-            return *m_maps[m_main_idx].get();
-        }
         void AddMap(std::shared_ptr<RasterMap> map);
         size_t Size() const {
             return m_maps.size();
@@ -47,12 +44,8 @@ class RasterMapCollection {
         const RasterMap &Get(size_t i) const {
             return *m_maps[i];
         }
-        void SetMain(size_t i) {
-            m_main_idx = i;
-        }
     private:
         DISALLOW_COPY_AND_ASSIGN(RasterMapCollection);
-        unsigned int m_main_idx;
         std::vector<std::shared_ptr<RasterMap>> m_maps;
 };
 

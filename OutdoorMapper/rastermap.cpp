@@ -22,12 +22,11 @@
 RasterMap::~RasterMap() {};
 
 RasterMapCollection::RasterMapCollection()
-    : m_main_idx(0), m_maps()
+    : m_maps()
 { }
 
 void RasterMapCollection::AddMap(std::shared_ptr<class RasterMap> map) {
     m_maps.push_back(map);
-    m_main_idx = m_maps.size() - 1;
 }
 
 void LoadMap(RasterMapCollection &maps, const std::wstring &fname) {

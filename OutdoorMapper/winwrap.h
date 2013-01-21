@@ -17,6 +17,7 @@ class DevContext {
         ~DevContext();
 
         void SetPixelFormat();
+        void ForceRepaint();
         HDC Get() const { return m_hdc; };
     private:
         DISALLOW_COPY_AND_ASSIGN(DevContext);
@@ -29,6 +30,7 @@ class OGLContext {
         explicit OGLContext(const std::shared_ptr<DevContext> &device);
         ~OGLContext();
         HGLRC Get() const { return m_hglrc; };
+        class DevContext *GetDevContext() { return m_device.get(); };
     private:
         DISALLOW_COPY_AND_ASSIGN(OGLContext);
         HGLRC m_hglrc;

@@ -19,7 +19,8 @@ class DispOpenGL {
 
         void Render(class std::vector<class DisplayOrder> &orders);
         void Resize(unsigned int width, unsigned int height);
-        
+        void ForceRepaint();
+
     private:
         DISALLOW_COPY_AND_ASSIGN(DispOpenGL);
 

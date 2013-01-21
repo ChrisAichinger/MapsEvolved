@@ -26,7 +26,7 @@ class MapDisplayManager {
         const class RasterMap &GetBaseMap() const;
 
         void Resize(unsigned int width, unsigned int height);
-        void ChangeMap();
+        void ChangeMap(const RasterMap *new_map, bool try_preserve_pos=true);
 
         double GetZoom() const;
         void StepZoom(int steps);
@@ -54,7 +54,6 @@ class MapDisplayManager {
             return Point<double>(m_center_x + rel_x / m_zoom,
                                  m_center_y + rel_y / m_zoom);
         };
-
 
     private:
         DISALLOW_COPY_AND_ASSIGN(MapDisplayManager);

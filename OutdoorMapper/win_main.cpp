@@ -159,7 +159,6 @@ LRESULT RootWindow::OnNotify(struct NMHDRExtraData *nmh) {
                 POINT mouse_pos = GetClientMousePos(m_hwndMap);
                 m_mapdisplay->CenterToDisplayCoord(mouse_pos.x,
                                                    mouse_pos.y);
-                InvalidateRect(m_hwndMap, NULL, false);
                 return 0;
             }
             case MW_MWHEEL: {
@@ -167,7 +166,6 @@ LRESULT RootWindow::OnNotify(struct NMHDRExtraData *nmh) {
                 int step = GET_WHEEL_DELTA_WPARAM(nmh->data) / WHEEL_DELTA;
                 m_mapdisplay->StepZoom(step, point.x, point.y);
                 UpdateStatusbar();
-                InvalidateRect(m_hwndMap, NULL, false);
                 return 0;
                 }
             case MW_LCLICK:
@@ -184,7 +182,6 @@ LRESULT RootWindow::OnNotify(struct NMHDRExtraData *nmh) {
                 PMW_DragStruct pdrag = (PMW_DragStruct)nmh->data;
                 m_mapdisplay->DragMap(pdrag->cur.x - pdrag->last.x,
                                       pdrag->cur.y - pdrag->last.y);
-                InvalidateRect(m_hwndMap, NULL, false);
                 return 0;
             }
             case MW_MOUSEMOVE:
@@ -247,7 +244,7 @@ LRESULT RootWindow::HandleMessage(
             return OnNotify((PNMHDRExtraData)lParam);
         case WM_COMMAND:
             WORD id = LOWORD(wParam);
-            if (id == ID_FILE_NEW) ShowMapListWindow(*this, m_maps);
+            if (id == ID_FILE_NEW) ShowMapListWindow(*m_mapdisplay, m_maps);
     }
 
     return __super::HandleMessage(uMsg, wParam, lParam);
@@ -269,11 +266,6 @@ RootWindow *RootWindow::Create() {
     }
     delete self;
     return NULL;
-}
-
-void RootWindow::MapChange() {
-    m_mapdisplay->ChangeMap();
-    InvalidateRect(m_hwndMap, NULL, false);
 }
 
 void RootWindow::UpdateStatusbar() {

@@ -40,6 +40,10 @@ void DevContext::SetPixelFormat() {
     } 
 }
 
+void DevContext::ForceRepaint() {
+    InvalidateRect(m_hwnd, NULL, false);
+}
+
 
 OGLContext::OGLContext(const std::shared_ptr<DevContext> &device)
     : m_device(device)

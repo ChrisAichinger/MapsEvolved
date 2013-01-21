@@ -13,7 +13,6 @@ class RootWindow : public Window
         static RootWindow *Create();
         virtual void PaintContent(PAINTSTRUCT *pps);
 
-        void MapChange();
     private:
         HWND m_hwndMap;
         HWND m_hwndStatus;

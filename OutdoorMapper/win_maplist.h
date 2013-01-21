@@ -18,15 +18,15 @@ class MapListSizer {
 class MapListWindow : public Window
 {
     public:
-        explicit MapListWindow(class RootWindow &rootwindow,
+        explicit MapListWindow(class MapDisplayManager &mapdisplay,
                                class RasterMapCollection &maps);
         virtual LPCTSTR ClassName();
         virtual UINT WCStyle() { return CS_HREDRAW | CS_VREDRAW; };
-        static MapListWindow *Create(class RootWindow &rootwindow,
+        static MapListWindow *Create(class MapDisplayManager &mapdisplay,
                                      class RasterMapCollection &maps);
         virtual void PaintContent(PAINTSTRUCT *pps);
     private:
-        class RootWindow &m_rootwindow;
+        class MapDisplayManager &m_mapdisplay;
         class RasterMapCollection &m_maps;
         LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
         LRESULT OnCreate();
@@ -37,6 +37,6 @@ class MapListWindow : public Window
         std::shared_ptr<ImageList> m_lvImages;
 };
 
-void ShowMapListWindow(class RootWindow &rw, class RasterMapCollection &maps);
+void ShowMapListWindow(class MapDisplayManager &mapdisplay, class RasterMapCollection &maps);
 
 #endif

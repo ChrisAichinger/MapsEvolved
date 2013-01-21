@@ -1,6 +1,7 @@
 
 #include "win_maplist.h"
 #include "rastermap.h"
+#include "mapdisplay.h"
 #include "projection.h"
 #include "resource.h"
 #include "win_main.h"
@@ -10,9 +11,9 @@ LPCTSTR MapListWindow::ClassName() {
     return MapListClassname;
 }
 
-MapListWindow *MapListWindow::Create(class RootWindow &rootwindow, 
+MapListWindow *MapListWindow::Create(class MapDisplayManager &mapdisplay,
                                      class RasterMapCollection &maps) {
-    MapListWindow *self = new MapListWindow(rootwindow, maps);
+    MapListWindow *self = new MapListWindow(mapdisplay, maps);
     if (self && self->WinCreateWindow(0,
                 TEXT("OutdoorMapper Map List"), WS_OVERLAPPEDWINDOW,
                 CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -23,9 +24,9 @@ MapListWindow *MapListWindow::Create(class RootWindow &rootwindow,
     return NULL;
 }
 
-MapListWindow::MapListWindow(RootWindow &rootwindow,
+MapListWindow::MapListWindow(MapDisplayManager &mapdisplay,
                              RasterMapCollection &maps)
-    : m_rootwindow(rootwindow), m_maps(maps), m_sizer(0)
+    : m_mapdisplay(mapdisplay), m_maps(maps), m_sizer(0)
 { }
 
 void MapListWindow::PaintContent(PAINTSTRUCT *pps) {
@@ -53,8 +54,7 @@ LRESULT MapListWindow::HandleMessage(
                 }
                 case NM_DBLCLK: {
                     LPNMITEMACTIVATE pnmv = (LPNMITEMACTIVATE)lParam;
-                    m_maps.SetMain(pnmv->iItem);
-                    m_rootwindow.MapChange();
+                    m_mapdisplay.ChangeMap(&m_maps.Get(pnmv->iItem));
                     break;
                 }
                 }
@@ -144,10 +144,10 @@ LRESULT MapListWindow::OnCreate() {
     return 0;
 }
 
-void ShowMapListWindow(class RootWindow &rw, class RasterMapCollection &maps) {
+void ShowMapListWindow(class MapDisplayManager &mapdisplay, class RasterMapCollection &maps) {
     HWND hwnd = FindWindowWithinProcess(MapListClassname);
     if (!hwnd) {
-        hwnd = MapListWindow::Create(rw, maps)->GetHWND();
+        hwnd = MapListWindow::Create(mapdisplay, maps)->GetHWND();
     }
     if (!SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
                       SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW)) {
