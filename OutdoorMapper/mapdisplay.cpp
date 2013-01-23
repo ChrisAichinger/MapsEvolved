@@ -35,6 +35,7 @@ void MapDisplayManager::ChangeMap(const RasterMap *new_map,
         new_map->LatLongToPixel(&x, &y);
         // Check if old map position is within new map
         if (IsInRect(x, y, new_map->GetWidth(), new_map->GetHeight())) {
+            m_zoom *= MetersPerPixel(new_map, x, y) / MetersPerPixel(m_base_map, m_center_x, m_center_y);
             m_center_x = x;
             m_center_y = y;
         } else {
@@ -45,10 +46,10 @@ void MapDisplayManager::ChangeMap(const RasterMap *new_map,
     if (!try_preserve_pos) {
         m_center_x = m_base_map->GetWidth() * 0.5f;
         m_center_y = m_base_map->GetHeight() * 0.5f;
+        m_zoom = 1.0;
     }
 
     m_base_map = new_map;
-    m_zoom = 1.0;
     m_display->ForceRepaint();
 }
 

@@ -53,17 +53,27 @@ HeightFinder::HeightFinder(const class RasterMapCollection &maps)
     : m_maps(maps), m_active_dhm(0)
 { }
 
-double HeightFinder::GetHeight(double latitude, double longitude) {
-    double height = 0.0;
-    // return 0.0 if CalcTerrain() fails
-    CalcTerrain(latitude, longitude, &height, NULL, NULL, NULL);
-    return height;
+bool HeightFinder::CalcTerrain(double lat, double lon, double *height,
+                               double *slope_face, double *steepness_deg)
+{
+    TerrainInfo ti;
+    bool res = CalcTerrain(lat, lon, &ti);
+    if (!res)
+        return res;
+
+    if (height)
+        *height = ti.height;
+    if (slope_face)
+        *slope_face = ti.slope_face;
+    if (steepness_deg)
+        *steepness_deg = ti.steepness_deg;
+
+    return res;
 }
 
-bool HeightFinder::CalcTerrain(double lat, double lon, double *height,
-                               double *slope_face, double *steepness_deg,
-                               double *meter_per_pixel)
-{
+bool HeightFinder::CalcTerrain(double lat, double lon, TerrainInfo *result) {
+    assert(result);
+
     if (!LatLongWithinActiveDHM(lat, lon)) {
         m_active_dhm = FindBestMap(lat, lon, RasterMap::TYPE_DHM);
         if (!m_active_dhm)
@@ -76,38 +86,20 @@ bool HeightFinder::CalcTerrain(double lat, double lon, double *height,
 
     unsigned int cx = bezier.GetCenterX();
     unsigned int cy = bezier.GetCenterY();
-    unsigned int delta = (bezier.N_POINTS - 1) / 2;
+    unsigned int bezier_pixels = bezier.N_POINTS - 1;
+    double bezier_meters = bezier_pixels * MetersPerPixel(m_active_dhm, cx, cy);
 
-    double Lx = cx - delta, Ly = cy;
-    double Rx = cx + delta, Ry = cy;
-    double Tx = cx, Ty = cy - delta;
-    double Bx = cx, By = cy + delta;
-    m_active_dhm->PixelToLatLong(&Lx, &Ly);
-    m_active_dhm->PixelToLatLong(&Rx, &Ry);
-    m_active_dhm->PixelToLatLong(&Tx, &Ty);
-    m_active_dhm->PixelToLatLong(&Bx, &By);
-
-    Projection proj = m_active_dhm->GetProj();
     double gradx = x, grady = y;
     bezier.GetGradient(&gradx, &grady);
-    double distance_x = proj.CalcDistance(Ly, Lx, Ry, Rx);
-    double distance_y = proj.CalcDistance(Ty, Tx, By, Bx);
-    gradx /= distance_x;
-    grady /= distance_y;
+    gradx /= bezier_meters;
+    grady /= bezier_meters;
     double grad_direction = atan2(grady, gradx);
     double grad_abs = sqrt(gradx*gradx + grady*grady);
     double grad_steepness = atan(grad_abs);
 
-    if (height)
-        *height = bezier.GetValue(x, y);
-    if (slope_face)
-        *slope_face = normalize_direction(270 + grad_direction * RAD_to_DEG);
-    if (steepness_deg)
-        *steepness_deg = grad_steepness * RAD_to_DEG;
-    if (meter_per_pixel) {
-        // distance_x and _y are between pixel (n - delta) and (n + delta)
-        *meter_per_pixel = 0.5 * (distance_x + distance_y) / (2*delta);
-    }
+    result->height = bezier.GetValue(x, y);
+    result->slope_face = normalize_direction(270 + grad_direction*RAD_to_DEG);
+    result->steepness_deg = grad_steepness * RAD_to_DEG;
     return true;
 }
 
@@ -136,4 +128,22 @@ HeightFinder::FindBestMap(
             return &map;
     }
     return NULL;
+}
+
+double MetersPerPixel(const RasterMap *map, double x_px, double y_px) {
+    double Lx = x_px - 1, Ly = y_px;
+    double Rx = x_px + 1, Ry = y_px;
+    double Tx = x_px, Ty = y_px - 1;
+    double Bx = x_px, By = y_px + 1;
+    map->PixelToLatLong(&Lx, &Ly);
+    map->PixelToLatLong(&Rx, &Ry);
+    map->PixelToLatLong(&Tx, &Ty);
+    map->PixelToLatLong(&Bx, &By);
+
+    Projection proj = map->GetProj();
+    double distance_x = proj.CalcDistance(Ly, Lx, Ry, Rx);
+    double distance_y = proj.CalcDistance(Ty, Tx, By, Bx);
+
+    // distance_xy = 2 pixels from (px-1) to (px+1) -> additional factor 0.5
+    return (distance_x + distance_y) * 0.25;
 }

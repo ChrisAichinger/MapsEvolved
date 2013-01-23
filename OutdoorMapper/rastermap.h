@@ -51,13 +51,18 @@ class RasterMapCollection {
 
 void LoadMap(RasterMapCollection &maps, const std::wstring &fname);
 
+struct TerrainInfo {
+    double height;
+    double slope_face;
+    double steepness_deg;
+};
+
 class HeightFinder {
     public:
         explicit HeightFinder(const class RasterMapCollection &maps);
-        double GetHeight(double latitude, double longitude);
         bool CalcTerrain(double lat, double lon, double *height,
-                         double *slope_face, double *steepness_deg,
-                         double *meter_per_pixel);
+                         double *slope_face, double *steepness_deg);
+        bool CalcTerrain(double lat, double lon, TerrainInfo *result);
     private:
         const class RasterMapCollection &m_maps;
         const class RasterMap *m_active_dhm;
@@ -66,5 +71,7 @@ class HeightFinder {
         const class RasterMap *FindBestMap(double latitude, double longitude,
                                            RasterMap::RasterMapType type) const;
 };
+
+double MetersPerPixel(const RasterMap *map, double x_px, double y_px);
 
 #endif
