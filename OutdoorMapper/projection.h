@@ -5,17 +5,6 @@
 
 #include "util.h"
 
-typedef void* projPJ;
-
-class ProjWrap {
-    public:
-        explicit ProjWrap(projPJ proj);
-        ~ProjWrap();
-        projPJ Get() { return m_proj; };
-    private:
-        projPJ m_proj;
-};
-
 class Projection {
     public:
         explicit Projection(const std::string &proj_str);
@@ -28,7 +17,7 @@ class Projection {
                             double long2, double lat2) const;
 
     private:
-        std::shared_ptr<ProjWrap> m_proj;
+        std::shared_ptr<class ProjWrap> m_proj;
         std::string m_proj_str;
 };
 

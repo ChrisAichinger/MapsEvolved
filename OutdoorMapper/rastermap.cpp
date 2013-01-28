@@ -130,20 +130,19 @@ HeightFinder::FindBestMap(
     return NULL;
 }
 
+double GetMapDistance(const RasterMap &map, double Cx, double Cy, double dx, double dy) {
+    double Ax = Cx - dx;
+    double Ay = Cy - dy;
+    double Bx = Cx + dx;
+    double By = Cy + dy;
+    map.PixelToLatLong(&Ax, &Ay);
+    map.PixelToLatLong(&Bx, &By);
+    Projection proj = map.GetProj();
+    return proj.CalcDistance(Ay, Ax, By, Bx);
+}
+
 double MetersPerPixel(const RasterMap *map, double x_px, double y_px) {
-    double Lx = x_px - 1, Ly = y_px;
-    double Rx = x_px + 1, Ry = y_px;
-    double Tx = x_px, Ty = y_px - 1;
-    double Bx = x_px, By = y_px + 1;
-    map->PixelToLatLong(&Lx, &Ly);
-    map->PixelToLatLong(&Rx, &Ry);
-    map->PixelToLatLong(&Tx, &Ty);
-    map->PixelToLatLong(&Bx, &By);
-
-    Projection proj = map->GetProj();
-    double distance_x = proj.CalcDistance(Ly, Lx, Ry, Rx);
-    double distance_y = proj.CalcDistance(Ty, Tx, By, Bx);
-
-    // distance_xy = 2 pixels from (px-1) to (px+1) -> additional factor 0.5
-    return (distance_x + distance_y) * 0.25;
+    double mppx = 0.5 * GetMapDistance(*map, x_px, y_px, 1, 0);
+    double mppy = 0.5 * GetMapDistance(*map, x_px, y_px, 0, 1);
+    return 0.5 * (mppx + mppy);
 }

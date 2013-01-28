@@ -5,9 +5,10 @@
 #include <memory>
 #include <vector>
 
+#include "odm_config.h"
 #include "util.h"
 
-class RasterMap {
+class ODM_INTERFACE RasterMap {
     public:
         enum RasterMapType {
             TYPE_MAP = 1,
@@ -72,6 +73,7 @@ class HeightFinder {
                                            RasterMap::RasterMapType type) const;
 };
 
+double GetMapDistance(const RasterMap &map, double Cx, double Cy, double dx, double dy);
 double MetersPerPixel(const RasterMap *map, double x_px, double y_px);
 
 #endif

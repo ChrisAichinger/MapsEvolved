@@ -6,11 +6,29 @@
 #include <GL/glu.h>                     /* OpenGL utilities header file */
 
 #include "winwrap.h"
+#include "odm_config.h"
 
+TemporaryWindowDisable::TemporaryWindowDisable(HWND hwnd)
+    : m_hwnd(hwnd)
+{
+    assert(m_hwnd);
+    EnableWindow(hwnd, false);
+}
+
+TemporaryWindowDisable::~TemporaryWindowDisable() {
+    EnableNow();
+}
+
+void TemporaryWindowDisable::EnableNow() {
+    if (m_hwnd) {
+        EnableWindow(m_hwnd, true);
+        m_hwnd = NULL; 
+    } 
+}
 
 DevContext::DevContext(HWND hwnd)
     : m_hwnd(hwnd), m_hdc(GetDC(m_hwnd))
-{ 
+{
     if (!m_hwnd)
         throw std::invalid_argument("Invalid window handle (NULL)");
     if (!m_hdc)
@@ -33,11 +51,11 @@ void DevContext::SetPixelFormat() {
     int pf = ChoosePixelFormat(m_hdc, &pfd);
     if (pf == 0) {
         throw std::runtime_error("No suitable pixel format.");
-    } 
+    }
 
     if (::SetPixelFormat(m_hdc, pf, &pfd) == FALSE) {
         throw std::runtime_error("Cannot set pixel format.");
-    } 
+    }
 }
 
 void DevContext::ForceRepaint() {
@@ -47,7 +65,7 @@ void DevContext::ForceRepaint() {
 
 OGLContext::OGLContext(const std::shared_ptr<DevContext> &device)
     : m_device(device)
-{ 
+{
     m_device->SetPixelFormat();
     m_hglrc = wglCreateContext(m_device->Get());
     wglMakeCurrent(device->Get(), m_hglrc);
@@ -89,7 +107,7 @@ ImageList::~ImageList() {
 
 IconHandle::IconHandle(HINSTANCE hInstance, LPCTSTR lpIconName)
     : m_handle((HICON)LoadImage(hInstance, lpIconName, IMAGE_ICON, 0, 0, 0))
-{ 
+{
     if (!m_handle) {
         throw std::runtime_error("Failed to load icon.");
     }
@@ -102,7 +120,7 @@ IconHandle::~IconHandle() {
 
 BitmapHandle::BitmapHandle(HINSTANCE hInstance, LPCTSTR lpBitmapName)
     : m_handle((HBITMAP)LoadImage(hInstance, lpBitmapName, IMAGE_BITMAP, 0, 0, 0))
-{ 
+{
     if (!m_handle) {
         throw std::runtime_error("Failed to load bitmap.");
     }
@@ -225,12 +243,12 @@ static BOOL CALLBACK FWWP_EnumWindowsProc(HWND hwnd, LPARAM lParam) {
     GetWindowThreadProcessId(hwnd, &wndProcess);
     if (wndProcess != data->pid)
         return true; // continue iteration
-    
+
     wchar_t wndClsName[1024];
     GetClassName(hwnd, wndClsName, ARRAY_SIZE(wndClsName));
     if (wndClsName != data->cls_name)
         return true; // continue iteration
-    
+
     data->hwnd = hwnd;
     return false; // exit immediately
 }
@@ -254,3 +272,249 @@ std::wstring LoadResString(UINT uID, HINSTANCE hInst) {
 
     return std::wstring(p_str_resource);
 }
+
+
+/////////////////////////////
+// Print abort implementation
+/////////////////////////////
+
+class PrintAbortImpl {
+    public:
+        PrintAbortImpl(PrintAbortManager *pam, HDC hdc)
+            : m_pam(pam), m_hdc(hdc) {}
+        ~PrintAbortImpl() { m_pam->ReturnTicket(m_hdc); }
+    private:
+        PrintAbortManager *m_pam;
+        HDC m_hdc;
+};
+
+
+PrintAbortTicket::PrintAbortTicket(class PrintAbortManager *pam, HDC hdc)
+    : m_impl(std::shared_ptr<PrintAbortImpl>(new PrintAbortImpl(pam, hdc)))
+{}
+
+
+PrintAbortManager::PrintAbortManager()
+    : m_hdc(NULL), m_pdlg(NULL)
+{}
+
+PrintAbortTicket
+PrintAbortManager::RegisterAbort(HDC hdc, IPrintAbortHandler *pdlg) {
+    assert(!m_hdc && !m_pdlg);
+    m_hdc = hdc;
+    m_pdlg = pdlg;
+    SetAbortProc(m_hdc, s_AbortProc);
+    return PrintAbortTicket(this, hdc);
+}
+
+void PrintAbortManager::ReturnTicket(HDC hdc) {
+    assert(hdc == m_hdc && m_hdc && m_pdlg);
+    m_hdc = NULL;
+    m_pdlg = NULL;
+}
+
+BOOL CALLBACK PrintAbortManager::s_AbortProc(HDC hdcPrn, int iCode) {
+    PrintAbortManager *self = PrintAbortManager::Instance();
+    assert(self->m_hdc && self->m_pdlg);
+    assert(self->m_hdc == hdcPrn);
+    return self->m_pdlg->PrintAbortCallback(iCode);
+}
+
+PrintAbortManager *PrintAbortManager::Instance() {
+    static PrintAbortManager *print_manager = new PrintAbortManager();
+    return print_manager;
+}
+
+////////////////////////////////////////
+// Print Canceling Dialog implementation
+////////////////////////////////////////
+
+PrintDialog::PrintDialog(HWND hwnd_parent, TemporaryWindowDisable *twd,
+                         const std::wstring &app_name)
+    : m_hwnd_parent(hwnd_parent), m_twd(twd), m_user_abort(false),
+      m_app_name(app_name)
+{
+    m_hwnd = CreateDialogParam(g_hinst, L"PrintDlgBox", hwnd_parent,
+                               s_PrintDlgProc, reinterpret_cast<LPARAM>(this));
+    if (!m_hwnd)
+        throw std::runtime_error("Failed to create print dialog");
+}
+
+PrintDialog::~PrintDialog() {
+    Close();
+}
+
+void PrintDialog::Close() {
+    if (m_hwnd) {
+        DestroyWindow(m_hwnd);
+    }
+}
+
+bool PrintDialog::PrintAbortCallback(int iCode) {
+    MSG msg;
+    while (!m_user_abort && PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        if (!m_hwnd || !IsDialogMessage(m_hwnd, &msg)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
+    return !m_user_abort;
+}
+
+BOOL CALLBACK PrintDialog::s_PrintDlgProc(HWND hDlg, UINT message,
+                                          WPARAM wParam, LPARAM lParam)
+{
+    if (message == WM_INITDIALOG) {
+        SetWindowLongPtr(hDlg, GWLP_USERDATA, lParam);
+    }
+    PrintDialog *self = reinterpret_cast<PrintDialog*>(GetWindowLongPtr(hDlg, GWLP_USERDATA));
+    if (!self)
+        return false;
+
+    BOOL result = self->PrintDlgProc(message, wParam, lParam);
+    if (message == WM_NCDESTROY) {
+        self->m_hwnd = 0;
+    }
+    return result;
+}
+
+BOOL PrintDialog::PrintDlgProc(UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) {
+        case WM_INITDIALOG:
+            SetWindowText(m_hwnd, m_app_name.c_str());
+            EnableMenuItem(GetSystemMenu(m_hwnd, FALSE), SC_CLOSE, MF_GRAYED);
+            return true;
+
+        case WM_COMMAND:
+            m_user_abort = true;
+            m_twd->EnableNow();
+            Close();
+            return false;
+    }
+    return false;
+}
+
+class PrinterPreferences {
+    public:
+        PrinterPreferences();
+        bool ShowDialog(HWND hwnd_parent);
+        HDC GetHDC();
+        bool CheckSupportRaster();
+    private:
+        PRINTDLGEX m_pd;
+        GlobalMem m_dev_mode;
+        GlobalMem m_dev_names;
+        PrinterDC m_printer_dc;
+};
+
+PrinterPreferences::PrinterPreferences()
+    : m_pd(), m_dev_mode(NULL), m_dev_names(NULL), m_printer_dc(NULL)
+{}
+
+bool PrinterPreferences::ShowDialog(HWND hwnd_parent) {
+    m_pd.lStructSize = sizeof(m_pd);
+    m_pd.hwndOwner = hwnd_parent;
+    m_pd.Flags = PD_RETURNDC | PD_USEDEVMODECOPIESANDCOLLATE | PD_NOPAGENUMS;
+    m_pd.nStartPage = START_PAGE_GENERAL;
+
+    HRESULT res = PrintDlgEx(&m_pd);
+    m_dev_mode.Reset(m_pd.hDevMode);
+    m_dev_names.Reset(m_pd.hDevNames);
+    m_printer_dc.Reset(m_pd.hDC);
+
+    if (res != S_OK)
+        throw std::runtime_error("Unknown printer selection dialog error");
+
+    if (m_pd.dwResultAction == PD_RESULT_CANCEL)
+        return false;
+
+    if (m_pd.dwResultAction == PD_RESULT_APPLY) {
+        assert(false); // Not implemented
+        return false;
+    }
+
+    if (!m_pd.hDC)
+        throw std::runtime_error("HDC returned by PrintDlg invalid");
+
+    return true;
+}
+
+HDC PrinterPreferences::GetHDC() {
+    return m_printer_dc.Get();
+}
+
+bool PrinterPreferences::CheckSupportRaster() {
+    return (GetDeviceCaps(m_printer_dc.Get(), RASTERCAPS) & RC_BITBLT) != 0;
+}
+
+bool Print(HWND hwnd_parent, const struct PrintOrder &order) {
+    PrinterPreferences pref;
+    if (!pref.ShowDialog(hwnd_parent)) {
+        // user aborted the operation
+        return false;
+    }
+    if (!pref.CheckSupportRaster())
+        throw std::runtime_error("Printer does not support bitmap printing");
+
+    HDC hdc = pref.GetHDC();
+    int horzsize = GetDeviceCaps(hdc, HORZSIZE);
+    int vertsize = GetDeviceCaps(hdc, VERTSIZE);
+    int horzres = GetDeviceCaps(hdc, HORZRES);
+    int vertres = GetDeviceCaps(hdc, VERTRES);
+    int aspectx = GetDeviceCaps(hdc, ASPECTX);
+    int aspecty = GetDeviceCaps(hdc, ASPECTY);
+    int aspectxy = GetDeviceCaps(hdc, ASPECTXY);
+    int pwidth = GetDeviceCaps(hdc, PHYSICALWIDTH);
+    int pheight = GetDeviceCaps(hdc, PHYSICALHEIGHT);
+    int poffx = GetDeviceCaps(hdc, PHYSICALOFFSETX);
+    int poffy = GetDeviceCaps(hdc, PHYSICALOFFSETY);
+    int scalex = GetDeviceCaps(hdc, SCALINGFACTORX);
+    int scaley = GetDeviceCaps(hdc, SCALINGFACTORY);
+    int dpi_x = round_to_int(INCH_to_MM * horzres / horzsize);
+    int dpi_y = round_to_int(INCH_to_MM * vertres / vertsize);
+
+    TemporaryWindowDisable twd(hwnd_parent);
+    PrintDialog pd(hwnd_parent, &twd, order.PrintDialogName);
+    PrintAbortTicket pad = PrintAbortManager::Instance()->RegisterAbort(hdc, &pd);
+
+    static DOCINFO di = { 0 };
+    di.cbSize = sizeof(di);
+    di.lpszDocName = order.DocName.c_str();
+    if (StartDoc(hdc, &di) <= 0)
+        return false;
+
+    if (StartPage(hdc) <= 0)
+        return false;
+
+    order.print_client.Print(hdc);
+
+    if (EndPage(hdc) <= 0)
+        return false;
+
+    if (EndDoc(hdc) <= 0)
+        return false;
+
+    return true;
+}
+
+bool PageSetupDialog(HWND hwnd_parent) {
+    PAGESETUPDLG psd = { 0 };
+    psd.lStructSize = sizeof(psd);
+    psd.hwndOwner = hwnd_parent;
+
+    if (!PageSetupDlg(&psd)) {
+        if (CommDlgExtendedError() == 0) {
+            // User canceled the print dialog
+            return false;
+        }
+        throw std::runtime_error("Unknown page setup dialog error");
+    }
+
+    if (psd.hDevMode)
+        GlobalFree(psd.hDevMode);
+
+    if (psd.hDevNames)
+        GlobalFree(psd.hDevNames);
+    return true;
+}
+

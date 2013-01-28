@@ -97,6 +97,14 @@ double MapDisplayManager::GetZoom() const {
     return m_zoom;
 }
 
+double MapDisplayManager::GetCenterX() const {
+    return m_center_x;
+}
+
+double MapDisplayManager::GetCenterY() const {
+    return m_center_y;
+}
+
 void MapDisplayManager::StepZoom(int steps) {
     if (steps > 0) {
         for (int i = 0; i < steps; i++) {

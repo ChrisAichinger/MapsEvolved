@@ -25,9 +25,14 @@ int PASCAL
 WinMain(HINSTANCE hinst, HINSTANCE, LPSTR, int nShowCmd) {
     g_hinst = hinst;
 
-    INITCOMMONCONTROLSEX icex;        // Structure for control initialization.
+    if (!SUCCEEDED(CoInitialize(NULL)))
+        return 1;
+
+    INITCOMMONCONTROLSEX icex;
+    icex.dwSize = sizeof(icex);
     icex.dwICC = ICC_LISTVIEW_CLASSES;
-    InitCommonControlsEx(&icex);
+    if (!InitCommonControlsEx(&icex))
+        return 1;
 
     RegisterMapWindow();
 
@@ -40,5 +45,7 @@ WinMain(HINSTANCE hinst, HINSTANCE, LPSTR, int nShowCmd) {
             DispatchMessage(&msg);
         }
     }
+
+    CoUninitialize();
     return 0;
 }

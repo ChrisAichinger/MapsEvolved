@@ -23,12 +23,14 @@ class MapDisplayManager {
     public:
         MapDisplayManager(std::shared_ptr<class DispOpenGL> &display,
                           const class RasterMapCollection &maps);
+
         const class RasterMap &GetBaseMap() const;
-
-        void Resize(unsigned int width, unsigned int height);
-        void ChangeMap(const RasterMap *new_map, bool try_preserve_pos=true);
-
         double GetZoom() const;
+        double GetCenterX() const;
+        double GetCenterY() const;
+
+        void ChangeMap(const RasterMap *new_map, bool try_preserve_pos=true);
+        void Resize(unsigned int width, unsigned int height);
         void StepZoom(int steps);
         // mouse_x, mouse_y are mouse coordinates relative to the map panel
         // The map location under the mouse is held constant

@@ -17,6 +17,7 @@
 #include "win_mappanel.h"
 #include "win_maplist.h"
 #include "mapdisplay.h"
+#include "print_map.h"
 
 #define IDC_STATUSBAR     100
 #define IDC_MAP           101
@@ -245,6 +246,15 @@ LRESULT RootWindow::HandleMessage(
         case WM_COMMAND:
             WORD id = LOWORD(wParam);
             if (id == ID_FILE_NEW) ShowMapListWindow(*m_mapdisplay, m_maps);
+            if (id == ID_FILE_OPEN) {
+                //PageSetupDialog(m_hwnd);
+                MapPrinter mprint(m_mapdisplay, 50000);
+                struct PrintOrder po = { L"Outdoor Mapper Document",
+                                         L"Printing...",
+                                         mprint,
+                                       };
+                Print(m_hwnd, po);
+            }
     }
 
     return __super::HandleMessage(uMsg, wParam, lParam);

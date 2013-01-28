@@ -96,6 +96,7 @@
     <ClCompile Include="map_dhm_advanced.cpp" />
     <ClCompile Include="map_geotiff.cpp" />
     <ClCompile Include="OutdoorMapper.cpp" />
+    <ClCompile Include="print_map.cpp" />
     <ClCompile Include="projection.cpp" />
     <ClCompile Include="rastermap.cpp" />
     <ClCompile Include="tiles.cpp" />
@@ -114,6 +115,7 @@
     <ClInclude Include="map_dhm_advanced.h" />
     <ClInclude Include="map_geotiff.h" />
     <ClInclude Include="odm_config.h" />
+    <ClInclude Include="print_map.h" />
     <ClInclude Include="win_main.h" />
     <ClInclude Include="projection.h" />
     <ClInclude Include="rastermap.h" />

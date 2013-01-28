@@ -86,6 +86,8 @@ void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
 static const int FULL_CIRCLE = 360;
 static const double RAD_to_DEG = 57.29577951308232;
 static const double DEG_to_RAD = .0174532925199432958;
+static const double INCH_to_MM = 25.4;
+static const double MM_to_INCH = 0.0393700787;
 
 // return degrees normalized to [0.0, 360.0)
 double normalize_direction(double degrees);

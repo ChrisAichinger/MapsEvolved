@@ -7,6 +7,15 @@
 #include "proj_api.h"
 #include "rastermap.h"
 
+class ProjWrap {
+    public:
+        explicit ProjWrap(projPJ proj);
+        ~ProjWrap();
+        projPJ Get() { return m_proj; };
+    private:
+        projPJ m_proj;
+};
+
 ProjWrap::ProjWrap(projPJ proj)
     : m_proj(proj)
     {};
