@@ -87,7 +87,8 @@ bool HeightFinder::CalcTerrain(double lat, double lon, TerrainInfo *result) {
     unsigned int cx = bezier.GetCenterX();
     unsigned int cy = bezier.GetCenterY();
     unsigned int bezier_pixels = bezier.N_POINTS - 1;
-    double bezier_meters = bezier_pixels * MetersPerPixel(m_active_dhm, cx, cy);
+    double bezier_meters = bezier_pixels *
+                           MetersPerPixel(m_active_dhm, cx, cy);
 
     double gradx = x, grady = y;
     bezier.GetGradient(&gradx, &grady);
@@ -130,7 +131,9 @@ HeightFinder::FindBestMap(
     return NULL;
 }
 
-double GetMapDistance(const RasterMap &map, double Cx, double Cy, double dx, double dy) {
+double GetMapDistance(const RasterMap &map, double Cx, double Cy,
+                      double dx, double dy)
+{
     double Ax = Cx - dx;
     double Ay = Cy - dy;
     double Bx = Cx + dx;

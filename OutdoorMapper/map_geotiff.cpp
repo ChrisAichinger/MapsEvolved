@@ -66,13 +66,13 @@ std::shared_ptr<unsigned int> Tiff::GetRegion(int x, int y,
     unsigned int uy = (y >= 0) ? y : 0;
     if (x + width < 0 || y + height < 0 || ux > m_width || uy > m_height) {
         // Return zero-initialized memory block (notice the parentheses)
-        return std::shared_ptr<unsigned int>(new unsigned int[width * height](),
+        return std::shared_ptr<unsigned int>(new unsigned int[width*height](),
                                              ArrayDeleter<unsigned int>());
     }
 
     TIFFRGBAImage img;
     char emsg[1024] = "";
-    if (!TIFFRGBAImageOK(m_rawtiff, emsg) || 
+    if (!TIFFRGBAImageOK(m_rawtiff, emsg) ||
         !TIFFRGBAImageBegin(&img, m_rawtiff, 0, emsg)) {
         throw std::runtime_error("TIFF RGBA access not possible.");
     }
@@ -117,7 +117,7 @@ GeoTiff::GeoTiff(const std::wstring &fname)
       m_tiepoints(NULL), m_pixscale(NULL), m_transform(NULL),
       m_ntiepoints(0), m_npixscale(0), m_ntransform(0),
       m_proj(), m_type()
-{ 
+{
     if (!CheckVersion()) {
         throw std::runtime_error("GeoTIFF version not supported.");
     }
@@ -132,6 +132,7 @@ bool GeoTiff::CheckVersion() const {
            versions[REV_MAJOR] <= GvCurrentRevision;
 }
 
+using std::tie;
 void GeoTiff::LoadCoordinates() {
     geocode_t model = GetKeySingle<geocode_t>(GTModelTypeGeoKey);
     assert(model == ModelTypeProjected); // The rest is not implemented
@@ -150,9 +151,9 @@ void GeoTiff::LoadCoordinates() {
         m_proj = proj_str.get();
     }
 
-    std::tie(m_ntiepoints, m_tiepoints) = GetField<double>(TIFFTAG_GEOTIEPOINTS);
-    std::tie(m_npixscale, m_pixscale) = GetField<double>(TIFFTAG_GEOPIXELSCALE);
-    std::tie(m_ntransform, m_transform) = GetField<double>(TIFFTAG_GEOTRANSMATRIX);
+    tie(m_ntiepoints, m_tiepoints) = GetField<double>(TIFFTAG_GEOTIEPOINTS);
+    tie(m_npixscale, m_pixscale) = GetField<double>(TIFFTAG_GEOPIXELSCALE);
+    tie(m_ntransform, m_transform) = GetField<double>(TIFFTAG_GEOTRANSMATRIX);
 
     if (HasKey(VerticalUnitsGeoKey)) {
         // Vertical coordinate system defined -> DHM
@@ -164,7 +165,7 @@ void GeoTiff::LoadCoordinates() {
 
 template <typename T>
 std::tuple<unsigned int, std::shared_ptr<T>>
-GeoTiff::GetKey(geokey_t key) const 
+GeoTiff::GetKey(geokey_t key) const
 {
     int size;
     tagtype_t type;
@@ -279,7 +280,9 @@ TiffMap::TiffMap(const wchar_t *fname)
 };
 
 
-RasterMap::RasterMapType TiffMap::GetType() const { return m_geotiff->GetType(); };
+RasterMap::RasterMapType TiffMap::GetType() const {
+    return m_geotiff->GetType();
+}
 unsigned int TiffMap::GetWidth() const { return m_geotiff->GetWidth(); };
 unsigned int TiffMap::GetHeight() const { return m_geotiff->GetHeight(); };
 std::shared_ptr<unsigned int> TiffMap::GetRegion(int x, int y,

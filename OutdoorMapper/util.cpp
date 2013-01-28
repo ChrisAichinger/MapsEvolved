@@ -100,11 +100,13 @@ BasicBitmap LoadBufferFromBMP(const std::wstring &fname) {
     std::shared_ptr<unsigned int> buffer(
             new unsigned int[bih.biWidth * bih.biHeight],
             ArrayDeleter<unsigned int>());
-    file.read(reinterpret_cast<char*>(buffer.get()), bih.biWidth * bih.biHeight * bih.biBitCount / 8);
+    file.read(reinterpret_cast<char*>(buffer.get()),
+              bih.biWidth * bih.biHeight * bih.biBitCount / 8);
     BasicBitmap res = { bih.biWidth, bih.biHeight, bih.biBitCount, buffer };
     return res;
 }
 
+using std::ios;
 void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
                      unsigned int width, unsigned int height, unsigned int bpp)
 {
@@ -115,7 +117,7 @@ void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
                              0, 0, SZ_BMP_HDR };
     BITMAPINFOHEADER bih = { sizeof(BITMAPINFOHEADER),
                              width, height, 1, bpp, BI_RGB, 0, 0, 0, 0, 0 };
-    std::ofstream file(fname, std::ios::out | std::ios::trunc | std::ios::binary);
+    std::ofstream file(fname, ios::out | ios::trunc | ios::binary);
     if (!file.is_open()) {
         throw std::runtime_error("Error opening BMP file for writing.");
     }

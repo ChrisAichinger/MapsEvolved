@@ -22,8 +22,8 @@ TemporaryWindowDisable::~TemporaryWindowDisable() {
 void TemporaryWindowDisable::EnableNow() {
     if (m_hwnd) {
         EnableWindow(m_hwnd, true);
-        m_hwnd = NULL; 
-    } 
+        m_hwnd = NULL;
+    }
 }
 
 DevContext::DevContext(HWND hwnd)
@@ -119,7 +119,8 @@ IconHandle::~IconHandle() {
 
 
 BitmapHandle::BitmapHandle(HINSTANCE hInstance, LPCTSTR lpBitmapName)
-    : m_handle((HBITMAP)LoadImage(hInstance, lpBitmapName, IMAGE_BITMAP, 0, 0, 0))
+    : m_handle((HBITMAP)LoadImage(hInstance, lpBitmapName, IMAGE_BITMAP,
+                                  0, 0, 0))
 {
     if (!m_handle) {
         throw std::runtime_error("Failed to load bitmap.");
@@ -367,7 +368,8 @@ BOOL CALLBACK PrintDialog::s_PrintDlgProc(HWND hDlg, UINT message,
     if (message == WM_INITDIALOG) {
         SetWindowLongPtr(hDlg, GWLP_USERDATA, lParam);
     }
-    PrintDialog *self = reinterpret_cast<PrintDialog*>(GetWindowLongPtr(hDlg, GWLP_USERDATA));
+    PrintDialog *self = reinterpret_cast<PrintDialog*>(
+                        GetWindowLongPtr(hDlg, GWLP_USERDATA));
     if (!self)
         return false;
 
@@ -475,7 +477,8 @@ bool Print(HWND hwnd_parent, const struct PrintOrder &order) {
 
     TemporaryWindowDisable twd(hwnd_parent);
     PrintDialog pd(hwnd_parent, &twd, order.PrintDialogName);
-    PrintAbortTicket pad = PrintAbortManager::Instance()->RegisterAbort(hdc, &pd);
+    PrintAbortTicket pad = PrintAbortManager::Instance()->RegisterAbort(hdc,
+                                                                        &pd);
 
     static DOCINFO di = { 0 };
     di.cbSize = sizeof(di);

@@ -26,7 +26,8 @@ class MapWindow : public IMapWindow {
         bool m_child_drag;
         MW_DragStruct m_dragstr;
 
-        static LRESULT CALLBACK s_WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+        static LRESULT CALLBACK s_WndProc(HWND hwnd, UINT msg,
+                                          WPARAM wParam, LPARAM lParam);
         LRESULT HandleMessage(UINT msg, WPARAM wParam, LPARAM lParam);
 
         //void OnCommand(int cmd);
@@ -50,16 +51,16 @@ ATOM RegisterMapWindow() {
 ATOM MapWindow::RegisterControl() {
     WNDCLASS wc;
 
-    wc.style                    = CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS;
-    wc.lpfnWndProc              = MapWindow::s_WndProc;
-    wc.cbClsExtra               = 0;
-    wc.cbWndExtra               = sizeof(MapWindow *);
-    wc.hInstance                = g_hinst;
-    wc.hIcon                    = NULL;
-    wc.hCursor                  = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground            = NULL; //(HBRUSH)(COLOR_3DFACE+1);
-    wc.lpszMenuName             = NULL;
-    wc.lpszClassName            = g_MapWndClass;
+    wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS;
+    wc.lpfnWndProc   = MapWindow::s_WndProc;
+    wc.cbClsExtra    = 0;
+    wc.cbWndExtra    = sizeof(MapWindow *);
+    wc.hInstance     = g_hinst;
+    wc.hIcon         = NULL;
+    wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground = NULL; //(HBRUSH)(COLOR_3DFACE+1);
+    wc.lpszMenuName  = NULL;
+    wc.lpszClassName = g_MapWndClass;
 
     return RegisterClass(&wc);
 }

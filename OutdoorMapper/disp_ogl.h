@@ -39,7 +39,7 @@ class Texture {
 
         unsigned int GetWidth() const { return m_width; };
         unsigned int GetHeight() const { return m_height; };
-            
+
     private:
         DISALLOW_COPY_AND_ASSIGN(Texture);
 

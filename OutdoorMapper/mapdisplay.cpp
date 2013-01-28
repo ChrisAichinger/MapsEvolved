@@ -10,8 +10,9 @@ static const int MAX_TILES = 100;
 const double MapDisplayManager::ZOOM_STEP =
                     1.189207115002721066717499970560475915;
 
-MapDisplayManager::MapDisplayManager(std::shared_ptr<class DispOpenGL> &display,
-                                     const class RasterMapCollection &maps) 
+MapDisplayManager::MapDisplayManager(
+        std::shared_ptr<class DispOpenGL> &display,
+        const class RasterMapCollection &maps)
     : m_display(display), m_maps(maps), m_base_map(&maps.Get(0)),
       m_center_x(m_base_map->GetWidth() * 0.5f),
       m_center_y(m_base_map->GetHeight() * 0.5f),
@@ -35,7 +36,8 @@ void MapDisplayManager::ChangeMap(const RasterMap *new_map,
         new_map->LatLongToPixel(&x, &y);
         // Check if old map position is within new map
         if (IsInRect(x, y, new_map->GetWidth(), new_map->GetHeight())) {
-            m_zoom *= MetersPerPixel(new_map, x, y) / MetersPerPixel(m_base_map, m_center_x, m_center_y);
+            m_zoom *= MetersPerPixel(new_map, x, y);
+            m_zoom /= MetersPerPixel(m_base_map, m_center_x, m_center_y);
             m_center_x = x;
             m_center_y = y;
         } else {

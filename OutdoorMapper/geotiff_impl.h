@@ -34,7 +34,7 @@ class GeoTiffHandle {
     public:
         explicit GeoTiffHandle(TiffHandle &tiffhandle)
             : m_gtif(GTIFNew(tiffhandle.GetTIFF()))
-        { 
+        {
             if (!m_gtif)
                 throw std::runtime_error("Opening GeoTiff failed.");
         };

@@ -27,7 +27,7 @@ ProjWrap::~ProjWrap() {
     }
 }
 
-Projection::Projection(const std::string &proj_str) 
+Projection::Projection(const std::string &proj_str)
     : m_proj(new ProjWrap(pj_init_plus(proj_str.c_str()))),
       m_proj_str(proj_str)
 {

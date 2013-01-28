@@ -37,13 +37,13 @@ LRESULT MapListWindow::HandleMessage(
 {
     switch (uMsg) {
         case WM_CREATE:
-            return OnCreate();  
+            return OnCreate();
         case WM_NOTIFY:
-            LPNMHDR pnmhdr = (LPNMHDR)lParam; 
+            LPNMHDR pnmhdr = (LPNMHDR)lParam;
             if (pnmhdr->hwndFrom == m_hwndListview) {
                 switch (pnmhdr->code) {
                 case LVN_ITEMCHANGED: {
-                    LPNMLISTVIEW pnmv = (LPNMLISTVIEW)lParam; 
+                    LPNMLISTVIEW pnmv = (LPNMLISTVIEW)lParam;
                     if (0 == (pnmv->uNewState & LVIS_SELECTED))
                         break;
                     const RasterMap &map = m_maps.Get(pnmv->iItem);
@@ -76,18 +76,18 @@ LRESULT MapListWindow::OnCreate() {
             rect.left, rect.top,
             rect.right - rect.left,
             rect.bottom - rect.top,
-            m_hwnd, (HMENU)0, g_hinst, NULL); 
+            m_hwnd, (HMENU)0, g_hinst, NULL);
 
     if (!m_hwndListview)
         throw std::runtime_error("Failed to create map list view.");
 
-    m_lvImages.reset(new ImageList(GetSystemMetrics(SM_CXSMICON), 
-                                   GetSystemMetrics(SM_CYSMICON), 
+    m_lvImages.reset(new ImageList(GetSystemMetrics(SM_CXSMICON),
+                                   GetSystemMetrics(SM_CYSMICON),
                                    ILC_MASK | ILC_COLOR32, 10));
 
     IconHandle icon(g_hinst, MAKEINTRESOURCE(IDI_MAP_STD));
     ImageList_AddIcon(m_lvImages->Get(), icon.Get());
-    ListView_SetImageList(m_hwndListview, m_lvImages->Get(), LVSIL_SMALL); 
+    ListView_SetImageList(m_hwndListview, m_lvImages->Get(), LVSIL_SMALL);
 
     // Add the columns.
     for (int iCol = 0; iCol < 1; iCol++)
@@ -126,7 +126,7 @@ LRESULT MapListWindow::OnCreate() {
         lvI.state     = 0;
         lvI.iItem  = index;
         lvI.iImage = 0;
-    
+
         // Insert items into the list.
         if (ListView_InsertItem(m_hwndListview, &lvI) == -1)
             throw std::runtime_error("Failed to insert listview item");
@@ -144,7 +144,9 @@ LRESULT MapListWindow::OnCreate() {
     return 0;
 }
 
-void ShowMapListWindow(class MapDisplayManager &mapdisplay, class RasterMapCollection &maps) {
+void ShowMapListWindow(MapDisplayManager &mapdisplay,
+                       RasterMapCollection &maps)
+{
     HWND hwnd = FindWindowWithinProcess(MapListClassname);
     if (!hwnd) {
         hwnd = MapListWindow::Create(mapdisplay, maps)->GetHWND();
@@ -156,13 +158,13 @@ void ShowMapListWindow(class MapDisplayManager &mapdisplay, class RasterMapColle
 }
 
 void MapListSizer::GetListview(RECT &rect) {
-    GetClientRect(m_hwndParent, &rect); 
+    GetClientRect(m_hwndParent, &rect);
     rect.left += 150;
     rect.bottom /= 2;
 }
 
 void MapListSizer::GetTextbox(RECT &rect) {
-    GetClientRect(m_hwndParent, &rect); 
+    GetClientRect(m_hwndParent, &rect);
     rect.left += 150;
     rect.top += (rect.bottom - rect.top) / 2;
 }

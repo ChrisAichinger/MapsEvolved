@@ -28,7 +28,7 @@ inline bool operator==(const TileCode& lhs, const TileCode& rhs) {
            lhs.GetX() == rhs.GetX() &&
            lhs.GetY() == rhs.GetY() &&
            lhs.GetTileSize() == rhs.GetTileSize();
-} 
+}
 inline bool operator< (const TileCode& lhs, const TileCode& rhs) {
     const class RasterMap &lmap = lhs.GetMap();
     const class RasterMap &rmap = rhs.GetMap();
@@ -50,11 +50,11 @@ inline bool operator< (const TileCode& lhs, const TileCode& rhs) {
 
     return lhs.GetTileSize() < rhs.GetTileSize();
 }
-inline bool operator!=(const TileCode& lhs, const TileCode& rhs) {return !operator==(lhs,rhs);} 
-inline bool operator> (const TileCode& lhs, const TileCode& rhs) {return  operator< (rhs,lhs);} 
-inline bool operator<=(const TileCode& lhs, const TileCode& rhs) {return !operator> (lhs,rhs);} 
+inline bool operator!=(const TileCode& lhs, const TileCode& rhs) {return !operator==(lhs,rhs);}
+inline bool operator> (const TileCode& lhs, const TileCode& rhs) {return  operator< (rhs,lhs);}
+inline bool operator<=(const TileCode& lhs, const TileCode& rhs) {return !operator> (lhs,rhs);}
 inline bool operator>=(const TileCode& lhs, const TileCode& rhs) {return !operator< (lhs,rhs);}
-        
+
 
 class DisplayOrder {
     public:

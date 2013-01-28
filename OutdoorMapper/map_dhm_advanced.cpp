@@ -6,7 +6,7 @@
 #include "bezier.h"
 #include "map_dhm_advanced.h"
 
-GradientMap::GradientMap(std::shared_ptr<const RasterMap> orig_map) 
+GradientMap::GradientMap(std::shared_ptr<const RasterMap> orig_map)
     : m_orig_map(orig_map)
 {
     assert(orig_map->GetType() == RasterMap::TYPE_DHM);
@@ -68,7 +68,7 @@ std::shared_ptr<unsigned int> GradientMap::GetRegion(
             DEST(x, y) = static_cast<unsigned int>(HSV_to_RGB(
                           (unsigned char)(255*240/360 - elevation*255/4000),
                           255,
-                          (unsigned char)min(255, max(0, 128 + 1.25*(xa-ya)))));
+                          (unsigned char)min(255, max(0, 128+1.25*(xa-ya)))));
         }
     }
     DWORD diff = timeGetTime() - tmStart;

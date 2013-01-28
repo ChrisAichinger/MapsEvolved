@@ -42,7 +42,7 @@ Bezier::Bezier(const FromControlPoints &points)
 };
 
 Bezier::Bezier(const FitData &points)
-{ 
+{
     memcpy(m_points, points.Get(), sizeof(m_points));
     DoFitData();
 }
@@ -53,7 +53,7 @@ void Bezier::DoFitData() {
     MP(2,1) = 2 * MP(2,1) - 0.5 * (MP(2,0) + MP(2,2));
     MP(1,0) = 2 * MP(1,0) - 0.5 * (MP(0,0) + MP(2,0));
     MP(1,2) = 2 * MP(1,2) - 0.5 * (MP(0,2) + MP(2,2));
-    MP(1,1) = 4 * MP(1,1) 
+    MP(1,1) = 4 * MP(1,1)
                   - 0.25 * (MP(0,0) + MP(0,2) + MP(2,0) + MP(2,2))
                   - 0.50 * (MP(1,0) + MP(0,1) + MP(1,2) + MP(2,1));
 }
@@ -121,16 +121,17 @@ void Bezier::Bernstein_deriv_vec(unsigned int degree, double x, double *out) {
         return;
     }
     for (unsigned int i=0; i <= degree; i++) {
-        out[i] = degree * (Bernstein(degree - 1, i - 1, x) - Bernstein(degree - 1, i, x));
+        out[i] = degree * (Bernstein(degree - 1, i - 1, x) -
+                           Bernstein(degree - 1, i, x));
     }
 }
 
 double Bezier::Bernstein(unsigned int degree, unsigned int v, double x) {
-    return binomial(degree, v) * pow(x, (int)v) * pow(1 - x, (int)(degree - v));
+    return binomial(degree, v) * pow(x, (int)v) * pow(1-x, (int)(degree - v));
 }
 
-MapBezier::MapBezier(const class RasterMap &map, unsigned int x, unsigned int y) {
-    assert(x > 0 && y > 0 && x < map.GetWidth() - 1 && y < map.GetHeight() - 1);
+MapBezier::MapBezier(const RasterMap &map, unsigned int x, unsigned int y) {
+    assert(x > 0 && y > 0 && x < map.GetWidth()-1 && y < map.GetHeight()-1);
 
     m_center_x = x;
     m_center_y = y;
@@ -154,7 +155,8 @@ MapBezier::MapBezier(const unsigned int *src,
 MapBezier::MapBezier(const class RasterMap &map, double *x, double *y) {
     unsigned int x_int, y_int;
     PointFromDouble(x, y, &x_int, &y_int, map.GetWidth(), map.GetHeight());
-    assert(x_int > 0 && y_int > 0 && x_int < map.GetWidth() - 1 && y_int < map.GetHeight() - 1);
+    assert(x_int > 0 && y_int > 0
+           && x_int < map.GetWidth() - 1 && y_int < map.GetHeight() - 1);
 
     m_center_x = x_int;
     m_center_y = y_int;

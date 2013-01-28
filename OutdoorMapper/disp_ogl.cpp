@@ -45,7 +45,7 @@ class TextureCache {
             m_cache[tc].last_used = m_call_count;
             return m_cache[tc].texture;
         }
-                
+
     private:
         DISALLOW_COPY_AND_ASSIGN(TextureCache);
 
@@ -122,13 +122,14 @@ unsigned int DispOpenGL::GetDisplayHeight() const {
     return rect[GLR_HEIGHT];
 }
 
-Texture::Texture(unsigned int width, unsigned int height, const unsigned int *pixels)
-    : m_width(width), m_height(height) {
-
+Texture::Texture(unsigned int width, unsigned int height,
+                 const unsigned int *pixels)
+    : m_width(width), m_height(height)
+{
     MakeTexture(pixels);
 }
 
-Texture::Texture(const class TileCode& tilecode) 
+Texture::Texture(const class TileCode& tilecode)
     : m_width(tilecode.GetTileSize()), m_height(tilecode.GetTileSize()) {
 
     std::shared_ptr<unsigned int> pixels(tilecode.GetTile());

@@ -22,7 +22,7 @@
 #define IDC_STATUSBAR     100
 #define IDC_MAP           101
 #define IDC_TOOLBAR       102
-                         
+
 #define ID_FILE_NEW       0x8000
 #define ID_FILE_OPEN      0x8001
 #define ID_FILE_SAVEAS    0x8002
@@ -65,14 +65,14 @@ Toolbar::Toolbar(HWND hwndParent)
     // useful to load some items from COMCTRL32 and some from the application.
     // msdn.microsoft.com/en-us/library/windows/desktop/bb787433%28v=vs.85%29
     const int ImageListID = 0;
-    SendMessage(m_hwndTool, TB_SETIMAGELIST, 
+    SendMessage(m_hwndTool, TB_SETIMAGELIST,
                 (WPARAM)ImageListID, (LPARAM)m_imagelist.Get());
 
-    SendMessage(m_hwndTool, TB_LOADIMAGES, 
+    SendMessage(m_hwndTool, TB_LOADIMAGES,
                 (WPARAM)IDB_STD_SMALL_COLOR, (LPARAM)HINST_COMMCTRL);
 
     const DWORD btnStyles = BTNS_AUTOSIZE;
-    TBBUTTON tbButtons[n_buttons] = 
+    TBBUTTON tbButtons[n_buttons] =
     {
         { MAKELONG(STD_FILENEW,  ImageListID),
           ID_FILE_NEW,  TBSTATE_ENABLED, btnStyles, {0}, 0, (INT_PTR)L"TT1" },
@@ -87,10 +87,11 @@ Toolbar::Toolbar(HWND hwndParent)
 
     // Add buttons.
     SendMessage(m_hwndTool, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
-    SendMessage(m_hwndTool, TB_ADDBUTTONS, (WPARAM)n_buttons, (LPARAM)&tbButtons);
+    SendMessage(m_hwndTool, TB_ADDBUTTONS, (WPARAM)n_buttons,
+                                           (LPARAM)&tbButtons);
 
     // Resize the toolbar, and then show it.
-    SendMessage(m_hwndTool, TB_AUTOSIZE, 0, 0); 
+    SendMessage(m_hwndTool, TB_AUTOSIZE, 0, 0);
 }
 
 void Toolbar::Resize() {
@@ -131,7 +132,7 @@ LRESULT RootWindow::OnCreate()
             rect.right - rect.left,
             rect.bottom - rect.top,
             m_hwnd, (HMENU)IDC_MAP, g_hinst, NULL);
-    
+
     if (!m_hwndMap) {
         throw std::runtime_error("Error creating map window.");
     }
@@ -210,7 +211,7 @@ LRESULT RootWindow::HandleMessage(
 {
     switch (uMsg) {
         case WM_CREATE:
-            return OnCreate();  
+            return OnCreate();
 
         case WM_NCDESTROY:
             // Death of the root window ends the thread
@@ -290,8 +291,8 @@ void RootWindow::UpdateStatusbar() {
 
     SetSBText(0, string_format(L"lat/lon = %.5f / %.5f", y, x));
     SetSBText(5, string_format(L"Zoom: %.0f %%", m_mapdisplay->GetZoom()*100));
-    double mpp = MetersPerPixel(&m_mapdisplay->GetBaseMap(), base_point.GetX(),
-                                                             base_point.GetY());
+    double mpp = MetersPerPixel(&m_mapdisplay->GetBaseMap(),
+                                base_point.GetX(), base_point.GetY());
     SetSBText(4, string_format(L"Map: %.1f m/pix", mpp));
 
     double height, orientation, steepness;
