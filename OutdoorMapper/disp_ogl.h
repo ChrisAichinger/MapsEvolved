@@ -30,7 +30,8 @@ class DispOpenGL {
 
 class Texture {
     public:
-        Texture(unsigned int width, unsigned int height, const unsigned int *pixels);
+        Texture(unsigned int width, unsigned int height,
+                const unsigned int *pixels);
         explicit Texture(const class TileCode& tilecode);
         ~Texture();
 

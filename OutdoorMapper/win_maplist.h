@@ -37,6 +37,7 @@ class MapListWindow : public Window
         std::shared_ptr<ImageList> m_lvImages;
 };
 
-void ShowMapListWindow(class MapDisplayManager &mapdisplay, class RasterMapCollection &maps);
+void ShowMapListWindow(class MapDisplayManager &mapdisplay,
+                       class RasterMapCollection &maps);
 
 #endif

@@ -70,10 +70,11 @@ class HeightFinder {
 
         bool LatLongWithinActiveDHM(double x, double y) const;
         const class RasterMap *FindBestMap(double latitude, double longitude,
-                                           RasterMap::RasterMapType type) const;
+                                       RasterMap::RasterMapType type) const;
 };
 
-double GetMapDistance(const RasterMap &map, double Cx, double Cy, double dx, double dy);
+double GetMapDistance(const RasterMap &map, double Cx, double Cy,
+                      double dx, double dy);
 double MetersPerPixel(const RasterMap *map, double x_px, double y_px);
 
 #endif

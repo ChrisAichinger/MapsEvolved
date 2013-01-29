@@ -9,7 +9,9 @@ class RootWindow : public Window
 {
     public:
         virtual LPCTSTR ClassName() { return TEXT("clsOutdoorMapper"); }
-        virtual UINT WCStyle() { return CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW; };
+        virtual UINT WCStyle() {
+            return CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
+        }
         static RootWindow *Create();
         virtual void PaintContent(PAINTSTRUCT *pps);
 

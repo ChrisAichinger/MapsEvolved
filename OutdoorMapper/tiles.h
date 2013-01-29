@@ -50,10 +50,18 @@ inline bool operator< (const TileCode& lhs, const TileCode& rhs) {
 
     return lhs.GetTileSize() < rhs.GetTileSize();
 }
-inline bool operator!=(const TileCode& lhs, const TileCode& rhs) {return !operator==(lhs,rhs);}
-inline bool operator> (const TileCode& lhs, const TileCode& rhs) {return  operator< (rhs,lhs);}
-inline bool operator<=(const TileCode& lhs, const TileCode& rhs) {return !operator> (lhs,rhs);}
-inline bool operator>=(const TileCode& lhs, const TileCode& rhs) {return !operator< (lhs,rhs);}
+inline bool operator!=(const TileCode& lhs, const TileCode& rhs) {
+    return !operator==(lhs,rhs);
+}
+inline bool operator> (const TileCode& lhs, const TileCode& rhs) {
+    return  operator< (rhs,lhs);
+}
+inline bool operator<=(const TileCode& lhs, const TileCode& rhs) {
+    return !operator> (lhs,rhs);
+}
+inline bool operator>=(const TileCode& lhs, const TileCode& rhs) {
+    return !operator< (lhs,rhs);
+}
 
 
 class DisplayOrder {

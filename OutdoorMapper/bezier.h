@@ -34,7 +34,8 @@ class Bezier {
     private:
         static double Bernstein(unsigned int degree, unsigned int v, double x);
         static void Bernstein_vec(unsigned int degree, double x, double *out);
-        static void Bernstein_deriv_vec(unsigned int degree, double x, double *out);
+        static void Bernstein_deriv_vec(unsigned int degree, double x,
+                                        double *out);
 };
 
 class MapBezier : public Bezier {
