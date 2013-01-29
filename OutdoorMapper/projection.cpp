@@ -61,8 +61,8 @@ double flattening_from_excentricity_squared(double e2) {
     return 1 - sqrt(1 - e2);
 }
 
-double Projection::CalcDistance(double long1, double lat1,
-                                double long2, double lat2) const
+double Projection::CalcDistance(double lat1, double long1,
+                                double lat2, double long2) const
 {
     double a, e2; // major axis and excentricity squared
     pj_get_spheroid_defn(m_proj->Get(), &a, &e2);

@@ -45,12 +45,3 @@ bool MapPrinter::Print(HDC hdc) {
 
     return false;
 }
-
-// Rax - Gr. Priel 2441 x 15 pixels
-// Gr. Priel 47.716944°, 14.063056°
-// Rax 47.689444°, 15.687778°
-//
-// distance (m)  meters/pixel
-// 121975.354    49.9694199
-// 121975        49,9692749
-// 121725        49.8668578
