@@ -24,7 +24,7 @@ class MapWindow : public IMapWindow {
         HMENU m_hmenu;
 
         bool m_child_drag;
-        MW_DragStruct m_dragstr;
+        MW_DragData m_dragdata;
 
         static LRESULT CALLBACK s_WndProc(HWND hwnd, UINT msg,
                                           WPARAM wParam, LPARAM lParam);
@@ -34,6 +34,8 @@ class MapWindow : public IMapWindow {
         //void OnContextMenu(int x, int y);
 
         LRESULT NotifyParent(UINT code, UINT_PTR data = 0);
+        void InitMouseData(MW_MouseData *md, WPARAM wParam,
+                           LPARAM lParam, bool is_client_coord = true);
 };
 
 IMapWindow *GetIMapWindow(HWND hwnd) {
@@ -85,8 +87,24 @@ LRESULT CALLBACK MapWindow::s_WndProc(
 }
 
 MapWindow::MapWindow(HWND hwnd)
-    : m_hwnd(hwnd), m_hmenu(0), m_child_drag(false), m_dragstr()
+    : m_hwnd(hwnd), m_hmenu(0), m_child_drag(false), m_dragdata()
 { }
+
+void MapWindow::InitMouseData(MW_MouseData *md, WPARAM wParam,
+                              LPARAM lParam, bool is_client_coord)
+{
+    if (is_client_coord) {
+        md->xPos = GET_X_LPARAM(lParam);
+        md->yPos = GET_Y_LPARAM(lParam);
+    } else {
+        POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+        ScreenToClient(m_hwnd, &pt);
+        md->xPos = pt.x;
+        md->yPos = pt.y;
+    }
+    md->fwKeys = GET_KEYSTATE_WPARAM(wParam);
+    md->zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+}
 
 LRESULT MapWindow::HandleMessage(UINT msg, WPARAM wParam, LPARAM lParam) {
     switch(msg) {
@@ -95,8 +113,16 @@ LRESULT MapWindow::HandleMessage(UINT msg, WPARAM wParam, LPARAM lParam) {
             NotifyParent(MW_PAINT);
             return 0;
         }
-        case WM_LBUTTONDBLCLK: return NotifyParent(MW_DBLCLK);
-        case WM_MOUSEWHEEL:    return NotifyParent(MW_MWHEEL, wParam);
+        case WM_LBUTTONDBLCLK: {
+            MW_MouseData md;
+            InitMouseData(&md, wParam, lParam);
+            return NotifyParent(MW_DBLCLK, reinterpret_cast<UINT_PTR>(&md));
+        }
+        case WM_MOUSEWHEEL: {
+            MW_MouseData md;
+            InitMouseData(&md, wParam, lParam, false);
+            return NotifyParent(MW_MWHEEL, reinterpret_cast<UINT_PTR>(&md));
+        }
         case WM_CONTEXTMENU:
             assert(false); // Not implemented
             //OnContextMenu((sint16)LOWORD(lParam), (sint16)HIWORD(lParam));
@@ -108,18 +134,19 @@ LRESULT MapWindow::HandleMessage(UINT msg, WPARAM wParam, LPARAM lParam) {
             break;
 
         case WM_LBUTTONDOWN: {
-            POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+            MW_MouseData md;
+            InitMouseData(&md, wParam, lParam);
+
+            POINT point = { md.xPos, md.yPos };
             ClientToScreen(m_hwnd, &point);
             if (DragDetect(m_hwnd, point)) {
-                POINT mouse_pos;
-                GetCursorPos(&mouse_pos);
-                m_dragstr.start = m_dragstr.last = m_dragstr.cur = mouse_pos;
+                m_dragdata.last = m_dragdata.cur = m_dragdata.start = md;
                 m_child_drag = true;
-
                 SetCapture(m_hwnd);
-                NotifyParent(MW_DRAGSTART, (UINT_PTR)(&m_dragstr));
+                NotifyParent(MW_DRAGSTART,
+                             reinterpret_cast<UINT_PTR>(&m_dragdata));
             } else {
-                NotifyParent(MW_LCLICK);
+                NotifyParent(MW_LCLICK, reinterpret_cast<UINT_PTR>(&md));
             }
             return 0;
         }
@@ -144,10 +171,8 @@ LRESULT MapWindow::HandleMessage(UINT msg, WPARAM wParam, LPARAM lParam) {
             if (m_child_drag) {
                 m_child_drag = ((HWND)lParam == m_hwnd);
                 if (!m_child_drag) {
-                    POINT mouse_pos;
-                    GetCursorPos(&mouse_pos);
-                    m_dragstr.cur = mouse_pos;
-                    NotifyParent(MW_DRAGEND, (UINT_PTR)(&m_dragstr));
+                    NotifyParent(MW_DRAGEND,
+                                 reinterpret_cast<UINT_PTR>(&m_dragdata));
                 }
                 return 0;
             }
@@ -155,16 +180,15 @@ LRESULT MapWindow::HandleMessage(UINT msg, WPARAM wParam, LPARAM lParam) {
 
         case WM_MOUSEMOVE:
             if (m_child_drag) {
-                POINT mouse_pos;
-                GetCursorPos(&mouse_pos);
-                m_dragstr.cur = mouse_pos;
-                LRESULT res = NotifyParent(MW_DRAG, (UINT_PTR)(&m_dragstr));
-                m_dragstr.last = mouse_pos;
-                return res;
+                InitMouseData(&m_dragdata.cur, wParam, lParam);
+                NotifyParent(MW_DRAG, reinterpret_cast<UINT_PTR>(&m_dragdata));
+                m_dragdata.last = m_dragdata.cur;
             } else {
-                return NotifyParent(MW_MOUSEMOVE);
+                MW_MouseData md;
+                InitMouseData(&md, wParam, lParam);
+                NotifyParent(MW_MOUSEMOVE, reinterpret_cast<UINT_PTR>(&md));
             }
-            break;
+            return 0;
     }
 
     return DefWindowProc(m_hwnd, msg, wParam, lParam);

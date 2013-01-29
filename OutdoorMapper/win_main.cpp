@@ -18,6 +18,7 @@
 #include "win_maplist.h"
 #include "mapdisplay.h"
 #include "print_map.h"
+#include "uimode.h"
 
 #define IDC_STATUSBAR     100
 #define IDC_MAP           101
@@ -145,10 +146,29 @@ LRESULT RootWindow::OnCreate()
     std::shared_ptr<DispOpenGL> display(new DispOpenGL(ogl_ctx));
 
     m_mapdisplay.reset(new MapDisplayManager(display, m_maps));
+    m_mode.reset(new UIModeNormal(this, m_mapdisplay));
 
-    m_child_drag = false;
     return 0;
 }
+
+class MouseEvent_Obj : public MouseEvent {
+    public:
+        explicit MouseEvent_Obj(const MW_MouseData *md) {
+            x = md->xPos;
+            y = md->yPos;
+            flags = md->fwKeys;
+            wheel_step = 1.0 * md->zDelta / WHEEL_DELTA;
+        }
+};
+
+class DragEvent_Obj : public DragEvent {
+    public:
+        explicit DragEvent_Obj(const MW_DragData *dd) {
+            start = static_cast<MouseEvent_Obj>(&dd->start);
+            last = static_cast<MouseEvent_Obj>(&dd->last);
+            cur = static_cast<MouseEvent_Obj>(&dd->cur);
+        }
+};
 
 LRESULT RootWindow::OnNotify(struct NMHDRExtraData *nmh) {
     switch (nmh->nmhdr.idFrom) {
@@ -157,38 +177,41 @@ LRESULT RootWindow::OnNotify(struct NMHDRExtraData *nmh) {
             case MW_PAINT:
                 m_mapdisplay->Paint();
                 break;
+            case MW_LCLICK: {
+                MouseEvent_Obj me(reinterpret_cast<MW_MouseData*>(nmh->data));
+                m_mode->OnLClick(me);
+                return 0;
+            }
             case MW_DBLCLK: {
-                POINT mouse_pos = GetClientMousePos(m_hwndMap);
-                m_mapdisplay->CenterToDisplayCoord(mouse_pos.x,
-                                                   mouse_pos.y);
+                MouseEvent_Obj me(reinterpret_cast<MW_MouseData*>(nmh->data));
+                m_mode->OnDblClick(me);
                 return 0;
             }
             case MW_MWHEEL: {
-                POINT point = GetClientMousePos(m_hwndMap);
-                int step = GET_WHEEL_DELTA_WPARAM(nmh->data) / WHEEL_DELTA;
-                m_mapdisplay->StepZoom(step, point.x, point.y);
-                UpdateStatusbar();
-                return 0;
-                }
-            case MW_LCLICK:
-                MessageBeep(MB_ICONERROR);
-                return 0;
-            case MW_DRAGSTART:
-                m_child_drag = true;
-                SetCursor(LoadCursor(NULL, IDC_HAND));
-                return 0;
-            case MW_DRAGEND:
-                m_child_drag = false;
-                return 0;
-            case MW_DRAG: {
-                PMW_DragStruct pdrag = (PMW_DragStruct)nmh->data;
-                m_mapdisplay->DragMap(pdrag->cur.x - pdrag->last.x,
-                                      pdrag->cur.y - pdrag->last.y);
+                MouseEvent_Obj me(reinterpret_cast<MW_MouseData*>(nmh->data));
+                m_mode->OnMouseWheel(me);
                 return 0;
             }
-            case MW_MOUSEMOVE:
-                UpdateStatusbar();
+            case MW_MOUSEMOVE: {
+                MouseEvent_Obj me(reinterpret_cast<MW_MouseData*>(nmh->data));
+                m_mode->OnMapMouseMove(me);
                 return 0;
+            }
+            case MW_DRAGSTART: {
+                DragEvent_Obj de(reinterpret_cast<MW_DragData*>(nmh->data));
+                m_mode->OnDragStart(de);
+                return 0;
+            }
+            case MW_DRAGEND: {
+                DragEvent_Obj de(reinterpret_cast<MW_DragData*>(nmh->data));
+                m_mode->OnDragEnd(de);
+                return 0;
+            }
+            case MW_DRAG: {
+                DragEvent_Obj de(reinterpret_cast<MW_DragData*>(nmh->data));
+                m_mode->OnDrag(de);
+                return 0;
+            }
         }
     }
     return 0;
@@ -231,7 +254,7 @@ LRESULT RootWindow::HandleMessage(
                 SetWindowPos(m_hwndMap, NULL, rect.left, rect.top,
                              rect.right - rect.left, rect.bottom - rect.top,
                              SWP_NOZORDER | SWP_NOACTIVATE);
-				m_mapdisplay->Resize(rect.right - rect.left,
+                m_mapdisplay->Resize(rect.right - rect.left,
                                      rect.bottom - rect.top);
             }
             return 0;
@@ -243,7 +266,8 @@ LRESULT RootWindow::HandleMessage(
             return 0;
 
         case WM_NOTIFY:
-            return OnNotify((PNMHDRExtraData)lParam);
+            return OnNotify(reinterpret_cast<PNMHDRExtraData>(lParam));
+
         case WM_COMMAND:
             WORD id = LOWORD(wParam);
             if (id == ID_FILE_NEW) ShowMapListWindow(*m_mapdisplay, m_maps);
@@ -262,7 +286,7 @@ LRESULT RootWindow::HandleMessage(
 }
 
 RootWindow::RootWindow()
-    : Window(), m_hwndMap(0), m_hwndStatus(0), m_child_drag(false),
+    : Window(), m_hwndMap(0), m_hwndStatus(0),
       m_maps(), m_heightfinder(m_maps), m_mapdisplay(),
       m_toolbar()
 { }
@@ -316,4 +340,13 @@ void RootWindow::SetSBText(int idx, const std::wstring &str) {
 void RootWindow::SetSBText(int idx, const std::wostringstream &sStream) {
     SendMessage(m_hwndStatus, SB_SETTEXT, idx,
                 reinterpret_cast<LPARAM>(sStream.str().c_str()));
+}
+
+void RootWindow::SetCursor(CursorType cursor) {
+    switch (cursor) {
+        case CUR_NORMAL:    ::SetCursor(LoadCursor(NULL, IDC_ARROW)); return;
+        case CUR_DRAG_HAND: ::SetCursor(LoadCursor(NULL, IDC_HAND)); return;
+        default:
+            assert(false); // not implemented
+    }
 }

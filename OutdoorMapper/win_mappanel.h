@@ -43,12 +43,15 @@ enum mwMessages {
     MW_DRAG,        // Mouse moved while drag active
 };
 
-// Structure describing the progress of a mouse drag
-struct MW_DragStruct {
-    POINT start;    // Mouse position when drag was started (MW_DRAGSTART)
-    POINT last;     // Mouse position at the last MW_DRAG message
-    POINT cur;      // Current mouse position
+struct MW_MouseData {
+    int xPos, yPos, fwKeys, zDelta;
 };
-typedef MW_DragStruct *PMW_DragStruct;
+
+// Structure describing the progress of a mouse drag
+struct MW_DragData {
+    MW_MouseData start;  // Mouse state when drag was started (MW_DRAGSTART)
+    MW_MouseData last;   // Mouse state at the last MW_DRAG message
+    MW_MouseData cur;    // Current mouse state
+};
 
 #endif
