@@ -14,7 +14,23 @@
 // Bitmap resources
 //
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BITMAP1        BITMAP         ".\\resource\\map.bmp"
+IDB_DATABASE       BITMAP "resource\\famfamfam_silk_icons\\database.bmp"
+IDB_PRINTER        BITMAP "resource\\famfamfam_silk_icons\\printer.bmp"
+IDB_MAP            BITMAP "resource\\famfamfam_silk_icons\\map.bmp"
+
+
+
+//
+// Dialog resources
+//
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+PRINTDLGBOX DIALOG 20, 20, 186, 63
+STYLE DS_MODALFRAME | DS_SETFONT | WS_CAPTION | WS_VISIBLE | WS_POPUP | WS_SYSMENU
+FONT 8, "MS Sans Serif"
+{
+    PUSHBUTTON      "Cancel", IDCANCEL, 67, 42, 50, 14
+    CTEXT           "Cancel Printing", IDC_STATIC, 7, 21, 172, 8, SS_CENTER
+}
 
 
 
@@ -33,16 +49,4 @@ STRINGTABLE
 // Icon resources
 //
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_MAP_STD        ICON           ".\\resource\\map.ico"
-
-
-/////////////////////////////////////////////////////////////////////////////
-// Dialog
-
-PRINTDLGBOX DIALOG DISCARDABLE  20, 20, 186, 63
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-FONT 8, "MS Sans Serif"
-BEGIN
-    PUSHBUTTON      "Cancel",IDCANCEL,67,42,50,14
-    CTEXT           "Cancel Printing",IDC_STATIC,7,21,172,8
-END
+IDI_MAP_STD        ICON ".\\resource\\famfamfam_silk_icons\\map.ico"

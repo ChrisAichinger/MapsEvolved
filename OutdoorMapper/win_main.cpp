@@ -1,6 +1,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <list>
 
 #include <windows.h>
 #include <windowsx.h>
@@ -20,34 +21,56 @@
 #include "print_map.h"
 #include "uimode.h"
 
-#define IDC_STATUSBAR     100
-#define IDC_MAP           101
-#define IDC_TOOLBAR       102
+#define IDC_STATUSBAR         100
+#define IDC_MAP               101
+#define IDC_TOOLBAR           102
 
-#define ID_FILE_NEW       0x8000
-#define ID_FILE_OPEN      0x8001
-#define ID_FILE_SAVEAS    0x8002
+#define ID_OPEN_MAPLIST       0x8000
+#define ID_PRINT              0x8001
 
 
 static const wchar_t *MAPPATH = L"..\\..\\ok500_v5_wt99.tif";
 static const wchar_t *DHMPATH = L"..\\..\\dhm.tif";
 
+class ToolbarButton {
+    friend class Toolbar;
+    public:
+        ToolbarButton(int bitmap_res, int command_id, bool enabled,
+                      bool checked, const std::wstring &alt_text);
+    private:
+        int m_bitmap_res;
+        int m_command_id;
+        bool m_enabled;
+        bool m_checked;
+        std::wstring m_alt_text;
+};
+
 class Toolbar {
     public:
         explicit Toolbar(HWND hwndParent);
         void Resize();
+        void SetButtons(const std::list<ToolbarButton> &buttons);
     private:
         DISALLOW_COPY_AND_ASSIGN(Toolbar);
         HWND m_hwndParent, m_hwndTool;
-        ImageList m_imagelist;
+
+        LRESULT SendMsg(UINT Msg, WPARAM wParam, LPARAM lParam);
+        LRESULT SendMsg_NotNull(UINT Msg, WPARAM wParam, LPARAM lParam,
+                                const char* fail_msg);
+        LRESULT AddBitmap(int resource_id, unsigned int num_images);
+        void FillButtonStruct(TBBUTTON *button, const ToolbarButton &tbb);
 
         static const int bitmapSize = 16;
-        static const int n_buttons  = 3;
 };
+
+ToolbarButton::ToolbarButton(int bitmap_res, int command_id, bool enabled,
+                             bool checked, const std::wstring &alt_text)
+    : m_bitmap_res(bitmap_res), m_command_id(command_id),
+      m_enabled(enabled), m_checked(checked), m_alt_text(alt_text)
+{}
 
 Toolbar::Toolbar(HWND hwndParent)
     : m_hwndParent(hwndParent),
-      m_imagelist(bitmapSize, bitmapSize, ILC_COLOR16 | ILC_MASK, n_buttons),
       m_hwndTool(CreateWindowEx(
             0, TOOLBARCLASSNAME, NULL,
             WS_CHILD | WS_VISIBLE | TBSTYLE_WRAPABLE | TBSTYLE_TOOLTIPS |
@@ -56,47 +79,74 @@ Toolbar::Toolbar(HWND hwndParent)
             hwndParent, (HMENU)IDC_TOOLBAR, g_hinst, NULL))
 
 {
-    static HIMAGELIST g_hImageList;
-
-    if (m_hwndTool == NULL) {
+    if (!m_hwndTool) {
         throw std::runtime_error("Failed to create toolbar.");
     }
 
-    // Only using one imagelist (id = 0) for now; multiple imagelists might be
-    // useful to load some items from COMCTRL32 and some from the application.
-    // msdn.microsoft.com/en-us/library/windows/desktop/bb787433%28v=vs.85%29
-    const int ImageListID = 0;
-    SendMessage(m_hwndTool, TB_SETIMAGELIST,
-                (WPARAM)ImageListID, (LPARAM)m_imagelist.Get());
+    // Tell COMCTRL which version we support; no return value to check
+    SendMsg(TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
 
-    SendMessage(m_hwndTool, TB_LOADIMAGES,
-                (WPARAM)IDB_STD_SMALL_COLOR, (LPARAM)HINST_COMMCTRL);
-
-    const DWORD btnStyles = BTNS_AUTOSIZE;
-    TBBUTTON tbButtons[n_buttons] =
-    {
-        { MAKELONG(STD_FILENEW,  ImageListID),
-          ID_FILE_NEW,  TBSTATE_ENABLED, btnStyles, {0}, 0, (INT_PTR)L"TT1" },
-        { MAKELONG(STD_FILEOPEN, ImageListID),
-          ID_FILE_OPEN, TBSTATE_ENABLED, btnStyles, {0}, 0, (INT_PTR)L"TT2" },
-        { MAKELONG(STD_FILESAVE, ImageListID),
-          ID_FILE_SAVEAS, 0, btnStyles, {0}, 0, (INT_PTR)L"TT3"}
-    };
+    // Set bitmap size
+    SendMsg_NotNull(TB_SETBITMAPSIZE, 0, MAKELPARAM(bitmapSize, bitmapSize),
+                    "Failed: set toolbar bitmap size");
 
     // Set max text rows to zero to use TBBUTTON::iString as tooltip
-    SendMessage(m_hwndTool, TB_SETMAXTEXTROWS, 0, 0);
+    SendMsg_NotNull(TB_SETMAXTEXTROWS, 0, 0, "Failed: set toolbar text rows");
 
-    // Add buttons.
-    SendMessage(m_hwndTool, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
-    SendMessage(m_hwndTool, TB_ADDBUTTONS, (WPARAM)n_buttons,
-                                           (LPARAM)&tbButtons);
-
-    // Resize the toolbar, and then show it.
-    SendMessage(m_hwndTool, TB_AUTOSIZE, 0, 0);
+    // Resize the toolbar, and then show it; no return value to check
+    SendMsg(TB_AUTOSIZE, 0, 0);
 }
 
 void Toolbar::Resize() {
-    SendMessage(m_hwndTool, WM_SIZE, 0, 0);
+    SendMsg(WM_SIZE, 0, 0);
+}
+
+void Toolbar::SetButtons(const std::list<ToolbarButton> &buttons) {
+    const int n_buttons = buttons.size();
+    std::unique_ptr<TBBUTTON> tb_buttons(new TBBUTTON[n_buttons]);
+    TBBUTTON *tb_ptr = tb_buttons.get();
+    for (auto it=buttons.cbegin(); it != buttons.cend(); ++it) {
+        FillButtonStruct(tb_ptr, *it);
+        tb_ptr++;
+    }
+    SendMsg_NotNull(TB_ADDBUTTONS, (WPARAM)n_buttons, (LPARAM)tb_buttons.get(),
+                    "Failed: add buttons to toolbar.");
+
+    // Resize the toolbar, and then show it; no return value to check
+    SendMsg(TB_AUTOSIZE, 0, 0);
+}
+
+LRESULT Toolbar::SendMsg(UINT Msg, WPARAM wParam, LPARAM lParam) {
+    return SendMessage(m_hwndTool, Msg, wParam, lParam);
+}
+
+LRESULT Toolbar::SendMsg_NotNull(UINT Msg, WPARAM wParam, LPARAM lParam,
+                                 const char* fail_msg)
+{
+    LRESULT res = SendMsg(Msg, wParam, lParam);
+    if (!res) {
+        throw std::runtime_error(fail_msg);
+    }
+    return res;
+}
+
+LRESULT Toolbar::AddBitmap(int resource_id, unsigned int num_images) {
+    TBADDBITMAP tbaddbmp = { g_hinst, resource_id };
+    LRESULT res = SendMsg(TB_ADDBITMAP, num_images, (LPARAM)&tbaddbmp);
+    if (res == -1) {
+        throw std::runtime_error("Failed to add bitmap to toolbar.");
+    }
+    return res;
+}
+
+void Toolbar::FillButtonStruct(TBBUTTON *button, const ToolbarButton &tbb) {
+    memset(button, 0, sizeof(*button));
+    button->iBitmap = AddBitmap(tbb.m_bitmap_res, 1);
+    button->idCommand = tbb.m_command_id;
+    button->fsState |= (tbb.m_enabled ? TBSTATE_ENABLED : 0);
+    button->fsState |= (tbb.m_checked ? TBSTATE_CHECKED : 0);
+    button->fsStyle = BTNS_AUTOSIZE;
+    button->iString = (INT_PTR)tbb.m_alt_text.c_str();
 }
 
 
@@ -123,6 +173,12 @@ LRESULT RootWindow::OnCreate()
 {
     CreateStatusbar();
     m_toolbar.reset(new Toolbar(m_hwnd));
+    std::list<ToolbarButton> button_list;
+    button_list.push_back(
+            ToolbarButton(IDB_DATABASE, ID_OPEN_MAPLIST, true, false, L"TT1"));
+    button_list.push_back(
+            ToolbarButton(IDB_PRINTER, ID_PRINT, true, false, L"TT2"));
+    m_toolbar->SetButtons(button_list);
 
     RECT rect;
     CalcMapSize(rect);
@@ -270,8 +326,10 @@ LRESULT RootWindow::HandleMessage(
 
         case WM_COMMAND:
             WORD id = LOWORD(wParam);
-            if (id == ID_FILE_NEW) ShowMapListWindow(*m_mapdisplay, m_maps);
-            if (id == ID_FILE_OPEN) {
+            if (id == ID_OPEN_MAPLIST) {
+                ShowMapListWindow(*m_mapdisplay, m_maps);
+            }
+            if (id == ID_PRINT) {
                 //PageSetupDialog(m_hwnd);
                 MapPrinter mprint(m_mapdisplay, 50000);
                 struct PrintOrder po = { L"Outdoor Mapper Document",
