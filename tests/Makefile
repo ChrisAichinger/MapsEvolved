@@ -14,7 +14,7 @@ LDFLAGS=/SUBSYSTEM:CONSOLE /DEBUG $(LD_OUTPUT_OPTS) $(extra_library_dirs)
 DEFINES=/D "WIN32" /D "STRICT" /D "_DEBUG" /D "_WINDOWS" /D "_UNICODE" /D "UNICODE"
 CPPFLAGS=/nologo /EHsc /MDd /Od /Oy- /W3 /WX /Zi /GS /I$(odm_path) \
 	 $(DEFINES) $(CPP_OUTPUT_OPTS) $(extra_include_dirs)
-	 
+
 
 # Guard against direct usage of this makefile with nmake
 !IFNDEF odm_path
@@ -33,8 +33,8 @@ CPPFLAGS=/nologo /EHsc /MDd /Od /Oy- /W3 /WX /Zi /GS /I$(odm_path) \
 
 all: test
 
-test: executables
-	test_util.exe
+test: test.exe
+	test.exe
 	pause
 
 show: ..\tests\test_util.cpp
@@ -50,13 +50,11 @@ clean:
 	del /Q $(build_path)
 	-rmdir $(build_path)
 
-executables: $(build_path) $(REQ_OBJS) test_util.exe
+test.exe: $(build_path) $(REQ_OBJS) *.cpp *.h
+	$(CPP) *.cpp $(CPPFLAGS) /link $(LDFLAGS) $(DEPENDENCIES) $(REQ_OBJS)
 
 $(build_path):
 	mkdir $(build_path)
-
-.cpp.exe:
-	$(CPP) $< $(CPPFLAGS) /link $(LDFLAGS) $(DEPENDENCIES) $(REQ_OBJS)
 
 {$(odm_path)}.cpp.obj:
 	$(CPP) -c $< $(CPPFLAGS)
