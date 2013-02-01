@@ -1,25 +1,38 @@
 #ifndef ODM__DISP_OGL_H
 #define ODM__DISP_OGL_H
 
-#include <vector>
-#include <memory>
+#include <list>
 
 #include "util.h"
+#include "odm_config.h"
+#include "coordinates.h"
 
 class DevContext;
 class OGLContext;
 class TextureCache;
 
-class DispOpenGL {
+class ODM_INTERFACE Display {
+    public:
+        virtual unsigned int GetDisplayWidth() const = 0;
+        virtual unsigned int GetDisplayHeight() const = 0;
+        virtual DisplayDelta GetDisplaySize() const = 0;
+
+        virtual void Render(class std::list<class DisplayOrder> &orders) = 0;
+        virtual void Resize(unsigned int width, unsigned int height) = 0;
+        virtual void ForceRepaint() = 0;
+};
+
+class DispOpenGL : public Display {
     public:
         explicit DispOpenGL(const std::shared_ptr<OGLContext> &ogl_context);
 
-        unsigned int GetDisplayWidth() const;
-        unsigned int GetDisplayHeight() const;
+        virtual unsigned int GetDisplayWidth() const;
+        virtual unsigned int GetDisplayHeight() const;
+        virtual DisplayDelta GetDisplaySize() const;
 
-        void Render(class std::vector<class DisplayOrder> &orders);
-        void Resize(unsigned int width, unsigned int height);
-        void ForceRepaint();
+        virtual void Render(class std::list<class DisplayOrder> &orders);
+        virtual void Resize(unsigned int width, unsigned int height);
+        virtual void ForceRepaint();
 
     private:
         DISALLOW_COPY_AND_ASSIGN(DispOpenGL);

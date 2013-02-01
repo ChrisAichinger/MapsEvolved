@@ -1,6 +1,6 @@
 
 #include <memory>
-#include <vector>
+#include <list>
 #include <stdexcept>
 #include <map>
 #include <algorithm>
@@ -14,6 +14,26 @@
 #include "tiles.h"
 #include "winwrap.h"
 #include "external/glext.h"
+
+
+class OGLDisplayCoord {
+    public:
+        OGLDisplayCoord() : x(0), y(0) {};
+        OGLDisplayCoord(double x_, double y_) : x(x_), y(y_) {};
+        OGLDisplayCoord(const DisplayCoordCentered &coord,
+                        const class DisplayDelta &disp_size)
+            // Invert y as we use top-down coords while OGL uses bottom-up
+            : x(2 * coord.x / disp_size.x),
+              y(-2 * coord.y / disp_size.y)
+            {};
+
+        void TexVertex2d(double tex_s, double tex_t) {
+            glTexCoord2d(tex_s, tex_t);
+            glVertex2d(x, y);
+        };
+
+        double x, y;
+};
 
 
 class TextureCache {
@@ -73,30 +93,24 @@ void DispOpenGL::ForceRepaint() {
     m_opengl->GetDevContext()->ForceRepaint();
 }
 
-void DispOpenGL::Render(std::vector<class DisplayOrder> &orders) {
-    unsigned int target_width = GetDisplayWidth();
-    unsigned int target_height = GetDisplayHeight();
+void DispOpenGL::Render(std::list<class DisplayOrder> &orders) {
+    DisplayDelta target_size(GetDisplaySize());
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    for (auto it=orders.begin(); it < orders.end(); ++it) {
+    for (auto it=orders.cbegin(); it != orders.cend(); ++it) {
         std::shared_ptr<Texture> tex = m_texcache->Get(it->GetTileCode());
         if (!tex) {
             tex.reset(new Texture(it->GetTileCode()));
             m_texcache->Insert(it->GetTileCode(), tex);
         }
 
-        double x = 2 * it->GetX() / target_width;
-        double width = 2 * it->GetWidth() / target_width;
-        double y = -2 * it->GetY() / target_height;
-        double height = -2 * it->GetHeight() / target_height;
-
         tex->Activate();
         glBegin(GL_QUADS);
-        glTexCoord2d(1, 0); glVertex2d(x + width, y + height);
-        glTexCoord2d(0, 0); glVertex2d(x, y + height);
-        glTexCoord2d(0, 1); glVertex2d(x, y);
-        glTexCoord2d(1, 1); glVertex2d(x + width, y);
+        OGLDisplayCoord(it->GetBotRight(), target_size).TexVertex2d(1, 0);
+        OGLDisplayCoord(it->GetBotLeft(), target_size).TexVertex2d(0, 0);
+        OGLDisplayCoord(it->GetTopLeft(), target_size).TexVertex2d(0, 1);
+        OGLDisplayCoord(it->GetTopRight(), target_size).TexVertex2d(1, 1);
         glEnd();
         tex->Deactivate();
     }
@@ -120,6 +134,12 @@ unsigned int DispOpenGL::GetDisplayHeight() const {
     int rect[GLR_ARRAYLEN];
     glGetIntegerv(GL_VIEWPORT, rect);
     return rect[GLR_HEIGHT];
+}
+
+DisplayDelta DispOpenGL::GetDisplaySize() const {
+    int rect[GLR_ARRAYLEN];
+    glGetIntegerv(GL_VIEWPORT, rect);
+    return DisplayDelta(rect[GLR_WIDTH], rect[GLR_HEIGHT]);
 }
 
 Texture::Texture(unsigned int width, unsigned int height,

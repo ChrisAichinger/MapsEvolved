@@ -21,6 +21,9 @@ unsigned int GradientMap::GetWidth() const {
 unsigned int GradientMap::GetHeight() const {
     return m_orig_map->GetHeight();
 }
+MapPixelDelta GradientMap::GetSize() const {
+    return m_orig_map->GetSize();
+}
 void GradientMap::PixelToPCS(double *x, double *y) const {
     return m_orig_map->PixelToPCS(x, y);
 }
@@ -30,11 +33,11 @@ void GradientMap::PCSToPixel(double *x, double *y) const {
 const class Projection &GradientMap::GetProj() const {
     return m_orig_map->GetProj();
 }
-void GradientMap::PixelToLatLong(double *x, double *y) const {
-    return m_orig_map->PixelToLatLong(x, y);
+LatLon GradientMap::PixelToLatLon(const MapPixelCoord &pos) const {
+    return m_orig_map->PixelToLatLon(pos);
 }
-void GradientMap::LatLongToPixel(double *x, double *y) const {
-    return m_orig_map->LatLongToPixel(x, y);
+MapPixelCoord GradientMap::LatLonToPixel(const LatLon &pos) const {
+    return m_orig_map->LatLonToPixel(pos);
 }
 const std::wstring &GradientMap::GetFname() const {
     return m_orig_map->GetFname();
@@ -44,31 +47,33 @@ static std::vector<unsigned int> TimeCounter;
 
 
 #include <Windows.h>
-#define DEST(xx,yy) dest[(xx) + width * (yy)]
-#define SRC(xx,yy) src[(xx) + width * (yy)]
+#define DEST(xx,yy) dest[(xx) + size.x * (yy)]
+#define SRC(xx,yy) src[(xx) + req_size.x * (yy)]
 std::shared_ptr<unsigned int> GradientMap::GetRegion(
-        int x, int y, unsigned int width, unsigned int height) const
+        const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
 {
-    auto orig_data = m_orig_map->GetRegion(x-1, y-1, width+2, height+2);
+    MapPixelCoordInt req_pos = pos - MapPixelDeltaInt(1, 1);
+    MapPixelDeltaInt req_size = size + MapPixelDeltaInt(2, 2);
+    auto orig_data = m_orig_map->GetRegion(req_pos, req_size);
     //auto orig_data = LoadBufferFromBMP(L"example.bmp");
-    std::shared_ptr<unsigned int> data(new unsigned int[width * height],
+    std::shared_ptr<unsigned int> data(new unsigned int[size.x * size.y],
                                        ArrayDeleter<unsigned int>());
 
     unsigned int *src = orig_data.get();
     unsigned int *dest = data.get();
     DWORD tmStart = timeGetTime();
-    for (unsigned int x=0; x < width; x++) {
-        for (unsigned int y=0; y < height; y++) {
-            MapBezier bezier(src, width+2, height+2, x+1, y+1);
+    for (int x=0; x < size.x; x++) {
+        for (int y=0; y < size.y; y++) {
+            unsigned int elevation = SRC(x+1, y+1);
+            MapBezier bez(src, MapPixelCoordInt(x+1, y+1), req_size);
+            MapBezierGradient grad = bez.GetGradient(bez.GetCreationPos());
 
-            double xa = 0.5;
-            double ya = 0.5;
-            bezier.GetGradient(&xa, &ya);
-            unsigned int elevation = src[x+1 + (width+2)*(y+1)];
-            DEST(x, y) = static_cast<unsigned int>(HSV_to_RGB(
-                          (unsigned char)(255*240/360 - elevation*255/4000),
-                          255,
-                          (unsigned char)min(255, max(0, 128+1.25*(xa-ya)))));
+            DEST(x, y) = HSV_to_RGB(
+                      255*240/360 - elevation*255/4000,
+                      255,
+                      ValueBetween(0,
+                                   static_cast<int>(128+1.25*(grad.x-grad.y)),
+                                   255));
         }
     }
     DWORD diff = timeGetTime() - tmStart;

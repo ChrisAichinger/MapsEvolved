@@ -9,16 +9,17 @@ class TiffMap : public RasterMap {
         virtual RasterMap::RasterMapType GetType() const;
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
-        virtual std::shared_ptr<unsigned int> GetRegion(
-                int x, int y,
-                unsigned int width, unsigned int height) const;
+        virtual MapPixelDelta GetSize() const;
+        virtual std::shared_ptr<unsigned int>
+            GetRegion(const MapPixelCoordInt &pos,
+                      const MapPixelDeltaInt &size) const;
 
         virtual void PixelToPCS(double *x, double *y) const;
         virtual void PCSToPixel(double *x, double *y) const;
         virtual const class Projection &GetProj() const;
 
-        virtual void PixelToLatLong(double *x, double *y) const;
-        virtual void LatLongToPixel(double *x, double *y) const;
+        virtual LatLon PixelToLatLon(const MapPixelCoord &pos) const;
+        virtual MapPixelCoord LatLonToPixel(const LatLon &pos) const;
 
         virtual const std::wstring &GetFname() const;
     private:

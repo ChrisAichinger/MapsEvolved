@@ -7,6 +7,7 @@
 
 #include "odm_config.h"
 #include "util.h"
+#include "coordinates.h"
 
 class ODM_INTERFACE RasterMap {
     public:
@@ -22,15 +23,16 @@ class ODM_INTERFACE RasterMap {
         virtual RasterMapType GetType() const = 0;
         virtual unsigned int GetWidth() const = 0;
         virtual unsigned int GetHeight() const = 0;
-        virtual std::shared_ptr<unsigned int> GetRegion(int x, int y,
-                                        unsigned int width,
-                                        unsigned int height) const = 0;
+        virtual MapPixelDelta GetSize() const = 0;
+        virtual std::shared_ptr<unsigned int>
+            GetRegion(const MapPixelCoordInt &pos,
+                      const MapPixelDeltaInt &size) const = 0;
 
         virtual void PixelToPCS(double *x, double *y) const = 0;
         virtual void PCSToPixel(double *x, double *y) const = 0;
         virtual const class Projection &GetProj() const = 0;
-        virtual void PixelToLatLong(double *x, double *y) const = 0;
-        virtual void LatLongToPixel(double *x, double *y) const = 0;
+        virtual LatLon PixelToLatLon(const MapPixelCoord &pos) const = 0;
+        virtual MapPixelCoord LatLonToPixel(const LatLon &pos) const = 0;
 
         virtual const std::wstring &GetFname() const = 0;
 };
@@ -61,20 +63,21 @@ struct TerrainInfo {
 class HeightFinder {
     public:
         explicit HeightFinder(const class RasterMapCollection &maps);
-        bool CalcTerrain(double lat, double lon, double *height,
+        bool CalcTerrain(const LatLon &pos, double *height,
                          double *slope_face, double *steepness_deg);
-        bool CalcTerrain(double lat, double lon, TerrainInfo *result);
+        bool CalcTerrain(const LatLon &pos, TerrainInfo *result);
     private:
         const class RasterMapCollection &m_maps;
         const class RasterMap *m_active_dhm;
 
-        bool LatLongWithinActiveDHM(double x, double y) const;
-        const class RasterMap *FindBestMap(double latitude, double longitude,
+        bool LatLongWithinActiveDHM(const LatLon &pos) const;
+        const class RasterMap *FindBestMap(const LatLon &pos,
                                        RasterMap::RasterMapType type) const;
 };
 
-double GetMapDistance(const RasterMap &map, double Cx, double Cy,
+double GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
                       double dx, double dy);
-double MetersPerPixel(const RasterMap *map, double x_px, double y_px);
+double MetersPerPixel(const RasterMap *map, const MapPixelCoord &pos);
+double MetersPerPixel(const RasterMap *map, const MapPixelCoordInt &pos);
 
 #endif

@@ -1,9 +1,11 @@
 #include <vector>
+#include <list>
 
 #include "rastermap.h"
 #include "disp_ogl.h"
 #include "mapdisplay.h"
 #include "tiles.h"
+
 
 static const int MAX_TILES = 100;
 // ZOOM_STEP ** 4 == 2
@@ -14,8 +16,7 @@ MapDisplayManager::MapDisplayManager(
         std::shared_ptr<class DispOpenGL> &display,
         const class RasterMapCollection &maps)
     : m_display(display), m_maps(maps), m_base_map(&maps.Get(0)),
-      m_center_x(m_base_map->GetWidth() * 0.5f),
-      m_center_y(m_base_map->GetHeight() * 0.5f),
+      m_center(m_base_map->GetSize() * 0.5),
       m_zoom(1.0)
 { }
 
@@ -30,24 +31,20 @@ void MapDisplayManager::ChangeMap(const RasterMap *new_map,
         return;
 
     if (try_preserve_pos) {
-        double x = m_center_x;
-        double y = m_center_y;
-        m_base_map->PixelToLatLong(&x, &y);
-        new_map->LatLongToPixel(&x, &y);
+        LatLon point = m_base_map->PixelToLatLon(m_center);
+        MapPixelCoord new_center = new_map->LatLonToPixel(point);
         // Check if old map position is within new map
-        if (IsInRect(x, y, new_map->GetWidth(), new_map->GetHeight())) {
-            m_zoom *= MetersPerPixel(new_map, x, y);
-            m_zoom /= MetersPerPixel(m_base_map, m_center_x, m_center_y);
-            m_center_x = x;
-            m_center_y = y;
+        if (new_center.IsInRect(MapPixelCoord(0, 0), new_map->GetSize())) {
+            m_zoom *= MetersPerPixel(new_map, new_center);
+            m_zoom /= MetersPerPixel(m_base_map, m_center);
+            m_center = new_center;
         } else {
             try_preserve_pos = false;
         }
     }
 
     if (!try_preserve_pos) {
-        m_center_x = m_base_map->GetWidth() * 0.5f;
-        m_center_y = m_base_map->GetHeight() * 0.5f;
+        m_center = MapPixelCoord(m_base_map->GetSize() / 2);
         m_zoom = 1.0;
     }
 
@@ -56,36 +53,20 @@ void MapDisplayManager::ChangeMap(const RasterMap *new_map,
 }
 
 void MapDisplayManager::Paint() {
-    unsigned int d_width = m_display->GetDisplayWidth();
-    unsigned int d_height = m_display->GetDisplayHeight();
-    double bm_half_width = d_width / m_zoom * 0.5;
-    double bm_half_height = d_height / m_zoom * 0.5;
+    MapPixelDelta half_disp_size(m_display->GetDisplaySize() / 2.0, *this);
 
-    double bm_left = m_center_x - bm_half_width;
-    double bm_right = m_center_x + bm_half_width;
-    double bm_top = m_center_y - bm_half_height;
-    double bm_bottom = m_center_y + bm_half_height;
+    MapPixelCoordInt tile_topleft(m_center - half_disp_size, TILE_SIZE);
+    MapPixelCoordInt tile_botright(m_center + half_disp_size, TILE_SIZE);
 
-    // All values inclusive, first...last (not last+1 tile)
-    int tiles_left = round_to_neg_inf(bm_left, TILE_SIZE);
-    int tiles_top = round_to_neg_inf(bm_top, TILE_SIZE);
-    int tiles_right = round_to_neg_inf(bm_right, TILE_SIZE);
-    int tiles_bottom = round_to_neg_inf(bm_bottom, TILE_SIZE);
+    std::list<DisplayOrder> orders;
+    for (int tx = tile_topleft.x; tx <= tile_botright.x; tx += TILE_SIZE) {
+        for (int ty = tile_topleft.y; ty <= tile_botright.y; ty += TILE_SIZE) {
+            MapPixelCoordInt map_pos(tx, ty);
+            TileCode tilecode(*m_base_map, map_pos, TILE_SIZE);
 
-    int num_tiles = ((tiles_right - tiles_left) / TILE_SIZE + 1) *
-                    ((tiles_bottom - tiles_top) / TILE_SIZE + 1);
-    std::vector<DisplayOrder> orders;
-    orders.reserve(num_tiles);
-    for (int tx = tiles_left; tx <= tiles_right; tx += TILE_SIZE) {
-        for (int ty = tiles_top; ty <= tiles_bottom; ty += TILE_SIZE) {
-            double x = (tx - m_center_x) * m_zoom;
-            double y = (ty - m_center_y) * m_zoom;
-            double width = TILE_SIZE * m_zoom;
-            double height = TILE_SIZE * m_zoom;
-            double xe = x + width;
-            double ye = y + height;
-            TileCode tilecode(*m_base_map, tx, ty, TILE_SIZE);
-            orders.push_back(DisplayOrder(x, y, width, height, tilecode));
+            DisplayCoordCentered disp_pos(map_pos, *this);
+            DisplayDelta disp_size(TILE_SIZE * m_zoom, TILE_SIZE * m_zoom);
+            orders.push_back(DisplayOrder(disp_pos, disp_size, tilecode));
         }
     }
     m_display->Render(orders);
@@ -100,59 +81,57 @@ double MapDisplayManager::GetZoom() const {
 }
 
 double MapDisplayManager::GetCenterX() const {
-    return m_center_x;
+    return m_center.x;
 }
 
 double MapDisplayManager::GetCenterY() const {
-    return m_center_y;
+    return m_center.y;
 }
 
-void MapDisplayManager::StepZoom(int steps) {
-    if (steps > 0) {
-        for (int i = 0; i < steps; i++) {
-            m_zoom *= ZOOM_STEP;
-        }
-    } else {
-        for (int i = 0; i > steps; i--) {
-            m_zoom /= ZOOM_STEP;
+const MapPixelCoord &MapDisplayManager::GetCenter() const {
+    return m_center;
+}
 
-            // Don't allow to zoom out too far: approximate the number of tiles
-            int num_tiles = static_cast<int>(
-                    m_display->GetDisplayWidth() / (m_zoom * TILE_SIZE) *
-                    m_display->GetDisplayHeight() / (m_zoom * TILE_SIZE));
-            if (num_tiles > MAX_TILES) {
-                m_zoom *= ZOOM_STEP;
-            }
+void MapDisplayManager::StepZoom(double steps) {
+    m_zoom *= pow(ZOOM_STEP, steps);
+    while (true) {
+        // Don't allow to zoom out too far: approximate the number of tiles
+        double num_tiles =
+                m_display->GetDisplayWidth() / (m_zoom * TILE_SIZE) *
+                m_display->GetDisplayHeight() / (m_zoom * TILE_SIZE);
+        if (num_tiles > MAX_TILES) {
+            m_zoom *= ZOOM_STEP;
+        } else {
+            break;
         }
     }
     m_display->ForceRepaint();
 }
 
-void MapDisplayManager::StepZoom(int steps, int mouse_x, int mouse_y) {
+void MapDisplayManager::StepZoom(double steps, const DisplayCoord &mouse_pos) {
     double m_zoom_before = m_zoom;
-    double rel_x = mouse_x - m_display->GetDisplayWidth() / 2.0f;
-    double rel_y = mouse_y - m_display->GetDisplayHeight() / 2.0f;
+    DisplayCoordCentered old_pos(mouse_pos, *m_display);
 
     StepZoom(steps);
 
-    double new_x = rel_x * m_zoom / m_zoom_before;
-    double new_y = rel_y * m_zoom / m_zoom_before;
-
-    DragMap(round_to_int(rel_x - new_x), round_to_int(rel_y - new_y));
+    DisplayCoordCentered new_pos = old_pos * m_zoom / m_zoom_before;
+    DragMap(old_pos - new_pos);
 }
 
-void MapDisplayManager::CenterToDisplayCoord(int center_x, int center_y) {
-    Point<int> disp(center_x, center_y);
-    Point<double> base = BaseCoordFromDisplayCoord(disp);
-    m_center_x = base.GetX();
-    m_center_y = base.GetY();
+MapPixelCoord
+MapDisplayManager::MapPixelCoordFromDisplay(const DisplayCoord &disp) const {
+    DisplayCoordCentered centered(disp, *m_display);
+    return MapPixelCoord(centered, *this);
+}
+
+void MapDisplayManager::CenterToDisplayCoord(const DisplayCoord &center) {
+    m_center = MapPixelCoordFromDisplay(center);
     m_display->ForceRepaint();
 }
 
-void MapDisplayManager::DragMap(int dx, int dy) {
-    double max_x = m_base_map->GetWidth() - 1.0f;
-    double max_y = m_base_map->GetHeight() - 1.0f;
-    m_center_x = ValueBetween(0.0, m_center_x - dx / m_zoom, max_x);
-    m_center_y = ValueBetween(0.0, m_center_y - dy / m_zoom, max_y);
+void MapDisplayManager::DragMap(const DisplayDelta &disp_delta) {
+    m_center = m_center - MapPixelDelta(disp_delta, *this);
+    m_center.ClampToRect(MapPixelCoord(0,0),
+                         MapPixelCoord(m_base_map->GetSize()));
     m_display->ForceRepaint();
 }

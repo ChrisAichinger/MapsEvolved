@@ -363,22 +363,18 @@ RootWindow *RootWindow::Create() {
 
 void RootWindow::UpdateStatusbar() {
     POINT point = GetClientMousePos(m_hwndMap);
-    Point<int> disp_point(point.x, point.y);
-    Point<double> base_point(
-            m_mapdisplay->BaseCoordFromDisplayCoord(disp_point));
+    DisplayCoord disp_p(point.x, point.y);
+    MapPixelCoord base_point = m_mapdisplay->MapPixelCoordFromDisplay(disp_p);
 
-    double x = base_point.GetX();
-    double y = base_point.GetY();
-    m_mapdisplay->GetBaseMap().PixelToLatLong(&x, &y);
+    LatLon ll = m_mapdisplay->GetBaseMap().PixelToLatLon(base_point);
 
-    SetSBText(0, string_format(L"lat/lon = %.5f / %.5f", y, x));
+    SetSBText(0, string_format(L"lat/lon = %.5f / %.5f", ll.lat, ll.lon));
     SetSBText(5, string_format(L"Zoom: %.0f %%", m_mapdisplay->GetZoom()*100));
-    double mpp = MetersPerPixel(&m_mapdisplay->GetBaseMap(),
-                                base_point.GetX(), base_point.GetY());
+    double mpp = MetersPerPixel(&m_mapdisplay->GetBaseMap(), base_point);
     SetSBText(4, string_format(L"Map: %.1f m/pix", mpp));
 
     double height, orientation, steepness;
-    if (!m_heightfinder.CalcTerrain(x, y, &height, &orientation, &steepness)) {
+    if (!m_heightfinder.CalcTerrain(ll, &height, &orientation, &steepness)) {
         SetSBText(1, L"Height unknown");
         SetSBText(2, L"Terrain orientation unknown");
         SetSBText(3, L"Steepness unknown");

@@ -58,15 +58,17 @@ Tiff::Tiff(const std::wstring &fname)
     }
 };
 
-std::shared_ptr<unsigned int> Tiff::GetRegion(int x, int y,
-                              unsigned int width, unsigned int height) const
+std::shared_ptr<unsigned int>
+Tiff::GetRegion(const MapPixelCoordInt &pos,
+                const MapPixelDeltaInt &size) const
 {
-
-    unsigned int ux = (x >= 0) ? x : 0;
-    unsigned int uy = (y >= 0) ? y : 0;
-    if (x + width < 0 || y + height < 0 || ux > m_width || uy > m_height) {
+    MapPixelCoordInt endpos = pos + size;
+    if (endpos.x < 0 || endpos.y < 0 ||
+        pos.x > static_cast<int>(m_width) ||
+        pos.y > static_cast<int>(m_height))
+    {
         // Return zero-initialized memory block (notice the parentheses)
-        return std::shared_ptr<unsigned int>(new unsigned int[width*height](),
+        return std::shared_ptr<unsigned int>(new unsigned int[size.x*size.y](),
                                              ArrayDeleter<unsigned int>());
     }
 
@@ -77,15 +79,15 @@ std::shared_ptr<unsigned int> Tiff::GetRegion(int x, int y,
         throw std::runtime_error("TIFF RGBA access not possible.");
     }
 
-    img.col_offset = x;
-    img.row_offset = y;
+    img.col_offset = pos.x;
+    img.row_offset = pos.y;
 
     // Give derived classes a chance to influence TIFFRGBAGetImage
     Hook_TIFFRGBAImageGet(img);
 
-    std::shared_ptr<unsigned int> raster(new unsigned int[width * height],
+    std::shared_ptr<unsigned int> raster(new unsigned int[size.x * size.y],
                                          ArrayDeleter<unsigned int>());
-    int ok = TIFFRGBAImageGet(&img, raster.get(), width, height);
+    int ok = TIFFRGBAImageGet(&img, raster.get(), size.x, size.y);
     TIFFRGBAImageEnd(&img);
 
     if (!ok) {
@@ -285,9 +287,14 @@ RasterMap::RasterMapType TiffMap::GetType() const {
 }
 unsigned int TiffMap::GetWidth() const { return m_geotiff->GetWidth(); };
 unsigned int TiffMap::GetHeight() const { return m_geotiff->GetHeight(); };
-std::shared_ptr<unsigned int> TiffMap::GetRegion(int x, int y,
-    unsigned int width, unsigned int height) const
-    { return m_geotiff->GetRegion(x, y, width, height); };
+MapPixelDelta TiffMap::GetSize() const {
+    return MapPixelDelta(m_geotiff->GetWidth(), m_geotiff->GetHeight());
+}
+
+std::shared_ptr<unsigned int> TiffMap::GetRegion(
+                      const MapPixelCoordInt &pos,
+                      const MapPixelDeltaInt &size) const
+    { return m_geotiff->GetRegion(pos, size); };
 void TiffMap::PixelToPCS(double *x, double *y) const
     { return m_geotiff->PixelToPCS(x, y); }
 void TiffMap::PCSToPixel(double *x, double *y) const
@@ -297,12 +304,18 @@ const std::wstring &TiffMap::GetFname() const
 const class Projection &TiffMap::GetProj() const
     { return *m_proj; }
 
-void TiffMap::PixelToLatLong(double *x, double *y) const {
-    PixelToPCS(x, y);
-    GetProj().PCSToLatLong(*x, *y);
+LatLon TiffMap::PixelToLatLon(const MapPixelCoord &pos) const {
+    double x = pos.x;
+    double y = pos.y;
+    PixelToPCS(&x, &y);
+    GetProj().PCSToLatLong(x, y);
+    return LatLon(y, x);
 }
 
-void TiffMap::LatLongToPixel(double *x, double *y) const {
-    GetProj().LatLongToPCS(*x, *y);
-    PCSToPixel(x, y);
+MapPixelCoord TiffMap::LatLonToPixel(const LatLon &pos) const {
+    double x = pos.lon;
+    double y = pos.lat;
+    GetProj().LatLongToPCS(x, y);
+    PCSToPixel(&x, &y);
+    return MapPixelCoord(x, y);
 }

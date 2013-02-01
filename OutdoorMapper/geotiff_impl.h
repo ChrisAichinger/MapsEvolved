@@ -59,8 +59,9 @@ class Tiff {
         unsigned int GetHeight() const { return m_height; };
         unsigned int GetBitsPerSample() const { return m_bitspersample; };
         unsigned int GetSamplesPerPixel() const { return m_samplesperpixel; };
-        std::shared_ptr<unsigned int> GetRegion(int x, int y,
-                                unsigned int width, unsigned int height) const;
+        std::shared_ptr<unsigned int> GetRegion(
+                const class MapPixelCoordInt &pos,
+                const class MapPixelDeltaInt &size) const;
 
         template <typename T>
         std::tuple<unsigned int, const T*>

@@ -12,13 +12,11 @@ void UIModeNormal::OnLClick(const MouseEvent &event) {
 }
 
 void UIModeNormal::OnDblClick(const MouseEvent &event) {
-    m_mapdisplay->CenterToDisplayCoord(event.x, event.y);
+    m_mapdisplay->CenterToDisplayCoord(DisplayCoord(event.x, event.y));
 }
 
-void UIModeNormal::OnMouseWheel(const MouseEvent &event)
-{
-    int istep = round_to_int(event.wheel_step);
-    m_mapdisplay->StepZoom(istep, event.x, event.y);
+void UIModeNormal::OnMouseWheel(const MouseEvent &event) {
+    m_mapdisplay->StepZoom(event.wheel_step, DisplayCoord(event.x, event.y));
     m_rootwindow->UpdateStatusbar();
 }
 
@@ -31,8 +29,9 @@ void UIModeNormal::OnDragStart(const struct DragEvent &dragdata) {
 }
 
 void UIModeNormal::OnDrag(const struct DragEvent &dragdata) {
-    m_mapdisplay->DragMap(dragdata.cur.x - dragdata.last.x,
-                          dragdata.cur.y - dragdata.last.y);
+    DisplayDelta dd(dragdata.cur.x - dragdata.last.x,
+                    dragdata.cur.y - dragdata.last.y);
+    m_mapdisplay->DragMap(dd);
 }
 
 void UIModeNormal::OnDragEnd(const struct DragEvent &dragdata) {

@@ -1,6 +1,8 @@
 #ifndef ODM__BEZIER_H
 #define ODM__BEZIER_H
 
+#include "coordinates.h"
+
 class FromControlPoints {
     public:
         explicit FromControlPoints(const double *mat) : m_mat(mat) {};
@@ -40,28 +42,44 @@ class Bezier {
 
 class MapBezier : public Bezier {
     public:
-        MapBezier(const class RasterMap &map,
-                  double *x, double *y);
+        MapBezier(const class RasterMap &map, const MapPixelCoordInt &pos);
+        MapBezier(const class RasterMap &map, const MapPixelCoord &pos);
         MapBezier(const unsigned int *src,
-                  unsigned int width, unsigned int height,
-                  double *x, double *y);
-        MapBezier(const class RasterMap &map,
-                  unsigned int x, unsigned int y);
+                  const MapPixelCoordInt &pos, const MapPixelDeltaInt &size);
         MapBezier(const unsigned int *src,
-                  unsigned int width, unsigned int height,
-                  unsigned int x, unsigned int y);
-        unsigned int GetCenterX() const { return m_center_x; }
-        unsigned int GetCenterY() const { return m_center_y; }
+                  const MapPixelCoord &pos, const MapPixelDeltaInt &size);
+
+        const MapPixelCoordInt &GetBezierCenter() const {
+            return m_center_int;
+        }
+        const BezierCoord &GetCreationPos() const {
+            return m_creation_pos;
+        }
+
+        using Bezier::GetValue;
+        double GetValue(const BezierCoord &pos) {
+            return GetValue(pos.x, pos.y);
+        }
+        using Bezier::GetGradient;
+        MapBezierGradient GetGradient(const BezierCoord &pos) {
+            MapBezierGradient grad(pos.x, pos.y);
+            GetGradient(&grad.x, &grad.y);
+            return grad;
+        }
     private:
-        unsigned int m_center_x, m_center_y;
+        MapPixelCoordInt m_center_int;
+        BezierCoord m_creation_pos;
 
         void InitPoints(const unsigned int *src,
-                        unsigned int width, unsigned int height,
-                        unsigned int x, unsigned int y,
-                        bool invert_y=false);
-        void PointFromDouble(double *x, double *y,
-                             unsigned int *x_int, unsigned int *y_int,
-                             unsigned int width, unsigned int height);
+                        const MapPixelCoordInt &pos,
+                        const MapPixelDeltaInt &size,
+                        bool invert_y);
+        void InitPoints(const class RasterMap &map,
+                        const MapPixelCoordInt &pos);
+        MapPixelCoordInt FindCenter(const MapPixelCoord &pos,
+                                 const MapPixelDeltaInt &size) const;
+        BezierCoord FindCreationPos(const MapPixelCoord &d_pos,
+                                    const MapPixelCoordInt &i_pos) const;
 };
 
 #endif

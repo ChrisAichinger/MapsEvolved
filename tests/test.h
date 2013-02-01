@@ -20,12 +20,14 @@ void test_op(bool res, const char* op, T a, U b,
 }
 
 #define test_eq(v, w) test_op((v) == (w), "==", (v), (w), #v, #w)
+#define test_neq(v, w) test_op((v) != (w), "!=", (v), (w), #v, #w)
 
 
 int test_util();
+int test_coords();
 
 typedef int (*TestFunction)();
-static TestFunction test_funcs[] = { test_util, 0 };
+static TestFunction test_funcs[] = { test_util, test_coords, 0 };
 
 
 #endif

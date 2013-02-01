@@ -25,14 +25,14 @@ bool MapPrinter::Print(HDC hdc) {
     double map_width_m = print_width_mm * m_scale / 1000.0;
     double map_height_m = print_width_mm * m_scale / 1000.0;
 
-    int Cx = round_to_int(m_display->GetCenterX());
-    int Cy = round_to_int(m_display->GetCenterY());
     const RasterMap &map = m_display->GetBaseMap();
 
+    MapPixelCoord map_center = m_display->GetCenter();
     int dx, dy;
-    for (dx=1; GetMapDistance(map, Cx, Cy, dx, 0) < map_width_m; dx++);
-    for (dy=1; GetMapDistance(map, Cx, Cy, 0, dy) < map_height_m; dy++);
-    auto pixels = map.GetRegion(Cx - dx, Cy - dy, 2*dx, 2*dy);
+    for (dx=1; GetMapDistance(map, map_center, dx, 0) < map_width_m; dx++);
+    for (dy=1; GetMapDistance(map, map_center, 0, dy) < map_height_m; dy++);
+    MapPixelCoordInt center(map_center);
+    auto pixels = map.GetRegion(center, MapPixelDeltaInt(2*dx, 2*dy));
 
     BITMAPINFO bmi = { { sizeof(BITMAPINFOHEADER),
                          2*dx, 2*dy, 1, 32, BI_RGB, 0, 0, 0, 0, 0 }, 0 };
