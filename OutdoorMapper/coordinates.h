@@ -118,6 +118,8 @@ class MapPixelDeltaInt {
 
         MapPixelDeltaInt& operator+=(const class MapPixelDeltaInt &rhs);
         MapPixelDeltaInt& operator-=(const class MapPixelDeltaInt &rhs);
+        MapPixelDeltaInt& operator*=(int factor);
+        MapPixelDeltaInt& operator/=(int divisor);
 
         int x, y;
 };
@@ -226,6 +228,7 @@ OPERATORS_EQ_STREAM(MapBezierGradient)
 OPERATORS_MULDIV(DisplayDelta, double)
 OPERATORS_MULDIV(DisplayCoordCentered, double)
 OPERATORS_MULDIV(MapPixelDelta, double)
+OPERATORS_MULDIV(MapPixelDeltaInt, int)
 OPERATORS_MULDIV(MapBezierGradient, double)
 
 OPERATORS_ADDSUB(DisplayCoord, DisplayDelta)

@@ -41,13 +41,13 @@
          return *this;                                                        \
      }
 
-#define OPERATORS_DELTA_MULDIV(Class, x, y)                                   \
-     Class& Class::operator*=(double factor) {                                \
+#define OPERATORS_DELTA_MULDIV(Class, MulType, x, y)                          \
+     Class& Class::operator*=(MulType factor) {                               \
          x *= factor;                                                         \
          y *= factor;                                                         \
          return *this;                                                        \
      }                                                                        \
-     Class& Class::operator/=(double divisor) {                               \
+     Class& Class::operator/=(MulType divisor) {                              \
          x /= divisor;                                                        \
          y /= divisor;                                                        \
          return *this;                                                        \
@@ -81,7 +81,7 @@ OPERATORS_COORD_MULDIV(DisplayCoordCentered, x, y)
 
 // DisplayDelta
 OPERATORS_DELTA_ADDSUB(DisplayDelta, x, y)
-OPERATORS_DELTA_MULDIV(DisplayDelta, x, y)
+OPERATORS_DELTA_MULDIV(DisplayDelta, double, x, y)
 
 
 // MapPixelCoord
@@ -125,7 +125,7 @@ MapPixelDelta::MapPixelDelta(const class DisplayDelta &dd,
 {}
 
 OPERATORS_DELTA_ADDSUB(MapPixelDelta, x, y)
-OPERATORS_DELTA_MULDIV(MapPixelDelta, x, y)
+OPERATORS_DELTA_MULDIV(MapPixelDelta, double, x, y)
 
 // MapPixelCoordInt
 MapPixelCoordInt::MapPixelCoordInt(const class MapPixelCoord &coord)
@@ -159,6 +159,7 @@ MapPixelDeltaInt::MapPixelDeltaInt(const class MapPixelDelta &coord)
 {}
 
 OPERATORS_DELTA_ADDSUB(MapPixelDeltaInt, x, y)
+OPERATORS_DELTA_MULDIV(MapPixelDeltaInt, int, x, y)
 
 // LatLon
 LatLon::LatLon(const MapPixelCoord &pos, const class RasterMap &map) {
