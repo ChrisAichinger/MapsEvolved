@@ -44,7 +44,7 @@ void MapDisplayManager::ChangeMap(const RasterMap *new_map,
     }
 
     if (!try_preserve_pos) {
-        m_center = MapPixelCoord(m_base_map->GetSize() / 2);
+        m_center = MapPixelCoord(m_base_map->GetSize() / 2.0);
         m_zoom = 1.0;
     }
 
