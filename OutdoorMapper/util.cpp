@@ -182,3 +182,48 @@ std::wstring string_format(const std::wstring fmt, ...) {
         }
     }
 }
+
+
+#define SRC(xx, yy) src[(xx) + s_width * (yy)]
+#define DEST(xx, yy) dest[(xx + d_x) + s_width * (yy + d_y)]
+inline unsigned int sample_pixels(unsigned int *src,
+                                  unsigned int s_x, unsigned int s_y,
+                                  unsigned int s_width, unsigned int s_height,
+                                  unsigned int scale)
+{
+    unsigned int sum_r = 0;
+    unsigned int sum_g = 0;
+    unsigned int sum_b = 0;
+    unsigned int sum_a = 0;
+    for (unsigned int y=0; y < scale; y++) {
+        for (unsigned int x=0; x < scale; x++) {
+            sum_r += extractR(SRC(s_x + x, s_y + y));
+            sum_g += extractG(SRC(s_x + x, s_y + y));
+            sum_b += extractB(SRC(s_x + x, s_y + y));
+            sum_a += extractA(SRC(s_x + x, s_y + y));
+        }
+    }
+    unsigned int num_pixels = scale * scale;
+    return makeRGB(sum_r / num_pixels, sum_g / num_pixels,
+                   sum_b / num_pixels, sum_a / num_pixels);
+}
+
+void ShrinkImage(unsigned int *src,
+                 unsigned int s_width, unsigned int s_height,
+                 unsigned int *dest,
+                 unsigned int d_x, unsigned int d_y,
+                 unsigned int d_width, unsigned int d_height,
+                 unsigned int scale)
+{
+    assert(s_width % scale == 0);
+    assert(s_height % scale == 0);
+
+    for (unsigned int y = 0; y < s_height / scale; y++) {
+        for (unsigned int x = 0; x < s_width / scale; x++) {
+            DEST(x, y) = sample_pixels(src, x*scale, y*scale,
+                                       s_width, s_height, scale);
+        }
+    }
+}
+#undef SRC
+#undef DEST

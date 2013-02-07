@@ -59,9 +59,16 @@ ArraySizeHelper<N> makeArraySizeHelper(T(&)[N]);
 #define ARRAY_SIZE(a)  sizeof(makeArraySizeHelper(a))
 
 inline
-unsigned int makeRGB(unsigned char r, unsigned char g, unsigned char b) {
-    return r + (g << 8) + (b << 16);
+unsigned int makeRGB(unsigned char r, unsigned char g,
+                     unsigned char b, unsigned int a = 0)
+{
+    return r | (g << 8) | (b << 16) | (a << 24);
 }
+
+inline unsigned char extractR(unsigned int pix) { return pix >> 0; }
+inline unsigned char extractG(unsigned int pix) { return pix >> 8; }
+inline unsigned char extractB(unsigned int pix) { return pix >> 16; }
+inline unsigned char extractA(unsigned int pix) { return pix >> 24; }
 
 unsigned int HSV_to_RGB(unsigned char H, unsigned char S, unsigned char V);
 
@@ -96,5 +103,12 @@ double normalize_direction(double degrees);
 std::wstring CompassPointFromDirection(double degrees);
 
 std::wstring string_format(const std::wstring fmt, ...);
+
+void ShrinkImage(unsigned int *src,
+                 unsigned int s_width, unsigned int s_height,
+                 unsigned int *dest,
+                 unsigned int d_x, unsigned int d_y,
+                 unsigned int d_width, unsigned int d_height,
+                 unsigned int scale);
 
 #endif
