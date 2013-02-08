@@ -5,6 +5,7 @@
 #include "disp_ogl.h"
 #include "mapdisplay.h"
 #include "tiles.h"
+#include "disp_ogl.h"
 
 
 static const int MAX_TILES = 100;
@@ -16,7 +17,7 @@ MapDisplayManager::MapDisplayManager(
         std::shared_ptr<class DispOpenGL> &display,
         const class RasterMapCollection &maps)
     : m_display(display), m_maps(maps), m_base_map(&maps.Get(0)),
-      m_center(m_base_map->GetSize() * 0.5),
+      m_center(BaseMapCoord(BaseMapDelta(m_base_map->GetSize() * 0.5))),
       m_zoom(1.0)
 { }
 
@@ -34,17 +35,17 @@ void MapDisplayManager::ChangeMap(const RasterMap *new_map,
         LatLon point = m_base_map->PixelToLatLon(m_center);
         MapPixelCoord new_center = new_map->LatLonToPixel(point);
         // Check if old map position is within new map
-        if (new_center.IsInRect(MapPixelCoord(0, 0), new_map->GetSize())) {
+        if (new_center.IsInRect(MapPixelCoordInt(0, 0), new_map->GetSize())) {
             m_zoom *= MetersPerPixel(*new_map, new_center);
             m_zoom /= MetersPerPixel(*m_base_map, m_center);
-            m_center = new_center;
+            m_center = BaseMapCoord(new_center);
         } else {
             try_preserve_pos = false;
         }
     }
 
     if (!try_preserve_pos) {
-        m_center = MapPixelCoord(m_base_map->GetSize() / 2.0);
+        m_center = BaseMapCoord(BaseMapDelta(m_base_map->GetSize() / 2.0));
         m_zoom = 1.0;
     }
 
@@ -53,7 +54,8 @@ void MapDisplayManager::ChangeMap(const RasterMap *new_map,
 }
 
 void MapDisplayManager::Paint() {
-    MapPixelDelta half_disp_size(m_display->GetDisplaySize() / 2.0, *this);
+    DisplayDelta half_disp_size_d(m_display->GetDisplaySize() / m_zoom / 2.0);
+    MapPixelDelta half_disp_size(half_disp_size_d.x, half_disp_size_d.y);
 
     MapPixelCoordInt tile_topleft(m_center - half_disp_size, TILE_SIZE);
     MapPixelCoordInt tile_botright(m_center + half_disp_size, TILE_SIZE);
@@ -65,7 +67,7 @@ void MapDisplayManager::Paint() {
             MapPixelCoordInt map_pos(tx, ty);
             TileCode tilecode(*m_base_map, map_pos, tile_size);
 
-            DisplayCoordCentered disp_pos(map_pos, *this);
+            DisplayCoordCentered disp_pos = DisplayCoordCenteredFromMapPixel(map_pos, *m_base_map);
             DisplayDelta disp_size(TILE_SIZE * m_zoom, TILE_SIZE * m_zoom);
             orders.push_back(DisplayOrder(disp_pos, disp_size, tilecode));
         }
@@ -89,7 +91,7 @@ double MapDisplayManager::GetCenterY() const {
     return m_center.y;
 }
 
-const MapPixelCoord &MapDisplayManager::GetCenter() const {
+const BaseMapCoord &MapDisplayManager::GetCenter() const {
     return m_center;
 }
 
@@ -111,7 +113,7 @@ void MapDisplayManager::StepZoom(double steps) {
 
 void MapDisplayManager::StepZoom(double steps, const DisplayCoord &mouse_pos) {
     double m_zoom_before = m_zoom;
-    DisplayCoordCentered old_pos(mouse_pos, *m_display);
+    DisplayCoordCentered old_pos = CenteredCoordFromDisplay(mouse_pos, *m_display);
 
     StepZoom(steps);
 
@@ -119,20 +121,54 @@ void MapDisplayManager::StepZoom(double steps, const DisplayCoord &mouse_pos) {
     DragMap(old_pos - new_pos);
 }
 
-MapPixelCoord
-MapDisplayManager::MapPixelCoordFromDisplay(const DisplayCoord &disp) const {
-    DisplayCoordCentered centered(disp, *m_display);
-    return MapPixelCoord(centered, *this);
+BaseMapCoord
+MapDisplayManager::BaseCoordFromDisplay(const DisplayCoord &disp) const {
+    return BaseCoordFromDisplay(CenteredCoordFromDisplay(disp, *m_display));
+}
+
+BaseMapCoord
+MapDisplayManager::BaseCoordFromDisplay(const DisplayCoordCentered &disp) const {
+    return m_center + BaseMapDelta(disp.x / m_zoom, disp.y / m_zoom);
+}
+
+BaseMapDelta
+MapDisplayManager::BaseDeltaFromDisplay(const DisplayDelta &disp) const {
+    return BaseMapDelta(disp.x / m_zoom, disp.y / m_zoom);
+}
+
+DisplayCoordCentered
+MapDisplayManager::DisplayCoordCenteredFromBase(const BaseMapCoord &mpc) const {
+    BaseMapDelta diff = mpc - m_center;
+    return DisplayCoordCentered(diff.x * m_zoom, diff.y * m_zoom);
+}
+
+DisplayCoordCentered
+MapDisplayManager::DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
+                                 const RasterMap &map) const
+{
+    if (&map == m_base_map)
+        return DisplayCoordCenteredFromBase(BaseMapCoord(mpc));
+
+    LatLon world_pos = map.PixelToLatLon(mpc);
+    BaseMapCoord base_pos(m_base_map->LatLonToPixel(world_pos));
+    return DisplayCoordCenteredFromBase(base_pos);
+}
+
+DisplayCoordCentered
+MapDisplayManager::DisplayCoordCenteredFromMapPixel(const MapPixelCoordInt &mpc,
+                                 const RasterMap &map) const
+{
+    return DisplayCoordCenteredFromMapPixel(MapPixelCoord(mpc), map);
 }
 
 void MapDisplayManager::CenterToDisplayCoord(const DisplayCoord &center) {
-    m_center = MapPixelCoordFromDisplay(center);
+    m_center = BaseCoordFromDisplay(center);
     m_display->ForceRepaint();
 }
 
 void MapDisplayManager::DragMap(const DisplayDelta &disp_delta) {
-    m_center = m_center - MapPixelDelta(disp_delta, *this);
-    m_center.ClampToRect(MapPixelCoord(0,0),
-                         MapPixelCoord(m_base_map->GetSize()));
+    m_center = m_center - BaseDeltaFromDisplay(disp_delta);
+    m_center.ClampToRect(MapPixelCoordInt(0,0),
+                         MapPixelCoordInt(m_base_map->GetSize()));
     m_display->ForceRepaint();
 }

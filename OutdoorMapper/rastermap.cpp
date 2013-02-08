@@ -84,7 +84,7 @@ bool HeightFinder::LatLongWithinActiveDHM(const LatLon &pos) const {
     if (!m_active_dhm)
         return false;
     MapPixelCoord map_pos = m_active_dhm->LatLonToPixel(pos);
-    return map_pos.IsInRect(MapPixelCoord(0, 0), m_active_dhm->GetSize());
+    return map_pos.IsInRect(MapPixelCoord(0, 0), MapPixelDelta(m_active_dhm->GetSize()));
 }
 
 const class RasterMap *

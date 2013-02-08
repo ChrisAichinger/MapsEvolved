@@ -21,7 +21,7 @@ unsigned int GradientMap::GetWidth() const {
 unsigned int GradientMap::GetHeight() const {
     return m_orig_map->GetHeight();
 }
-MapPixelDelta GradientMap::GetSize() const {
+MapPixelDeltaInt GradientMap::GetSize() const {
     return m_orig_map->GetSize();
 }
 void GradientMap::PixelToPCS(double *x, double *y) const {

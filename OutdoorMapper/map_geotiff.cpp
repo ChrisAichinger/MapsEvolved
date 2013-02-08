@@ -287,8 +287,8 @@ RasterMap::RasterMapType TiffMap::GetType() const {
 }
 unsigned int TiffMap::GetWidth() const { return m_geotiff->GetWidth(); };
 unsigned int TiffMap::GetHeight() const { return m_geotiff->GetHeight(); };
-MapPixelDelta TiffMap::GetSize() const {
-    return MapPixelDelta(m_geotiff->GetWidth(), m_geotiff->GetHeight());
+MapPixelDeltaInt TiffMap::GetSize() const {
+    return MapPixelDeltaInt(m_geotiff->GetWidth(), m_geotiff->GetHeight());
 }
 
 std::shared_ptr<unsigned int> TiffMap::GetRegion(

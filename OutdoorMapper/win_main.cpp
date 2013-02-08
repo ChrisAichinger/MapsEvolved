@@ -364,7 +364,7 @@ RootWindow *RootWindow::Create() {
 void RootWindow::UpdateStatusbar() {
     POINT point = GetClientMousePos(m_hwndMap);
     DisplayCoord disp_p(point.x, point.y);
-    MapPixelCoord base_point = m_mapdisplay->MapPixelCoordFromDisplay(disp_p);
+    MapPixelCoord base_point = m_mapdisplay->BaseCoordFromDisplay(disp_p);
 
     LatLon ll = m_mapdisplay->GetBaseMap().PixelToLatLon(base_point);
 

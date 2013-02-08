@@ -23,7 +23,7 @@ class ODM_INTERFACE RasterMap {
         virtual RasterMapType GetType() const = 0;
         virtual unsigned int GetWidth() const = 0;
         virtual unsigned int GetHeight() const = 0;
-        virtual MapPixelDelta GetSize() const = 0;
+        virtual MapPixelDeltaInt GetSize() const = 0;
         virtual std::shared_ptr<unsigned int>
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const = 0;

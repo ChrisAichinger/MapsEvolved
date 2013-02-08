@@ -13,7 +13,7 @@ class MapDisplayManager {
         double GetZoom() const;
         double GetCenterX() const;
         double GetCenterY() const;
-        const MapPixelCoord &GetCenter() const;
+        const BaseMapCoord &GetCenter() const;
 
         void ChangeMap(const RasterMap *new_map, bool try_preserve_pos=true);
         void Resize(unsigned int width, unsigned int height);
@@ -25,7 +25,21 @@ class MapDisplayManager {
         void CenterToDisplayCoord(const DisplayCoord &center);
         void Paint();
 
-        MapPixelCoord MapPixelCoordFromDisplay(const DisplayCoord &disp) const;
+        BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp) const;
+        BaseMapCoord
+            BaseCoordFromDisplay(const DisplayCoordCentered &disp) const;
+
+        BaseMapDelta BaseDeltaFromDisplay(const DisplayDelta &disp) const;
+
+        DisplayCoordCentered
+        DisplayCoordCenteredFromBase(const BaseMapCoord &mpc) const;
+
+        DisplayCoordCentered
+        DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
+                                         const RasterMap &map) const;
+        DisplayCoordCentered
+        DisplayCoordCenteredFromMapPixel(const MapPixelCoordInt &mpc,
+                                         const RasterMap &map) const;
 
     private:
         DISALLOW_COPY_AND_ASSIGN(MapDisplayManager);
@@ -37,7 +51,7 @@ class MapDisplayManager {
         const class RasterMapCollection &m_maps;
         const class RasterMap *m_base_map;
 
-        MapPixelCoord m_center;
+        BaseMapCoord m_center;
         double m_zoom;
 };
 

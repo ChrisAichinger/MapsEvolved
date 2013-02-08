@@ -22,6 +22,12 @@ class ODM_INTERFACE Display {
         virtual void ForceRepaint() = 0;
 };
 
+DisplayCoordCentered CenteredCoordFromDisplay(const DisplayCoord& dc,
+                                              const Display& disp);
+DisplayCoord DisplayCoordFromCentered(const DisplayCoordCentered& dc,
+                                      const Display& disp);
+
+
 class DispOpenGL : public Display {
     public:
         explicit DispOpenGL(const std::shared_ptr<OGLContext> &ogl_context);
