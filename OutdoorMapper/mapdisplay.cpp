@@ -35,8 +35,8 @@ void MapDisplayManager::ChangeMap(const RasterMap *new_map,
         MapPixelCoord new_center = new_map->LatLonToPixel(point);
         // Check if old map position is within new map
         if (new_center.IsInRect(MapPixelCoord(0, 0), new_map->GetSize())) {
-            m_zoom *= MetersPerPixel(new_map, new_center);
-            m_zoom /= MetersPerPixel(m_base_map, m_center);
+            m_zoom *= MetersPerPixel(*new_map, new_center);
+            m_zoom /= MetersPerPixel(*m_base_map, m_center);
             m_center = new_center;
         } else {
             try_preserve_pos = false;
@@ -58,11 +58,12 @@ void MapDisplayManager::Paint() {
     MapPixelCoordInt tile_topleft(m_center - half_disp_size, TILE_SIZE);
     MapPixelCoordInt tile_botright(m_center + half_disp_size, TILE_SIZE);
 
+    MapPixelDeltaInt tile_size(TILE_SIZE, TILE_SIZE);
     std::list<DisplayOrder> orders;
     for (int tx = tile_topleft.x; tx <= tile_botright.x; tx += TILE_SIZE) {
         for (int ty = tile_topleft.y; ty <= tile_botright.y; ty += TILE_SIZE) {
             MapPixelCoordInt map_pos(tx, ty);
-            TileCode tilecode(*m_base_map, map_pos, TILE_SIZE);
+            TileCode tilecode(*m_base_map, map_pos, tile_size);
 
             DisplayCoordCentered disp_pos(map_pos, *this);
             DisplayDelta disp_size(TILE_SIZE * m_zoom, TILE_SIZE * m_zoom);

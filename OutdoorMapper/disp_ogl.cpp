@@ -150,7 +150,7 @@ Texture::Texture(unsigned int width, unsigned int height,
 }
 
 Texture::Texture(const class TileCode& tilecode)
-    : m_width(tilecode.GetTileSize()), m_height(tilecode.GetTileSize()) {
+    : m_width(tilecode.GetTileSize().x), m_height(tilecode.GetTileSize().y) {
 
     std::shared_ptr<unsigned int> pixels(tilecode.GetTile());
     MakeTexture(pixels.get());

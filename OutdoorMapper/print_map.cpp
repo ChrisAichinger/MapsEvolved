@@ -26,8 +26,7 @@ bool MapPrinter::Print(HDC hdc) {
     double map_height_m = print_width_mm * m_scale / 1000.0;
 
     const RasterMap &map = m_display->GetBaseMap();
-
-    MapPixelCoord map_center = m_display->GetCenter();
+    const MapPixelCoord &map_center = m_display->GetCenter();
     int dx, dy;
     for (dx=1; GetMapDistance(map, map_center, dx, 0) < map_width_m; dx++);
     for (dy=1; GetMapDistance(map, map_center, 0, dy) < map_height_m; dy++);

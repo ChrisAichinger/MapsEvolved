@@ -370,20 +370,21 @@ void RootWindow::UpdateStatusbar() {
 
     SetSBText(0, string_format(L"lat/lon = %.5f / %.5f", ll.lat, ll.lon));
     SetSBText(5, string_format(L"Zoom: %.0f %%", m_mapdisplay->GetZoom()*100));
-    double mpp = MetersPerPixel(&m_mapdisplay->GetBaseMap(), base_point);
+    double mpp = MetersPerPixel(m_mapdisplay->GetBaseMap(), base_point);
     SetSBText(4, string_format(L"Map: %.1f m/pix", mpp));
 
-    double height, orientation, steepness;
-    if (!m_heightfinder.CalcTerrain(ll, &height, &orientation, &steepness)) {
+    TerrainInfo ti;
+    if (!m_heightfinder.CalcTerrain(ll, &ti)) {
         SetSBText(1, L"Height unknown");
         SetSBText(2, L"Terrain orientation unknown");
         SetSBText(3, L"Steepness unknown");
         return;
     }
-    SetSBText(1, string_format(L"Height: %.1f m", height));
+    SetSBText(1, string_format(L"Height: %.1f m", ti.height_m));
     SetSBText(2, string_format(L"Orientation: %3s (%.1f°)",
-                 CompassPointFromDirection(orientation).c_str(), orientation));
-    SetSBText(3, string_format(L"Steepness: %.1f°", steepness));
+                 CompassPointFromDirection(ti.slope_face_deg).c_str(),
+                 ti.slope_face_deg));
+    SetSBText(3, string_format(L"Steepness: %.1f°", ti.steepness_deg));
 }
 
 void RootWindow::SetSBText(int idx, const std::wstring &str) {

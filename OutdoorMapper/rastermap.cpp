@@ -53,24 +53,6 @@ HeightFinder::HeightFinder(const class RasterMapCollection &maps)
     : m_maps(maps), m_active_dhm(0)
 { }
 
-bool HeightFinder::CalcTerrain(const LatLon &pos, double *height,
-                               double *slope_face, double *steepness_deg)
-{
-    TerrainInfo ti;
-    bool res = CalcTerrain(pos, &ti);
-    if (!res)
-        return res;
-
-    if (height)
-        *height = ti.height;
-    if (slope_face)
-        *slope_face = ti.slope_face;
-    if (steepness_deg)
-        *steepness_deg = ti.steepness_deg;
-
-    return res;
-}
-
 bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
     assert(result);
 
@@ -84,16 +66,17 @@ bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
 
     unsigned int bezier_pixels = bezier.N_POINTS - 1;
     double bezier_meters = bezier_pixels *
-                       MetersPerPixel(m_active_dhm, bezier.GetBezierCenter());
+                     MetersPerPixel(*m_active_dhm, bezier.GetBezierCenter());
 
     MapBezierGradient grad = bezier.GetGradient(bezier.GetCreationPos());
     grad /= bezier_meters;
     double grad_direction = atan2(grad.y, grad.x);
     double grad_steepness = atan(grad.Abs());
 
-    result->height = bezier.GetValue(bezier.GetCreationPos());
-    result->slope_face = normalize_direction(270 + grad_direction*RAD_to_DEG);
+    result->height_m = bezier.GetValue(bezier.GetCreationPos());
     result->steepness_deg = grad_steepness * RAD_to_DEG;
+    result->slope_face_deg = normalize_direction(270 +
+                                                 grad_direction*RAD_to_DEG);
     return true;
 }
 
@@ -127,12 +110,12 @@ double GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
     return proj.CalcDistance(lA.lat, lA.lon, lB.lat, lB.lon);
 }
 
-double MetersPerPixel(const RasterMap *map, const MapPixelCoord &pos) {
-    double mppx = 0.5 * GetMapDistance(*map, pos, 1, 0);
-    double mppy = 0.5 * GetMapDistance(*map, pos, 0, 1);
+double MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos) {
+    double mppx = 0.5 * GetMapDistance(map, pos, 1, 0);
+    double mppy = 0.5 * GetMapDistance(map, pos, 0, 1);
     return 0.5 * (mppx + mppy);
 }
 
-double MetersPerPixel(const RasterMap *map, const MapPixelCoordInt &pos) {
+double MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos) {
     return MetersPerPixel(map, MapPixelCoord(pos));
 }

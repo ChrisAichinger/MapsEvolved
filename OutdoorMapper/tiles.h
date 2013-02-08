@@ -8,18 +8,19 @@
 class TileCode {
     public:
         TileCode(const class RasterMap &map,
-                 const class MapPixelCoordInt &pos, int tilesize)
+                 const class MapPixelCoordInt &pos,
+                 const class MapPixelDeltaInt &tilesize)
             : m_map(map), m_pos(pos), m_tilesize(tilesize)
             {};
         const class RasterMap &GetMap() const { return m_map; };
         const MapPixelCoordInt &GetPosition() const { return m_pos; };
-        int GetTileSize() const { return m_tilesize; };
+        const MapPixelDeltaInt &GetTileSize() const { return m_tilesize; };
 
         std::shared_ptr<unsigned int> GetTile() const;
     private:
         const RasterMap &m_map;
         MapPixelCoordInt m_pos;
-        int m_tilesize;
+        MapPixelDeltaInt m_tilesize;
 };
 
 inline bool operator==(const TileCode& lhs, const TileCode& rhs) {
@@ -39,7 +40,12 @@ inline bool operator< (const TileCode& lhs, const TileCode& rhs) {
     if (lpos.x != rpos.x) return lpos.x < rpos.x;
     if (lpos.y != rpos.y) return lpos.y < rpos.y;
 
-    return lhs.GetTileSize() < rhs.GetTileSize();
+    const MapPixelDeltaInt &lsize = lhs.GetTileSize();
+    const MapPixelDeltaInt &rsize = rhs.GetTileSize();
+    if (lsize.x != rsize.x) return lsize.x < rsize.x;
+    if (lsize.y != rsize.y) return lsize.y < rsize.y;
+
+    return false;
 }
 inline bool operator!=(const TileCode& lhs, const TileCode& rhs) {
     return !operator==(lhs,rhs);
