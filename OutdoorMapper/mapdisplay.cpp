@@ -62,17 +62,38 @@ void MapDisplayManager::Paint() {
 
     MapPixelDeltaInt tile_size(TILE_SIZE, TILE_SIZE);
     std::list<DisplayOrder> orders;
-    for (int tx = tile_topleft.x; tx <= tile_botright.x; tx += TILE_SIZE) {
-        for (int ty = tile_topleft.y; ty <= tile_botright.y; ty += TILE_SIZE) {
-            MapPixelCoordInt map_pos(tx, ty);
-            TileCode tilecode(*m_base_map, map_pos, tile_size);
+    PaintOneLayer(&orders, *m_base_map,
+                  tile_topleft, tile_botright, tile_size);
+    m_display->Render(orders);
+}
 
-            DisplayCoordCentered disp_pos = DisplayCoordCenteredFromMapPixel(map_pos, *m_base_map);
-            DisplayDelta disp_size(TILE_SIZE * m_zoom, TILE_SIZE * m_zoom);
-            orders.push_back(DisplayOrder(disp_pos, disp_size, tilecode));
+void MapDisplayManager::PaintOneLayer(std::list<class DisplayOrder> *orders,
+                                      const class RasterMap &map,
+                                      const MapPixelCoordInt &tile_topleft,
+                                      const MapPixelCoordInt &tile_botright,
+                                      const MapPixelDeltaInt &tile_size)
+{
+    MapPixelDeltaInt tile_size_h(tile_size.x, 0);
+    MapPixelDeltaInt tile_size_v(0, tile_size.y);
+
+    for (int x = tile_topleft.x; x <= tile_botright.x; x += tile_size.x) {
+        for (int y = tile_topleft.y; y <= tile_botright.y; y += tile_size.y) {
+            MapPixelCoordInt map_pos(x, y);
+            TileCode tilecode(map, map_pos, tile_size);
+
+            DisplayCoordCentered disp_tl = DisplayCoordCenteredFromMapPixel(
+                                           map_pos, map);
+            DisplayCoordCentered disp_tr = DisplayCoordCenteredFromMapPixel(
+                                           map_pos + tile_size_h, map);
+            DisplayCoordCentered disp_bl = DisplayCoordCenteredFromMapPixel(
+                                           map_pos + tile_size_v, map);
+            DisplayCoordCentered disp_br = DisplayCoordCenteredFromMapPixel(
+                                           map_pos + tile_size, map);
+
+            orders->push_back(DisplayOrder(disp_tl, disp_tr, disp_bl, disp_br,
+                                           tilecode));
         }
     }
-    m_display->Render(orders);
 }
 
 const class RasterMap &MapDisplayManager::GetBaseMap() const {
