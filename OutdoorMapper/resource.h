@@ -7,3 +7,4 @@
 #define IDB_PRINTER                             108
 #define IDB_MAP                                 109
 #define IDS_MLV_COL_FNAME                       40000
+#define IDS_MLV_COL_TYPE                        40001

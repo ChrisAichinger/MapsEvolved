@@ -196,6 +196,7 @@ LRESULT RootWindow::OnCreate()
 
     LoadMap(m_maps, MAPPATH);
     LoadMap(m_maps, DHMPATH);
+    LoadMap(m_maps, L"dummyfile_doesn't_exist?.tif");
 
     std::shared_ptr<DevContext> dev_ctx(new DevContext(m_hwndMap));
     std::shared_ptr<OGLContext> ogl_ctx(new OGLContext(dev_ctx));

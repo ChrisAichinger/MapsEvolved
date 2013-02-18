@@ -17,6 +17,7 @@ class ODM_INTERFACE RasterMap {
             TYPE_GRADIENT,
             TYPE_LEGEND,
             TYPE_OVERVIEW,
+            TYPE_ERROR,
         };
         virtual ~RasterMap();
 

@@ -104,6 +104,9 @@ ImageList::~ImageList() {
     assert(ImageList_Destroy(m_handle));
 }
 
+void ImageList::AddIcon(const class IconHandle &icon) {
+    ImageList_AddIcon(m_handle, icon.Get());
+}
 
 IconHandle::IconHandle(HINSTANCE hInstance, LPCTSTR lpIconName)
     : m_handle((HICON)LoadImage(hInstance, lpIconName, IMAGE_ICON, 0, 0, 0))
@@ -263,6 +266,10 @@ HWND FindWindowWithinProcess(const std::wstring &wndClass) {
 }
 
 std::wstring LoadResString(UINT uID, HINSTANCE hInst) {
+    return std::wstring(LoadResPWCHAR(uID, hInst));
+}
+
+const wchar_t *LoadResPWCHAR(UINT uID, HINSTANCE hInst) {
     if (hInst == (HINSTANCE)-1) {
         hInst = g_hinst;
     }
@@ -270,8 +277,7 @@ std::wstring LoadResString(UINT uID, HINSTANCE hInst) {
     // Retrieve pointer to string resource
     const wchar_t *p_str_resource = NULL;
     LoadString(hInst, uID, (LPWSTR)&p_str_resource, 0);
-
-    return std::wstring(p_str_resource);
+    return p_str_resource;
 }
 
 
@@ -519,5 +525,231 @@ bool PageSetupDialog(HWND hwnd_parent) {
     if (psd.hDevNames)
         GlobalFree(psd.hDevNames);
     return true;
+}
+
+bool FileExists(const wchar_t* fname) {
+  DWORD dwAttrib = GetFileAttributes(fname);
+
+  return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+         !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+
+// Listview Stuff
+ListViewItem::ListViewItem()
+    : m_lvitem(), m_text()
+{
+    m_lvitem.pszText = const_cast<LPWSTR>(m_text.c_str());
+}
+
+ListViewItem::ListViewItem(const LVITEM &lvitem, const std::wstring &text)
+    : m_lvitem(lvitem), m_text(text)
+{
+    m_lvitem.pszText = const_cast<LPWSTR>(m_text.c_str());
+}
+
+ListViewItem::ListViewItem(const ListViewItem &rhs)
+    : m_lvitem(rhs.m_lvitem), m_text(rhs.m_text)
+{
+    m_lvitem.pszText = const_cast<LPWSTR>(m_text.c_str());
+}
+
+
+ListViewItem ListViewTextItem(const std::wstring &text) {
+    LVITEM lvitem = {0};
+    lvitem.mask = LVIF_TEXT | LVIF_STATE;
+    return ListViewItem(lvitem, text);
+}
+
+ListViewItem ListViewTextImageItem(const std::wstring &text, int image_id) {
+    LVITEM lvitem = {0};
+    lvitem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
+    lvitem.iImage = image_id;
+    return ListViewItem(lvitem, text);
+}
+
+void ListViewRow::AddItem(const ListViewItem& item) {
+    m_vec.push_back(item);
+}
+
+
+ListViewColumn::ListViewColumn()
+    : m_lvcolumn(), m_text()
+{
+    m_lvcolumn.pszText = const_cast<LPWSTR>(m_text.c_str());
+}
+
+ListViewColumn::ListViewColumn(const LVCOLUMN &lvcolumn, const std::wstring &text)
+    : m_lvcolumn(lvcolumn), m_text(text)
+{
+    m_lvcolumn.pszText = const_cast<LPWSTR>(m_text.c_str());
+}
+
+ListViewColumn::ListViewColumn(const ListViewColumn &rhs)
+    : m_lvcolumn(rhs.m_lvcolumn), m_text(rhs.m_text)
+{
+    m_lvcolumn.pszText = const_cast<LPWSTR>(m_text.c_str());
+}
+
+
+ListView::~ListView() {
+    if (m_hwnd) {
+        RemoveWindowSubclass(m_hwnd, &s_SubClassProc, 0);
+    }
+}
+
+void ListView::Create(HWND hwndParent, const RECT &rect) {
+    m_hwnd = CreateWindow(
+            WC_LISTVIEW, L"",
+            WS_CHILD | LVS_REPORT | LVS_SHAREIMAGELISTS,
+            rect.left, rect.top,
+            rect.right - rect.left,
+            rect.bottom - rect.top,
+            hwndParent, (HMENU)0, g_hinst, NULL);
+
+    if (!m_hwnd)
+        throw std::runtime_error("Failed to create list view.");
+
+    if (!SetWindowSubclass(m_hwnd, &s_SubClassProc, 0,
+                           reinterpret_cast<DWORD_PTR>(this)))
+    {
+        DestroyWindow(m_hwnd);
+        throw std::runtime_error("Failed to subclass list view.");
+    }
+}
+
+void ListView::SetImageList(std::unique_ptr<ImageList> &&imagelist) {
+    ListView_SetImageList(m_hwnd, imagelist->Get(), LVSIL_SMALL);
+    m_imagelist.swap(imagelist);
+}
+
+void ListView::InsertColumns(int n_columns, const LVCOLUMN columns[]) {
+    for (int iCol = 0; iCol < n_columns; iCol++) {
+        m_columns.push_back(
+                ListViewColumn(columns[iCol], columns[iCol].pszText));
+
+        ListViewColumn &col = m_columns[m_columns.size() - 1];
+        col.m_lvcolumn.iSubItem = iCol;
+        if (ListView_InsertColumn(m_hwnd, iCol, &col) == -1)
+            throw std::runtime_error("Failed to insert listview column");
+    }
+}
+
+void ListView::InsertRow(const ListViewRow &row, int desired_index) {
+    int subitem_index = 0;
+    auto it = row.cbegin();
+    assert(it != row.cend());
+
+    LVITEM item;
+    item = it->GetLVITEM();
+    item.iItem = desired_index;
+    item.iSubItem = subitem_index;
+    int index = ListView_InsertItem(m_hwnd, &item);
+    if (index == -1)
+        throw std::runtime_error("Failed to insert listview item");
+
+    ++it;
+    ++subitem_index;
+    for (; it != row.cend(); ++it, ++subitem_index) {
+        item = it->GetLVITEM();
+        item.iItem = index;
+        item.iSubItem = subitem_index;
+        if (!ListView_SetItem(m_hwnd, &item))
+            throw std::runtime_error("Failed to insert listview item");
+    }
+    m_rows.insert(m_rows.begin() + index, row);
+}
+
+LRESULT ListView::SubClassProc(HWND hwnd, UINT msg,
+                               WPARAM wParam, LPARAM lParam)
+{
+    if (hwnd != m_hwnd)
+        return DefSubclassProc(hwnd, msg, wParam, lParam);
+
+    if (msg == WM_PAINT) {
+        RECT rectUpdate, rectRedraw, rectItem;
+        GetUpdateRect(hwnd, &rectUpdate, FALSE);
+
+        // allow default processing first
+        DefSubclassProc(hwnd, msg, wParam, lParam);
+
+        int idxTop = ListView_GetTopIndex(hwnd);        // First visible row
+        int idxItems = ListView_GetCountPerPage(hwnd);  // Number rows visible
+        int idxLast = min(idxTop + idxItems, ListView_GetItemCount(hwnd) - 1);
+
+        for (int i = idxTop; i <= idxLast; i++) {
+            ListView_GetItemRect(hwnd, i, &rectItem, LVIR_BOUNDS);
+
+            // If item rect intersects update rect then it requires re-drawing
+            if (IntersectRect(&rectRedraw, &rectUpdate, &rectItem)) {
+                // invalidate the row rectangle then...
+                InvalidateRect(hwnd, &rectRedraw, FALSE);
+
+                if (m_rows[i].WantColor()) {
+                    // change color and force redraw
+                    COLORREF color_orig = ListView_GetTextBkColor(hwnd);
+                    ListView_SetTextBkColor(hwnd, m_rows[i].GetColor());
+                    DefSubclassProc(hwnd, msg, wParam, lParam);
+                    // change back to original color
+                    ListView_SetTextBkColor(hwnd, color_orig);
+                } else {
+                    DefSubclassProc(hwnd, msg, wParam, lParam);
+                }
+
+            }
+        }
+        return 0;
+    }
+    if (msg == WM_ERASEBKGND) {
+        DefSubclassProc(hwnd, msg, wParam, lParam);
+
+        int idxTop = ListView_GetTopIndex(hwnd);        // First visible row
+        int idxItems = ListView_GetCountPerPage(hwnd);  // Number rows visible
+        int idxLast = min(idxTop + idxItems, ListView_GetItemCount(hwnd) - 1);
+
+        for (int i = idxTop; i <= idxLast; i++) {
+            if (!m_rows[i].WantColor())
+                continue;
+
+            RECT r;
+            ListView_GetItemRect(hwnd, i, &r, LVIR_BOUNDS);
+            HBRUSH brush = CreateSolidBrush(m_rows[i].GetColor());
+            FillRect((HDC)wParam, &r, brush);
+            DeleteObject(brush);
+        }
+        return TRUE;
+    }
+    return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK ListView::s_SubClassProc(HWND hwnd, UINT msg,
+                                          WPARAM wParam, LPARAM lParam,
+                                          UINT_PTR uId, DWORD_PTR data)
+{
+    ListView *plv = reinterpret_cast<ListView*>(data);
+    return plv->SubClassProc(hwnd, msg, wParam, lParam);
+}
+
+void ListView::RegisterEventHandlers(const ListViewEvents &events) {
+    m_events = events;
+}
+
+bool ListView::HandleNotify(WPARAM wParam, LPARAM lParam) {
+    LPNMHDR pnmhdr = reinterpret_cast<LPNMHDR>(lParam);
+    if (pnmhdr->hwndFrom != m_hwnd)
+        return false;
+
+    switch (pnmhdr->code) {
+    case LVN_ITEMCHANGED:
+        if (m_events.ItemChanged)
+            m_events.ItemChanged(*this, reinterpret_cast<LPNMLISTVIEW>(lParam));
+        return true;
+
+    case NM_DBLCLK:
+        if (m_events.DoubleClick)
+            m_events.DoubleClick(*this, reinterpret_cast<LPNMITEMACTIVATE>(lParam));
+        return true;
+    }
+    return false;
 }
 

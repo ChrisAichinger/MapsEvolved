@@ -2,6 +2,9 @@
 #define ODM__WINWRAP_H
 
 #include <memory>
+#include <string>
+#include <vector>
+#include <functional>
 
 #include <Windows.h>
 #include <commctrl.h>
@@ -95,6 +98,7 @@ class ImageList {
         ImageList(int width, int height, unsigned int flags, int length);
         ~ImageList();
         HIMAGELIST Get() { return m_handle; };
+        void AddIcon(const class IconHandle &icon);
     private:
         DISALLOW_COPY_AND_ASSIGN(ImageList);
         HIMAGELIST m_handle;
@@ -104,7 +108,7 @@ class IconHandle {
     public:
         IconHandle(HINSTANCE hInstance, LPCTSTR lpIconName);
         ~IconHandle();
-        HICON Get() { return m_handle; };
+        HICON Get() const { return m_handle; };
     private:
         DISALLOW_COPY_AND_ASSIGN(IconHandle);
         HICON m_handle;
@@ -151,6 +155,7 @@ class Window
 POINT GetClientMousePos(HWND hwnd);
 HWND FindWindowWithinProcess(const std::wstring &wndClass);
 std::wstring LoadResString(UINT uID, HINSTANCE hInst = (HINSTANCE)-1);
+const wchar_t *LoadResPWCHAR(UINT uID, HINSTANCE hInst = (HINSTANCE)-1);
 
 
 class ODM_INTERFACE IPrintAbortHandler {
@@ -219,5 +224,118 @@ struct PrintOrder {
 };
 bool Print(HWND hwnd_parent, const struct PrintOrder &order);
 bool PageSetupDialog(HWND hwnd_parent);
+
+bool FileExists(const wchar_t* fname);
+
+
+class ListViewItem {
+    public:
+        ListViewItem();
+        ListViewItem(const LVITEM &lvitem, const std::wstring &text);
+        ListViewItem(const ListViewItem &rhs);
+
+        friend void swap(ListViewItem& first, ListViewItem& second) {
+            using std::swap; // enable ADL
+            swap(first.m_lvitem, second.m_lvitem);
+            swap(first.m_text, second.m_text);
+        }
+
+        ListViewItem& ListViewItem::operator=(ListViewItem rhs) {
+            swap(*this, rhs);
+            return *this;
+        }
+
+        const LVITEM &GetLVITEM() const { return m_lvitem; }
+        const std::wstring &GetText() const { return m_text; }
+    private:
+        LVITEM m_lvitem;
+        std::wstring m_text;
+};
+
+ListViewItem ListViewTextItem(const std::wstring &text);
+ListViewItem ListViewTextImageItem(const std::wstring &text, int image_id);
+
+class ListViewRow {
+    public:
+        ListViewRow() : m_vec(), m_color(0), m_want_color(false) {};
+        void AddItem(const ListViewItem& item);
+        unsigned int GetColor() const { return m_color; }
+        unsigned int WantColor() const { return m_want_color; }
+        void SetColor(unsigned int color) {
+            m_want_color = true;
+            m_color = color;
+        }
+
+        std::vector<const ListViewItem>::const_iterator cbegin() const {
+            return m_vec.cbegin();
+        }
+        std::vector<const ListViewItem>::const_iterator cend() const {
+            return m_vec.cend();
+        }
+    private:
+        std::vector<const ListViewItem> m_vec;
+        unsigned int m_color;
+        bool m_want_color;
+};
+
+class ListViewColumn {
+    public:
+        ListViewColumn();
+        ListViewColumn(const LVCOLUMN &lvcolumn, const std::wstring &text);
+        ListViewColumn(const ListViewColumn &rhs);
+
+        friend void swap(ListViewColumn& first, ListViewColumn& second) {
+            using std::swap; // enable ADL
+            swap(first.m_lvcolumn, second.m_lvcolumn);
+            swap(first.m_text, second.m_text);
+        }
+
+        ListViewColumn& ListViewColumn::operator=(ListViewColumn rhs) {
+            swap(*this, rhs);
+            return *this;
+        }
+
+        const LVCOLUMN &GetLVCOLUMN() const { return m_lvcolumn; }
+        const std::wstring &GetText() const { return m_text; }
+    private:
+        LVCOLUMN m_lvcolumn;
+        std::wstring m_text;
+
+        friend class ListView;
+};
+
+struct ListViewEvents {
+    std::function<LRESULT(const class ListView& lv, LPNMLISTVIEW pnmlv)> ItemChanged;
+    std::function<LRESULT(const class ListView& lv, LPNMITEMACTIVATE pnmlv)> DoubleClick;
+};
+
+class ListView {
+    public:
+        ListView() : m_hwnd(0), m_imagelist(), m_columns() {};
+        ~ListView();
+
+        void Create(HWND hwndParent, const RECT &rect);
+        void SetImageList(std::unique_ptr<class ImageList> &&imagelist);
+        void InsertColumns(int n_columns, const LVCOLUMN columns[]);
+        void InsertRow(const ListViewRow &row, int desired_index);
+        void RegisterEventHandlers(const ListViewEvents &events);
+        bool HandleNotify(WPARAM wParam, LPARAM lParam);
+
+        HWND GetHWND() const { return m_hwnd; };
+    private:
+        HWND m_hwnd;
+        std::unique_ptr<class ImageList> m_imagelist;
+        std::vector<ListViewColumn> m_columns;
+        std::vector<ListViewRow> m_rows;
+        ListViewEvents m_events;
+
+        LRESULT SubClassProc(HWND hwnd, UINT msg,
+                             WPARAM wParam, LPARAM lParam);
+        static LRESULT CALLBACK s_SubClassProc(HWND hwnd, UINT msg,
+                                               WPARAM wParam, LPARAM lParam,
+                                               UINT_PTR uId, DWORD_PTR data);
+
+        DISALLOW_COPY_AND_ASSIGN(ListView);
+};
 
 #endif

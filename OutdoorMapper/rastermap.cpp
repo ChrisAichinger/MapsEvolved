@@ -29,22 +29,69 @@ void RasterMapCollection::AddMap(std::shared_ptr<class RasterMap> map) {
     m_maps.push_back(map);
 }
 
+class RasterMapError : public RasterMap {
+    public:
+        explicit RasterMapError(const wchar_t *fname, const std::wstring &desc)
+            : m_fname(fname), m_desc(desc)
+            {}
+        virtual RasterMap::RasterMapType GetType() const { return TYPE_ERROR; }
+        virtual unsigned int GetWidth() const { return 0; }
+        virtual unsigned int GetHeight() const { return 0; }
+        virtual MapPixelDeltaInt GetSize() const
+            { return MapPixelDeltaInt(0,0); }
+        virtual std::shared_ptr<unsigned int>
+            GetRegion(const MapPixelCoordInt &pos,
+                      const MapPixelDeltaInt &sz) const
+        {
+            return std::shared_ptr<unsigned int>(new unsigned int[sz.x*sz.y](),
+                                                 ArrayDeleter<unsigned int>());
+        }
+        virtual void PixelToPCS(double *x, double *y) const {}
+        virtual void PCSToPixel(double *x, double *y) const {}
+        virtual const class Projection &GetProj() const {
+            assert(false);
+            Projection* pj = new Projection("");
+            return *pj;
+        }
+
+        virtual LatLon PixelToLatLon(const MapPixelCoord &pos) const {
+            return LatLon();
+        }
+        virtual MapPixelCoord LatLonToPixel(const LatLon &pos) const {
+            return MapPixelCoord();
+        }
+        virtual const std::wstring &GetFname() const { return m_fname; }
+        virtual const std::wstring &GetDescription() const {
+            return m_fname;
+        }
+
+    private:
+        const std::wstring m_fname;
+        const std::wstring m_desc;
+};
+
+
 void LoadMap(RasterMapCollection &maps, const std::wstring &fname) {
     std::wstring fname_lower(fname);
     std::transform(fname_lower.begin(), fname_lower.end(),
                    fname_lower.begin(), ::towlower);
 
     std::shared_ptr<class RasterMap> map;
-    if (ends_with(fname_lower, L".tif") || ends_with(fname_lower, L".tiff")) {
-        // Geotiff file
-        map.reset(new TiffMap(fname.c_str()));
-        maps.AddMap(map);
-    } else {
-        assert(false);  // Not implemented
-    }
+    try {
+        if (ends_with(fname_lower, L".tif") || ends_with(fname_lower, L".tiff")) {
+            // Geotiff file
+            map.reset(new TiffMap(fname.c_str()));
+            maps.AddMap(map);
+        } else {
+            assert(false);  // Not implemented
+        }
 
-    if (map->GetType() == RasterMap::TYPE_DHM) {
-        map.reset(new GradientMap(map));
+        if (map->GetType() == RasterMap::TYPE_DHM) {
+            map.reset(new GradientMap(map));
+            maps.AddMap(map);
+        }
+    } catch (const std::runtime_error &) {
+        map.reset(new RasterMapError(fname.c_str(), L"Exception"));
         maps.AddMap(map);
     }
 }

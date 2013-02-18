@@ -1,6 +1,8 @@
 #ifndef ODM__WIN_MAPLIST_H
 #define ODM__WIN_MAPLIST_H
 
+#include <vector>
+
 #include "util.h"
 #include "winwrap.h"
 
@@ -30,11 +32,11 @@ class MapListWindow : public Window
         class RasterMapCollection &m_maps;
         LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
         LRESULT OnCreate();
+        void InsertRow(const std::vector<LVITEM> &item);
 
         HWND m_hwndStatic;
-        HWND m_hwndListview;
         MapListSizer m_sizer;
-        std::shared_ptr<ImageList> m_lvImages;
+        std::unique_ptr<class ListView> m_listview;
 };
 
 void ShowMapListWindow(class MapDisplayManager &mapdisplay,

@@ -1,10 +1,15 @@
-
 #include "win_maplist.h"
+
+#include <cassert>
+#include <functional>
+
+#include "win_main.h"
 #include "rastermap.h"
 #include "mapdisplay.h"
 #include "projection.h"
 #include "resource.h"
-#include "win_main.h"
+#include "odm_config.h"
+
 
 static const wchar_t * const MapListClassname = L"clsODM_Maplist";
 LPCTSTR MapListWindow::ClassName() {
@@ -39,99 +44,86 @@ LRESULT MapListWindow::HandleMessage(
         case WM_CREATE:
             return OnCreate();
         case WM_NOTIFY:
-            LPNMHDR pnmhdr = (LPNMHDR)lParam;
-            if (pnmhdr->hwndFrom == m_hwndListview) {
-                switch (pnmhdr->code) {
-                case LVN_ITEMCHANGED: {
-                    LPNMLISTVIEW pnmv = (LPNMLISTVIEW)lParam;
-                    if (0 == (pnmv->uNewState & LVIS_SELECTED))
-                        break;
-                    const RasterMap &map = m_maps.Get(pnmv->iItem);
-                    std::string char_proj(map.GetProj().GetProjString());
-                    std::wstring proj(WStringFromUTF8(char_proj));
-                    SetWindowText(m_hwndStatic, proj.c_str());
-                    break;
-                }
-                case NM_DBLCLK: {
-                    LPNMITEMACTIVATE pnmv = (LPNMITEMACTIVATE)lParam;
-                    m_mapdisplay.ChangeMap(&m_maps.Get(pnmv->iItem));
-                    break;
-                }
-                }
+            if (m_listview->HandleNotify(wParam, lParam)) {
+                return 0;
             }
     }
     return __super::HandleMessage(uMsg, wParam, lParam);
 }
 
+
 LRESULT MapListWindow::OnCreate() {
-    RECT rect;
     m_sizer.SetHWND(m_hwnd);
 
+    RECT rect;
     m_sizer.GetListview(rect);
 
-    // Create the list-view window in report view with label editing enabled.
-    m_hwndListview = CreateWindow(
-            WC_LISTVIEW, L"",
-            WS_CHILD | LVS_REPORT | LVS_SHAREIMAGELISTS,
-            rect.left, rect.top,
-            rect.right - rect.left,
-            rect.bottom - rect.top,
-            m_hwnd, (HMENU)0, g_hinst, NULL);
+    m_listview.reset(new ListView());
+    m_listview->Create(m_hwnd, rect);
 
-    if (!m_hwndListview)
-        throw std::runtime_error("Failed to create map list view.");
-
-    m_lvImages.reset(new ImageList(GetSystemMetrics(SM_CXSMICON),
+    std::unique_ptr<ImageList> imglist(
+                     new ImageList(GetSystemMetrics(SM_CXSMICON),
                                    GetSystemMetrics(SM_CYSMICON),
                                    ILC_MASK | ILC_COLOR32, 10));
 
-    IconHandle icon(g_hinst, MAKEINTRESOURCE(IDI_MAP_STD));
-    ImageList_AddIcon(m_lvImages->Get(), icon.Get());
-    ListView_SetImageList(m_hwndListview, m_lvImages->Get(), LVSIL_SMALL);
+    imglist->AddIcon(IconHandle(g_hinst, MAKEINTRESOURCE(IDI_MAP_STD)));
+    m_listview->SetImageList(std::move(imglist));
 
-    // Add the columns.
-    for (int iCol = 0; iCol < 1; iCol++)
+    LVCOLUMN lvcs[] = { { LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM,
+                          LVCFMT_LEFT,
+                          200,
+                          const_cast<LPWSTR>(LoadResPWCHAR(IDS_MLV_COL_FNAME)),
+                        },
+                        { LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM,
+                          LVCFMT_LEFT,
+                          200,
+                          const_cast<LPWSTR>(LoadResPWCHAR(IDS_MLV_COL_TYPE)),
+                        }
+                      };
+    m_listview->InsertColumns(ARRAY_SIZE(lvcs), lvcs);
+
+    ListViewEvents events;
+    events.ItemChanged = [this](const ListView& lv, LPNMLISTVIEW pnmlv)
+                               -> LRESULT
     {
-        LVCOLUMN lvc;
-
-        if ( iCol < 2 )
-            lvc.fmt = LVCFMT_LEFT;  // Left-aligned column.
-        else
-            lvc.fmt = LVCFMT_RIGHT; // Right-aligned column.
-
-        std::wstring col_name = LoadResString(IDS_MLV_COL_FNAME + iCol);
-        lvc.pszText = const_cast<LPWSTR>(col_name.c_str());
-
-        lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
-        lvc.iSubItem = iCol;
-        lvc.cx = 100;               // Width of column in pixels.
-
-        // Insert the columns into the list view.
-        if (ListView_InsertColumn(m_hwndListview, iCol, &lvc) == -1)
-            throw std::runtime_error("Failed to insert listview column");
-    }
-
-
-    // Initialize LVITEM members that are different for each item.
-    for (unsigned int index = 0; index < m_maps.Size(); index++)
+        if (!(pnmlv->uNewState & LVIS_SELECTED))
+            return 0;
+        const RasterMap &map = m_maps.Get(pnmlv->iItem);
+        std::string char_proj(map.GetProj().GetProjString());
+        std::wstring proj(WStringFromUTF8(char_proj));
+        SetWindowText(m_hwndStatic, proj.c_str());
+        return 0;
+    };
+    events.DoubleClick = [this](const ListView& lv, LPNMITEMACTIVATE pnmia)
+                               -> LRESULT
     {
-        LVITEM lvI;
+        m_mapdisplay.ChangeMap(&m_maps.Get(pnmia->iItem));
+        return 0;
+    };
+    m_listview->RegisterEventHandlers(events);
 
-        // Initialize LVITEM members that are common to all items.
-        const std::wstring &fname(m_maps.Get(index).GetFname());
-        lvI.pszText   = const_cast<LPWSTR>(fname.c_str());
-        lvI.mask      = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
-        lvI.stateMask = 0;
-        lvI.iSubItem  = 0;
-        lvI.state     = 0;
-        lvI.iItem  = index;
-        lvI.iImage = 0;
-
-        // Insert items into the list.
-        if (ListView_InsertItem(m_hwndListview, &lvI) == -1)
-            throw std::runtime_error("Failed to insert listview item");
+    for (unsigned int index = 0; index < m_maps.Size(); index++) {
+        ListViewRow lvrow;
+        const RasterMap &map = m_maps.Get(index);
+        lvrow.AddItem(ListViewTextImageItem(map.GetFname(), 0));
+        wchar_t *str;
+        switch (map.GetType()) {
+            case RasterMap::TYPE_MAP: str = L"Map"; break;
+            case RasterMap::TYPE_DHM: str = L"DHM"; break;
+            case RasterMap::TYPE_GRADIENT: str = L"Gradient height map"; break;
+            case RasterMap::TYPE_LEGEND: str = L"Legend"; break;
+            case RasterMap::TYPE_OVERVIEW: str = L"Overview"; break;
+            case RasterMap::TYPE_ERROR:
+                str = L"Error loading map";
+                lvrow.SetColor(makeRGB(0xdd, 0, 0));
+                break;
+            default:
+                assert(false); // Unknown raster map type
+        }
+        lvrow.AddItem(ListViewTextItem(str));
+        m_listview->InsertRow(lvrow, INT_MAX);
     }
-    ShowWindow(m_hwndListview, SW_SHOW);
+    ShowWindow(m_listview->GetHWND(), SW_SHOW);
 
     m_sizer.GetTextbox(rect);
     m_hwndStatic = CreateWindow(
