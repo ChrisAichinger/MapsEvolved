@@ -78,7 +78,9 @@ void LoadMap(RasterMapCollection &maps, const std::wstring &fname) {
 
     std::shared_ptr<class RasterMap> map;
     try {
-        if (ends_with(fname_lower, L".tif") || ends_with(fname_lower, L".tiff")) {
+        if (ends_with(fname_lower, L".tif") ||
+            ends_with(fname_lower, L".tiff"))
+        {
             // Geotiff file
             map.reset(new TiffMap(fname.c_str()));
             maps.AddMap(map);
@@ -131,7 +133,8 @@ bool HeightFinder::LatLongWithinActiveDHM(const LatLon &pos) const {
     if (!m_active_dhm)
         return false;
     MapPixelCoord map_pos = m_active_dhm->LatLonToPixel(pos);
-    return map_pos.IsInRect(MapPixelCoord(0, 0), MapPixelDelta(m_active_dhm->GetSize()));
+    return map_pos.IsInRect(MapPixelCoord(0, 0),
+                            MapPixelDelta(m_active_dhm->GetSize()));
 }
 
 const class RasterMap *

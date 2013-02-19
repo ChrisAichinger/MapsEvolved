@@ -579,7 +579,8 @@ ListViewColumn::ListViewColumn()
     m_lvcolumn.pszText = const_cast<LPWSTR>(m_text.c_str());
 }
 
-ListViewColumn::ListViewColumn(const LVCOLUMN &lvcolumn, const std::wstring &text)
+ListViewColumn::ListViewColumn(const LVCOLUMN &lvcolumn,
+                               const std::wstring &text)
     : m_lvcolumn(lvcolumn), m_text(text)
 {
     m_lvcolumn.pszText = const_cast<LPWSTR>(m_text.c_str());

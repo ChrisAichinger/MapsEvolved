@@ -134,7 +134,8 @@ void MapDisplayManager::StepZoom(double steps) {
 
 void MapDisplayManager::StepZoom(double steps, const DisplayCoord &mouse_pos) {
     double m_zoom_before = m_zoom;
-    DisplayCoordCentered old_pos = CenteredCoordFromDisplay(mouse_pos, *m_display);
+    DisplayCoordCentered old_pos = CenteredCoordFromDisplay(mouse_pos,
+                                                            *m_display);
 
     StepZoom(steps);
 
@@ -148,7 +149,8 @@ MapDisplayManager::BaseCoordFromDisplay(const DisplayCoord &disp) const {
 }
 
 BaseMapCoord
-MapDisplayManager::BaseCoordFromDisplay(const DisplayCoordCentered &disp) const {
+MapDisplayManager::BaseCoordFromDisplay(const DisplayCoordCentered &disp) const
+{
     return m_center + BaseMapDelta(disp.x / m_zoom, disp.y / m_zoom);
 }
 
@@ -158,7 +160,8 @@ MapDisplayManager::BaseDeltaFromDisplay(const DisplayDelta &disp) const {
 }
 
 DisplayCoordCentered
-MapDisplayManager::DisplayCoordCenteredFromBase(const BaseMapCoord &mpc) const {
+MapDisplayManager::DisplayCoordCenteredFromBase(const BaseMapCoord &mpc) const
+{
     BaseMapDelta diff = mpc - m_center;
     return DisplayCoordCentered(diff.x * m_zoom, diff.y * m_zoom);
 }
@@ -176,8 +179,9 @@ MapDisplayManager::DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
 }
 
 DisplayCoordCentered
-MapDisplayManager::DisplayCoordCenteredFromMapPixel(const MapPixelCoordInt &mpc,
-                                 const RasterMap &map) const
+MapDisplayManager::DisplayCoordCenteredFromMapPixel(
+                        const MapPixelCoordInt &mpc,
+                        const RasterMap &map) const
 {
     return DisplayCoordCenteredFromMapPixel(MapPixelCoord(mpc), map);
 }
