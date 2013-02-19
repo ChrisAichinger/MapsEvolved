@@ -338,4 +338,28 @@ class ListView {
         DISALLOW_COPY_AND_ASSIGN(ListView);
 };
 
+class RegistryKey {
+    public:
+        enum reg_access { REG_READ, REG_WRITE };
+
+        explicit RegistryKey(HKEY hkey);
+        RegistryKey(HKEY hkey, const std::wstring &subkey,
+                   enum reg_access access);
+        ~RegistryKey();
+
+        bool GetStringList(const std::wstring &keyvalue,
+                           std::vector<std::wstring> *strings);
+        bool SetStringList(const std::wstring &keyvalue,
+                           const std::vector<std::wstring> &strings);
+
+        bool GetDWORD(const std::wstring &keyvalue, DWORD *value);
+        bool SetDWORD(const std::wstring &keyvalue, DWORD value);
+
+    private:
+        HKEY m_key;
+        bool m_is_open;
+
+        DISALLOW_COPY_AND_ASSIGN(RegistryKey);
+};
+
 #endif

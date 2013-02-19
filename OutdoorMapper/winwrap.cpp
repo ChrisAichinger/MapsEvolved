@@ -1,5 +1,5 @@
 #include <stdexcept>
-#include <assert.h>
+#include <cassert>
 
 #include <windows.h>
 #include <GL/gl.h>                      /* OpenGL header file */
@@ -743,14 +743,121 @@ bool ListView::HandleNotify(WPARAM wParam, LPARAM lParam) {
     switch (pnmhdr->code) {
     case LVN_ITEMCHANGED:
         if (m_events.ItemChanged)
-            m_events.ItemChanged(*this, reinterpret_cast<LPNMLISTVIEW>(lParam));
+            m_events.ItemChanged(*this,
+                                 reinterpret_cast<LPNMLISTVIEW>(lParam));
         return true;
 
     case NM_DBLCLK:
         if (m_events.DoubleClick)
-            m_events.DoubleClick(*this, reinterpret_cast<LPNMITEMACTIVATE>(lParam));
+            m_events.DoubleClick(*this,
+                                 reinterpret_cast<LPNMITEMACTIVATE>(lParam));
         return true;
     }
     return false;
 }
 
+RegistryKey::RegistryKey(HKEY hkey)
+    : m_key(hkey), m_is_open(hkey != INVALID_HANDLE_VALUE)
+{}
+
+RegistryKey::RegistryKey(HKEY hkey, const std::wstring &subkey,
+                         enum reg_access access)
+    : m_key((HKEY)INVALID_HANDLE_VALUE), m_is_open(false)
+{
+    REGSAM sam = (access == REG_READ) ? KEY_READ : KEY_WRITE;
+    LONG success = RegOpenKeyEx(hkey, subkey.c_str(), 0, sam, &m_key);
+    m_is_open = (success == ERROR_SUCCESS);
+}
+
+RegistryKey::~RegistryKey() {
+    if (m_key != INVALID_HANDLE_VALUE) {
+        RegCloseKey(m_key);
+        m_key = (HKEY)INVALID_HANDLE_VALUE;
+        m_is_open = false;
+    }
+}
+
+bool RegistryKey::GetStringList(const std::wstring &keyvalue,
+                                std::vector<std::wstring> *strings)
+{
+    if (!m_is_open)
+        return false;
+
+    DWORD type, char_len;
+    LONG success = RegGetValue(m_key, NULL, keyvalue.c_str(), RRF_RT_ANY,
+                               &type, NULL, &char_len);
+    if (success != ERROR_SUCCESS)
+        return false;
+    if (type != REG_MULTI_SZ)
+        return false;
+
+    size_t wchar_len = (char_len + sizeof(wchar_t) - 1) / sizeof(wchar_t);
+    // zero initialize data - notice the () after [wchar_len]
+    auto data = std::unique_ptr<wchar_t[]>(new wchar_t[wchar_len]());
+    success = RegGetValue(m_key, NULL, keyvalue.c_str(), RRF_RT_REG_MULTI_SZ,
+                          NULL, data.get(), &char_len);
+
+    if (success != ERROR_SUCCESS)
+        return false;
+
+    const wchar_t *p = data.get();
+    const wchar_t *end = data.get() + wchar_len;
+    size_t length = wcsnlen(p, end - p);
+    while (length > 0 && p + length < end) {
+        strings->push_back(std::wstring(p, length));
+        p += length + 1;
+        length = wcsnlen(p, end - p);
+    }
+    return true;
+}
+
+bool RegistryKey::SetStringList(const std::wstring &keyvalue,
+                                const std::vector<std::wstring> &strings)
+{
+    if (!m_is_open)
+        return false;
+
+    // empty string terminates the string list - allocate space for final \0
+    DWORD wchar_len = 1;
+    for (auto it = strings.cbegin(); it != strings.cend(); it++) {
+        wchar_len += it->length() + 1;  // account for \0
+    }
+
+    // zero initialize data - notice the () after [wchar_len]
+    auto data = std::unique_ptr<wchar_t[]>(new wchar_t[wchar_len]());
+
+    wchar_t *p = data.get();
+    const wchar_t *end = p + wchar_len;
+    for (auto it = strings.cbegin(); it != strings.cend(); it++) {
+        assert(p < end);
+        wcscpy_s(p, end - p, it->c_str());
+        p += it->length() + 1;
+    }
+
+    LONG res = RegSetValueEx(m_key, keyvalue.c_str(), 0, REG_MULTI_SZ,
+                             reinterpret_cast<BYTE*>(data.get()),
+                             wchar_len * sizeof(wchar_t));
+
+    return res == ERROR_SUCCESS;
+}
+
+bool RegistryKey::GetDWORD(const std::wstring &keyvalue, DWORD *value) {
+    if (!m_is_open)
+        return false;
+
+    DWORD size = sizeof(*value);
+    LONG success = RegGetValue(m_key, NULL, keyvalue.c_str(),
+                               RRF_RT_REG_DWORD, NULL, value, &size);
+    return success == ERROR_SUCCESS;
+}
+
+bool RegistryKey::SetDWORD(const std::wstring &keyvalue, DWORD value) {
+    if (!m_is_open)
+        return false;
+
+    LONG res = RegSetValueEx(m_key, keyvalue.c_str(), 0, REG_DWORD,
+                             reinterpret_cast<BYTE*>(&value),
+                             sizeof(value));
+
+    return res == ERROR_SUCCESS;
+}
