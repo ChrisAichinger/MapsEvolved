@@ -280,16 +280,8 @@ void GeoTiff::Hook_TIFFRGBAImageGet(TIFFRGBAImage &img) const {
 }
 
 TiffMap::TiffMap(const wchar_t *fname)
-    : m_geotiff(new GeoTiff(fname)), m_proj(NULL)
-{
-    m_proj.reset(new Projection(m_geotiff->GetProj4String()));
-    if (!*m_proj) {
-        throw std::runtime_error("Unable to initialize projection.");
-    }
-    if (m_geotiff->GetType() == TYPE_DHM) {
-
-    }
-};
+    : m_geotiff(new GeoTiff(fname)), m_proj(m_geotiff->GetProj4String())
+{}
 
 
 RasterMap::RasterMapType TiffMap::GetType() const {
@@ -311,8 +303,8 @@ void TiffMap::PCSToPixel(double *x, double *y) const
     { return m_geotiff->PCSToPixel(x, y); }
 const std::wstring &TiffMap::GetFname() const
     { return m_geotiff->GetFilename(); }
-const class Projection &TiffMap::GetProj() const
-    { return *m_proj; }
+Projection TiffMap::GetProj() const
+    { return m_proj; }
 
 LatLon TiffMap::PixelToLatLon(const MapPixelCoord &pos) const {
     double x = pos.x;

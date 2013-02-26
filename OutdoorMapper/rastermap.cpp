@@ -48,10 +48,9 @@ class RasterMapError : public RasterMap {
         }
         virtual void PixelToPCS(double *x, double *y) const {}
         virtual void PCSToPixel(double *x, double *y) const {}
-        virtual const class Projection &GetProj() const {
+        virtual Projection GetProj() const {
             assert(false);
-            Projection* pj = new Projection("");
-            return *pj;
+            return Projection("");
         }
 
         virtual LatLon PixelToLatLon(const MapPixelCoord &pos) const {

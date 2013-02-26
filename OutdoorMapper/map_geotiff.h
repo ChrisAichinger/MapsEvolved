@@ -2,6 +2,7 @@
 #define ODM__MAP_GEOTIFF_H
 
 #include "rastermap.h"
+#include "projection.h"
 
 class TiffMap : public RasterMap {
     public:
@@ -16,7 +17,7 @@ class TiffMap : public RasterMap {
 
         virtual void PixelToPCS(double *x, double *y) const;
         virtual void PCSToPixel(double *x, double *y) const;
-        virtual const class Projection &GetProj() const;
+        virtual Projection GetProj() const;
 
         virtual LatLon PixelToLatLon(const MapPixelCoord &pos) const;
         virtual MapPixelCoord LatLonToPixel(const LatLon &pos) const;
@@ -24,7 +25,7 @@ class TiffMap : public RasterMap {
         virtual const std::wstring &GetFname() const;
     private:
         std::shared_ptr<class GeoTiff> m_geotiff;
-        std::shared_ptr<class Projection> m_proj;
+        Projection m_proj;
 };
 
 #endif

@@ -8,6 +8,7 @@
 #include "odm_config.h"
 #include "util.h"
 #include "coordinates.h"
+#include "projection.h"
 
 class ODM_INTERFACE RasterMap {
     public:
@@ -31,7 +32,7 @@ class ODM_INTERFACE RasterMap {
 
         virtual void PixelToPCS(double *x, double *y) const = 0;
         virtual void PCSToPixel(double *x, double *y) const = 0;
-        virtual const class Projection &GetProj() const = 0;
+        virtual Projection GetProj() const = 0;
         virtual LatLon PixelToLatLon(const MapPixelCoord &pos) const = 0;
         virtual MapPixelCoord LatLonToPixel(const LatLon &pos) const = 0;
 

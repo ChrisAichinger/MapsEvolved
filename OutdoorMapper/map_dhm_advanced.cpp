@@ -30,7 +30,7 @@ void GradientMap::PixelToPCS(double *x, double *y) const {
 void GradientMap::PCSToPixel(double *x, double *y) const {
     return m_orig_map->PCSToPixel(x, y);
 }
-const class Projection &GradientMap::GetProj() const {
+Projection GradientMap::GetProj() const {
     return m_orig_map->GetProj();
 }
 LatLon GradientMap::PixelToLatLon(const MapPixelCoord &pos) const {

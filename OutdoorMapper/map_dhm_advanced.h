@@ -16,7 +16,7 @@ class GradientMap : public RasterMap {
 
         virtual void PixelToPCS(double *x, double *y) const;
         virtual void PCSToPixel(double *x, double *y) const;
-        virtual const class Projection &GetProj() const;
+        virtual Projection GetProj() const;
 
         virtual LatLon PixelToLatLon(const MapPixelCoord &pos) const;
         virtual MapPixelCoord LatLonToPixel(const LatLon &pos) const;
