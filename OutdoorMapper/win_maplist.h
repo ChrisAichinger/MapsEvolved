@@ -13,6 +13,7 @@ class MapListSizer {
 
         void GetListview(RECT &rect);
         void GetTextbox(RECT &rect);
+        void GetAddRasterbutton(RECT &rect);
     private:
         HWND m_hwndParent;
 };
@@ -32,9 +33,11 @@ class MapListWindow : public Window
         class RasterMapCollection &m_maps;
         LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
         LRESULT OnCreate();
-        void InsertRow(const std::vector<LVITEM> &item);
+
+        void InsertRow(const class RasterMap &map);
 
         HWND m_hwndStatic;
+        HWND m_hwndBtnAddRaster;
         MapListSizer m_sizer;
         std::unique_ptr<class ListView> m_listview;
 };

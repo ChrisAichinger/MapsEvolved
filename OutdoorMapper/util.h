@@ -81,15 +81,6 @@ unsigned int HSV_to_RGB(unsigned char H, unsigned char S, unsigned char V);
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
-struct BasicBitmap {
-    unsigned int width, height, bpp;
-    std::shared_ptr<unsigned int> pixels;
-};
-BasicBitmap LoadBufferFromBMP(const std::wstring &fname);
-void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
-                     unsigned int width, unsigned int height,
-                     unsigned int bpp);
-
 static const int FULL_CIRCLE = 360;
 static const double RAD_to_DEG = 57.29577951308232;
 static const double DEG_to_RAD = .0174532925199432958;
@@ -110,5 +101,23 @@ void ShrinkImage(unsigned int *src,
                  unsigned int d_x, unsigned int d_y,
                  unsigned int d_width, unsigned int d_height,
                  unsigned int scale);
+
+
+struct BasicBitmap {
+    unsigned int width, height, bpp;
+    std::shared_ptr<unsigned int> pixels;
+};
+BasicBitmap LoadBufferFromBMP(const std::wstring &fname);
+void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
+                     unsigned int width, unsigned int height,
+                     unsigned int bpp);
+
+std::wstring GetProgramPath_wchar();
+std::string GetProgramPath_char();
+std::wstring GetProgramDir_wchar();
+std::string GetProgramDir_char();
+
+extern const char *ODM_PathSep_char;
+extern const wchar_t *ODM_PathSep_wchar;
 
 #endif

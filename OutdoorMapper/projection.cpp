@@ -12,6 +12,7 @@ class ProjWrap {
         explicit ProjWrap(projPJ proj);
         ~ProjWrap();
         projPJ Get() { return m_proj; };
+        operator bool() const { return !!m_proj; }
     private:
         projPJ m_proj;
 };
@@ -31,7 +32,7 @@ Projection::Projection(const std::string &proj_str)
     : m_proj(new ProjWrap(pj_init_plus(proj_str.c_str()))),
       m_proj_str(proj_str)
 {
-    if (!m_proj) {
+    if (!*m_proj) {
         throw std::runtime_error("Failed to initialize projection.");
     }
 }

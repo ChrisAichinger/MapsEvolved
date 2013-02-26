@@ -14,6 +14,7 @@
 
 extern HINSTANCE g_hinst;
 
+
 class PrinterDC {
     public:
         explicit PrinterDC(HDC hdc) : m_hdc(hdc) {};
@@ -316,6 +317,7 @@ class ListView {
 
         void Create(HWND hwndParent, const RECT &rect);
         void SetImageList(std::unique_ptr<class ImageList> &&imagelist);
+        void DeleteAllRows();
         void InsertColumns(int n_columns, const LVCOLUMN columns[]);
         void InsertRow(const ListViewRow &row, int desired_index);
         void RegisterEventHandlers(const ListViewEvents &events);

@@ -10,6 +10,8 @@
 #include "resource.h"
 #include "odm_config.h"
 
+#define IDC_BTNADDRASTER      1018
+
 
 static const wchar_t * const MapListClassname = L"clsODM_Maplist";
 LPCTSTR MapListWindow::ClassName() {
@@ -47,6 +49,41 @@ LRESULT MapListWindow::HandleMessage(
             if (m_listview->HandleNotify(wParam, lParam)) {
                 return 0;
             }
+        case WM_COMMAND: {
+            if (LOWORD(wParam) == IDC_BTNADDRASTER &&
+                HIWORD(wParam) == BN_CLICKED &&
+                (HWND)lParam == m_hwndBtnAddRaster)
+            {
+                wchar_t buf[MAX_PATH] = {0};
+                wchar_t filters[] = L"Supported files\0*.tif;*.tiff\0"
+                                    L"Geotiff Files\0*.tif;*.tiff\0"
+                                    L"All Files (*.*)\0*.*\0"
+                                    L"\0\0";
+                OPENFILENAME ofn = {
+                            sizeof(ofn),
+                            m_hwnd,
+                            g_hinst,
+                            filters,
+                            NULL, 0, 0,
+                            buf, sizeof(buf),
+                            NULL, 0,
+                            NULL, L"Open Raster Map",
+                            OFN_FILEMUSTEXIST,
+                            0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+                BOOL success = GetOpenFileName(&ofn);
+                if (!success) {
+                    int error = CommDlgExtendedError();
+                    return 0;
+                }
+                LoadMap(m_maps, ofn.lpstrFile);
+
+                m_listview->DeleteAllRows();
+                for (unsigned int index = 0; index < m_maps.Size(); index++) {
+                    InsertRow(m_maps.Get(index));
+                }
+                return 0;
+            }
+        }
     }
     return __super::HandleMessage(uMsg, wParam, lParam);
 }
@@ -103,25 +140,7 @@ LRESULT MapListWindow::OnCreate() {
     m_listview->RegisterEventHandlers(events);
 
     for (unsigned int index = 0; index < m_maps.Size(); index++) {
-        ListViewRow lvrow;
-        const RasterMap &map = m_maps.Get(index);
-        lvrow.AddItem(ListViewTextImageItem(map.GetFname(), 0));
-        wchar_t *str;
-        switch (map.GetType()) {
-            case RasterMap::TYPE_MAP: str = L"Map"; break;
-            case RasterMap::TYPE_DHM: str = L"DHM"; break;
-            case RasterMap::TYPE_GRADIENT: str = L"Gradient height map"; break;
-            case RasterMap::TYPE_LEGEND: str = L"Legend"; break;
-            case RasterMap::TYPE_OVERVIEW: str = L"Overview"; break;
-            case RasterMap::TYPE_ERROR:
-                str = L"Error loading map";
-                lvrow.SetColor(makeRGB(0xdd, 0, 0));
-                break;
-            default:
-                assert(false); // Unknown raster map type
-        }
-        lvrow.AddItem(ListViewTextItem(str));
-        m_listview->InsertRow(lvrow, INT_MAX);
+        InsertRow(m_maps.Get(index));
     }
     ShowWindow(m_listview->GetHWND(), SW_SHOW);
 
@@ -133,7 +152,37 @@ LRESULT MapListWindow::OnCreate() {
             rect.right - rect.left,
             rect.bottom - rect.top,
             m_hwnd, (HMENU)0, g_hinst, NULL);
+
+    m_sizer.GetAddRasterbutton(rect);
+    m_hwndBtnAddRaster = CreateWindow(
+            L"BUTTON", L"Add Rastermap",
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            rect.left, rect.top,
+            rect.right - rect.left,
+            rect.bottom - rect.top,
+            m_hwnd, (HMENU)IDC_BTNADDRASTER, g_hinst, NULL);
     return 0;
+}
+
+void MapListWindow::InsertRow(const RasterMap &map) {
+    ListViewRow lvrow;
+    lvrow.AddItem(ListViewTextImageItem(map.GetFname(), 0));
+    wchar_t *str;
+    switch (map.GetType()) {
+        case RasterMap::TYPE_MAP: str = L"Map"; break;
+        case RasterMap::TYPE_DHM: str = L"DHM"; break;
+        case RasterMap::TYPE_GRADIENT: str = L"Gradient height map"; break;
+        case RasterMap::TYPE_LEGEND: str = L"Legend"; break;
+        case RasterMap::TYPE_OVERVIEW: str = L"Overview"; break;
+        case RasterMap::TYPE_ERROR:
+            str = L"Error loading map";
+            lvrow.SetColor(makeRGB(0xdd, 0, 0));
+            break;
+        default:
+            assert(false); // Unknown raster map type
+    }
+    lvrow.AddItem(ListViewTextItem(str));
+    m_listview->InsertRow(lvrow, INT_MAX);
 }
 
 void ShowMapListWindow(MapDisplayManager &mapdisplay,
@@ -159,4 +208,10 @@ void MapListSizer::GetTextbox(RECT &rect) {
     GetClientRect(m_hwndParent, &rect);
     rect.left += 150;
     rect.top += (rect.bottom - rect.top) / 2;
+}
+
+void MapListSizer::GetAddRasterbutton(RECT &rect) {
+    GetClientRect(m_hwndParent, &rect);
+    rect.right = rect.left + 150;
+    rect.bottom = rect.top + 30;
 }

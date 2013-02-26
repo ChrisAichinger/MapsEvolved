@@ -1,3 +1,5 @@
+#include "util.h"
+
 #include <cmath>
 #include <cassert>
 #include <climits>
@@ -10,11 +12,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <wchar.h>
-
-#include <Windows.h>
-
-#include "util.h"
-
 
 int round_to_neg_inf(int value, int round_to) {
     if (value >= 0) {
@@ -82,49 +79,6 @@ unsigned int HSV_to_RGB(unsigned char H, unsigned char S, unsigned char V) {
     }
     assert(false);
     return 0;
-}
-
-BasicBitmap LoadBufferFromBMP(const std::wstring &fname) {
-    BITMAPFILEHEADER bfh;
-    BITMAPINFOHEADER bih;
-    std::ifstream file(fname, std::ios::in | std::ios::binary);
-    if (!file.is_open()) {
-        throw std::runtime_error("Error opening BMP file for reading.");
-    }
-    file.read(reinterpret_cast<char*>(&bfh), sizeof(bfh));
-    file.read(reinterpret_cast<char*>(&bih), sizeof(bih));
-    if (bih.biBitCount != 32 || bih.biCompression != BI_RGB) {
-        throw std::runtime_error("Format of  the BMP file is not supported.");
-    }
-
-    std::shared_ptr<unsigned int> buffer(
-            new unsigned int[bih.biWidth * bih.biHeight],
-            ArrayDeleter<unsigned int>());
-    file.read(reinterpret_cast<char*>(buffer.get()),
-              bih.biWidth * bih.biHeight * bih.biBitCount / 8);
-    BasicBitmap res = { bih.biWidth, bih.biHeight, bih.biBitCount, buffer };
-    return res;
-}
-
-using std::ios;
-void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
-                     unsigned int width, unsigned int height, unsigned int bpp)
-{
-    static const unsigned short int BMP_MAGIC = 0x4D42;
-    static const unsigned int SZ_BMP_HDR = sizeof(BITMAPFILEHEADER) +
-                                           sizeof(BITMAPINFOHEADER);
-    BITMAPFILEHEADER bfh = { BMP_MAGIC, SZ_BMP_HDR + width * height * bpp / 8,
-                             0, 0, SZ_BMP_HDR };
-    BITMAPINFOHEADER bih = { sizeof(BITMAPINFOHEADER),
-                             width, height, 1, bpp, BI_RGB, 0, 0, 0, 0, 0 };
-    std::ofstream file(fname, ios::out | ios::trunc | ios::binary);
-    if (!file.is_open()) {
-        throw std::runtime_error("Error opening BMP file for writing.");
-    }
-    file.write(reinterpret_cast<char*>(&bfh), sizeof(bfh));
-    file.write(reinterpret_cast<char*>(&bih), sizeof(bih));
-    file.write(reinterpret_cast<char*>(buffer), width * height * bpp / 8);
-    file.close();
 }
 
 double normalize_direction(double degrees) {
@@ -227,3 +181,88 @@ void ShrinkImage(unsigned int *src,
 }
 #undef SRC
 #undef DEST
+
+
+#include <Windows.h>
+
+BasicBitmap LoadBufferFromBMP(const std::wstring &fname) {
+    BITMAPFILEHEADER bfh;
+    BITMAPINFOHEADER bih;
+    std::ifstream file(fname, std::ios::in | std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Error opening BMP file for reading.");
+    }
+    file.read(reinterpret_cast<char*>(&bfh), sizeof(bfh));
+    file.read(reinterpret_cast<char*>(&bih), sizeof(bih));
+    if (bih.biBitCount != 32 || bih.biCompression != BI_RGB) {
+        throw std::runtime_error("Format of  the BMP file is not supported.");
+    }
+
+    std::shared_ptr<unsigned int> buffer(
+            new unsigned int[bih.biWidth * bih.biHeight],
+            ArrayDeleter<unsigned int>());
+    file.read(reinterpret_cast<char*>(buffer.get()),
+              bih.biWidth * bih.biHeight * bih.biBitCount / 8);
+    BasicBitmap res = { bih.biWidth, bih.biHeight, bih.biBitCount, buffer };
+    return res;
+}
+
+void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
+                     unsigned int width, unsigned int height, unsigned int bpp)
+{
+    using std::ios;
+    static const unsigned short int BMP_MAGIC = 0x4D42;
+    static const unsigned int SZ_BMP_HDR = sizeof(BITMAPFILEHEADER) +
+                                           sizeof(BITMAPINFOHEADER);
+    BITMAPFILEHEADER bfh = { BMP_MAGIC, SZ_BMP_HDR + width * height * bpp / 8,
+                             0, 0, SZ_BMP_HDR };
+    BITMAPINFOHEADER bih = { sizeof(BITMAPINFOHEADER),
+                             width, height, 1, bpp, BI_RGB, 0, 0, 0, 0, 0 };
+    std::ofstream file(fname, ios::out | ios::trunc | ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Error opening BMP file for writing.");
+    }
+    file.write(reinterpret_cast<char*>(&bfh), sizeof(bfh));
+    file.write(reinterpret_cast<char*>(&bih), sizeof(bih));
+    file.write(reinterpret_cast<char*>(buffer), width * height * bpp / 8);
+    file.close();
+}
+
+#define ODM_GetProgramPath_imp(char_type, suffix)                         \
+    char_type path[MAX_PATH + 1];                                         \
+    DWORD chars_written = GetModuleFileName##suffix(0, path,              \
+                                                    ARRAY_SIZE(path));    \
+    if (chars_written == 0 || chars_written >= ARRAY_SIZE(path)) {        \
+        throw std::runtime_error("Could not retrieve program path.");     \
+    }                                                                     \
+                                                                          \
+    char_type abspath[MAX_PATH + 1];                                      \
+    char_type *p_fname;                                                   \
+    chars_written = GetFullPathName##suffix(path, ARRAY_SIZE(abspath),    \
+                                            abspath, &p_fname);           \
+    if (chars_written == 0 || chars_written >= ARRAY_SIZE(path)) {        \
+        throw std::runtime_error("Could not get absolute program path."); \
+    }                                                                     \
+
+std::wstring GetProgramPath_wchar() {
+    ODM_GetProgramPath_imp(wchar_t, W);
+    return std::wstring(abspath);
+}
+
+std::string GetProgramPath_char() {
+    ODM_GetProgramPath_imp(char, A);
+    return std::string(abspath);
+}
+
+std::wstring GetProgramDir_wchar() {
+    ODM_GetProgramPath_imp(wchar_t, W);
+    return std::wstring(abspath, p_fname - abspath);
+}
+
+std::string GetProgramDir_char() {
+    ODM_GetProgramPath_imp(char, A);
+    return std::string(abspath, p_fname - abspath);
+}
+
+const char *ODM_PathSep_char = "\\";
+const wchar_t *ODM_PathSep_wchar = L"\\";

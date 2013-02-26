@@ -624,6 +624,12 @@ void ListView::SetImageList(std::unique_ptr<ImageList> &&imagelist) {
     m_imagelist.swap(imagelist);
 }
 
+void ListView::DeleteAllRows() {
+    if (!ListView_DeleteAllItems(m_hwnd)) {
+        throw std::runtime_error("Failed to delete all listview items");
+    }
+}
+
 void ListView::InsertColumns(int n_columns, const LVCOLUMN columns[]) {
     for (int iCol = 0; iCol < n_columns; iCol++) {
         m_columns.push_back(

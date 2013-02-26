@@ -16,6 +16,7 @@ class Projection {
         double CalcDistance(double lat1, double long1,
                             double lat2, double long2) const;
 
+        operator bool() const { return !!m_proj; }
     private:
         std::shared_ptr<class ProjWrap> m_proj;
         std::string m_proj_str;

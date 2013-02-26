@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "cpl_serv.h"
 #include "tiff.h"
 #include "libxtiff/xtiffio.h"
 #include "geotiffio.h"
@@ -108,6 +109,14 @@ Tiff::GetField(ttag_t field) const {
     return std::make_tuple(length, data);
 }
 
+
+static const char *CSVFileOverride( const char * pszInput ) {
+    static char szPath[1024];
+    std::string csvdir = GetProgramDir_char() + "csv" + ODM_PathSep_char;
+    sprintf_s(szPath, sizeof(szPath), "%s%s", csvdir.c_str(), pszInput);
+    return(szPath);
+}
+
 // http://rocky.ess.washington.edu/data/raster/geotiff/docs/manual.txt
 // ftp://kratmos.gsfc.nasa.gov/pub/jim/imager/latest_version/TIFF_reader2.c
 // http://svn.osgeo.org/fdocore/tags/3.2.x_G052/Thirdparty/GDAL1.3/src/frmts/gtiff/geotiff.cpp
@@ -120,6 +129,7 @@ GeoTiff::GeoTiff(const std::wstring &fname)
       m_ntiepoints(0), m_npixscale(0), m_ntransform(0),
       m_proj(), m_type()
 {
+    SetCSVFilenameHook(&CSVFileOverride);
     if (!CheckVersion()) {
         throw std::runtime_error("GeoTIFF version not supported.");
     }
@@ -273,7 +283,7 @@ TiffMap::TiffMap(const wchar_t *fname)
     : m_geotiff(new GeoTiff(fname)), m_proj(NULL)
 {
     m_proj.reset(new Projection(m_geotiff->GetProj4String()));
-    if (!m_proj) {
+    if (!*m_proj) {
         throw std::runtime_error("Unable to initialize projection.");
     }
     if (m_geotiff->GetType() == TYPE_DHM) {
