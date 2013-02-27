@@ -762,6 +762,10 @@ bool ListView::HandleNotify(WPARAM wParam, LPARAM lParam) {
     return false;
 }
 
+int ListView::GetSelectedRow() const {
+    return ListView_GetSelectionMark(m_hwnd);
+}
+
 RegistryKey::RegistryKey(HKEY hkey)
     : m_key(hkey), m_is_open(hkey != INVALID_HANDLE_VALUE)
 {}
@@ -770,8 +774,13 @@ RegistryKey::RegistryKey(HKEY hkey, const std::wstring &subkey,
                          enum reg_access access)
     : m_key((HKEY)INVALID_HANDLE_VALUE), m_is_open(false)
 {
-    REGSAM sam = (access == REG_READ) ? KEY_READ : KEY_WRITE;
-    LONG success = RegOpenKeyEx(hkey, subkey.c_str(), 0, sam, &m_key);
+    if (access == REG_READ) {
+        LONG success = RegOpenKeyEx(hkey, subkey.c_str(), 0, KEY_READ, &m_key);
+        m_is_open = (success == ERROR_SUCCESS);
+        return;
+    }
+    LONG success = RegCreateKeyEx(hkey, subkey.c_str(), 0, NULL, 0, KEY_WRITE,
+                                  NULL, &m_key, NULL);
     m_is_open = (success == ERROR_SUCCESS);
 }
 
@@ -790,8 +799,8 @@ bool RegistryKey::GetStringList(const std::wstring &keyvalue,
         return false;
 
     DWORD type, char_len;
-    LONG success = RegGetValue(m_key, NULL, keyvalue.c_str(), RRF_RT_ANY,
-                               &type, NULL, &char_len);
+    LONG success = RegGetValue(m_key, NULL, keyvalue.c_str(),
+                               RRF_RT_REG_MULTI_SZ, &type, NULL, &char_len);
     if (success != ERROR_SUCCESS)
         return false;
     if (type != REG_MULTI_SZ)
@@ -839,6 +848,9 @@ bool RegistryKey::SetStringList(const std::wstring &keyvalue,
         wcscpy_s(p, end - p, it->c_str());
         p += it->length() + 1;
     }
+    while (p < end) {
+        *(p++) = 0;
+    }
 
     LONG res = RegSetValueEx(m_key, keyvalue.c_str(), 0, REG_MULTI_SZ,
                              reinterpret_cast<BYTE*>(data.get()),
@@ -866,4 +878,71 @@ bool RegistryKey::SetDWORD(const std::wstring &keyvalue, DWORD value) {
                              sizeof(value));
 
     return res == ERROR_SUCCESS;
+}
+
+PersistentStore::~PersistentStore() {}
+
+class WinRegistryStore : public PersistentStore {
+    public:
+        WinRegistryStore();
+        virtual bool OpenRead();
+        virtual bool OpenWrite();
+        virtual bool IsOpen() { return m_regkey && m_regkey->IsOpen(); }
+
+        virtual bool GetStringList(const std::wstring &keyvalue,
+                           std::vector<std::wstring> *strings);
+        virtual bool SetStringList(const std::wstring &keyvalue,
+                           const std::vector<std::wstring> &strings);
+
+        virtual bool GetUInt(const std::wstring &keyvalue,
+                             unsigned long int *value);
+        virtual bool SetUInt(const std::wstring &keyvalue,
+                             unsigned long int value);
+
+    private:
+        std::unique_ptr<class RegistryKey> m_regkey;
+};
+
+WinRegistryStore::WinRegistryStore()
+    : PersistentStore(), m_regkey(nullptr)
+{}
+
+bool WinRegistryStore::OpenRead() {
+    m_regkey.reset(new RegistryKey(HKEY_CURRENT_USER, ODM_REG_PATH,
+                                   RegistryKey::REG_READ));
+    return IsOpen();
+}
+
+bool WinRegistryStore::OpenWrite() {
+    m_regkey.reset(new RegistryKey(HKEY_CURRENT_USER, ODM_REG_PATH,
+                                   RegistryKey::REG_WRITE));
+    return IsOpen();
+}
+
+bool WinRegistryStore::GetStringList(const std::wstring &keyvalue,
+                                     std::vector<std::wstring> *strings)
+{
+    return IsOpen() && m_regkey->GetStringList(keyvalue, strings);
+}
+
+bool WinRegistryStore::SetStringList(const std::wstring &keyvalue,
+                                     const std::vector<std::wstring> &strings)
+{
+    return IsOpen() && m_regkey->SetStringList(keyvalue, strings);
+}
+
+bool WinRegistryStore::GetUInt(const std::wstring &keyvalue,
+                               unsigned long int *value)
+{
+    return IsOpen() && m_regkey->GetDWORD(keyvalue, value);
+}
+
+bool WinRegistryStore::SetUInt(const std::wstring &keyvalue,
+                               unsigned long int value)
+{
+    return IsOpen() && m_regkey->SetDWORD(keyvalue, value);
+}
+
+std::unique_ptr<PersistentStore> CreatePersistentStore() {
+    return std::unique_ptr<PersistentStore>(new WinRegistryStore());
 }

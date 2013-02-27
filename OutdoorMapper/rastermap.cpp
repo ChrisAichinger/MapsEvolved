@@ -1,3 +1,5 @@
+#include "rastermap.h"
+
 #include <string>
 #include <memory>
 #include <tuple>
@@ -13,7 +15,6 @@
 #include <GeographicLib\Geodesic.hpp>
 
 #include "util.h"
-#include "rastermap.h"
 #include "map_geotiff.h"
 #include "map_dhm_advanced.h"
 #include "bezier.h"
@@ -28,6 +29,42 @@ RasterMapCollection::RasterMapCollection()
 void RasterMapCollection::AddMap(std::shared_ptr<class RasterMap> map) {
     m_maps.push_back(map);
 }
+
+void RasterMapCollection::DeleteMap(unsigned int index) {
+    m_maps.erase(m_maps.begin() + index);
+}
+
+bool RasterMapCollection::StoreTo(PersistentStore *store) const {
+    if (!store->IsOpen())
+        store->OpenWrite();
+
+    std::vector<std::wstring> filenames;
+    filenames.reserve(m_maps.size());
+    for (auto it = m_maps.cbegin(); it != m_maps.cend(); ++it) {
+        std::shared_ptr<RasterMap> map = *it;
+        if (map->GetType() == RasterMap::TYPE_GRADIENT) {
+            continue;
+        }
+        filenames.push_back(map->GetFname());
+    }
+    return store->SetStringList(L"maps", filenames);
+}
+
+bool RasterMapCollection::RetrieveFrom(PersistentStore *store) {
+    if (!store->IsOpen())
+        store->OpenRead();
+
+    std::vector<std::wstring> filenames;
+    if (!store->GetStringList(L"maps", &filenames)) {
+        return false;
+    }
+
+    for (auto it = filenames.cbegin(); it != filenames.cend(); ++it) {
+        LoadMap(*this, *it);
+    }
+    return true;
+}
+
 
 class RasterMapError : public RasterMap {
     public:

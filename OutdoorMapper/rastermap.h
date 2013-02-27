@@ -43,15 +43,20 @@ class RasterMapCollection {
     public:
         RasterMapCollection();
         void AddMap(std::shared_ptr<RasterMap> map);
+        void DeleteMap(unsigned int index);
         size_t Size() const {
             return m_maps.size();
         }
         const RasterMap &Get(size_t i) const {
             return *m_maps[i];
         }
+
+        bool StoreTo(PersistentStore *store) const;
+        bool RetrieveFrom(PersistentStore *store);
     private:
-        DISALLOW_COPY_AND_ASSIGN(RasterMapCollection);
         std::vector<std::shared_ptr<RasterMap>> m_maps;
+
+        DISALLOW_COPY_AND_ASSIGN(RasterMapCollection);
 };
 
 void LoadMap(RasterMapCollection &maps, const std::wstring &fname);

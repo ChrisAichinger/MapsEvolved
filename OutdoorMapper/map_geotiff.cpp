@@ -283,7 +283,6 @@ TiffMap::TiffMap(const wchar_t *fname)
     : m_geotiff(new GeoTiff(fname)), m_proj(m_geotiff->GetProj4String())
 {}
 
-
 RasterMap::RasterMapType TiffMap::GetType() const {
     return m_geotiff->GetType();
 }

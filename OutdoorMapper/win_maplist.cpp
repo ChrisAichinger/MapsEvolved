@@ -11,6 +11,7 @@
 #include "odm_config.h"
 
 #define IDC_BTNADDRASTER      1018
+#define IDC_BTNDELRASTER      1019
 
 
 static const wchar_t * const MapListClassname = L"clsODM_Maplist";
@@ -33,7 +34,8 @@ MapListWindow *MapListWindow::Create(class MapDisplayManager &mapdisplay,
 
 MapListWindow::MapListWindow(MapDisplayManager &mapdisplay,
                              RasterMapCollection &maps)
-    : m_mapdisplay(mapdisplay), m_maps(maps), m_sizer(0)
+    : m_mapdisplay(mapdisplay), m_maps(maps), m_sizer(0),
+      m_hwndStatic(0), m_hwndBtnAddRaster(0), m_hwndBtnDelRaster(0)
 { }
 
 void MapListWindow::PaintContent(PAINTSTRUCT *pps) {
@@ -50,6 +52,33 @@ LRESULT MapListWindow::HandleMessage(
                 return 0;
             }
         case WM_COMMAND: {
+            if (LOWORD(wParam) == IDC_BTNDELRASTER &&
+                HIWORD(wParam) == BN_CLICKED &&
+                (HWND)lParam == m_hwndBtnDelRaster)
+            {
+                int index = m_listview->GetSelectedRow();
+                if (index == -1) {
+                    MessageBox(m_hwnd, L"You must select a map to delete.",
+                               L"Error", MB_OK | MB_ICONWARNING);
+                    return 0;
+                }
+                m_maps.DeleteMap(index);
+
+                std::unique_ptr<PersistentStore> ps = CreatePersistentStore();
+                if (!m_maps.StoreTo(ps.get())) {
+                    MessageBox(m_hwnd,
+                               L"Couldn't save map preferences.\n"
+                               L"Map viewing will continue to work but the "
+                               L"changes will be gone when you restart.",
+                               L"Outdoormapper Error", MB_OK | MB_ICONWARNING);
+                }
+
+                m_listview->DeleteAllRows();
+                for (unsigned int index = 0; index < m_maps.Size(); index++) {
+                    InsertRow(m_maps.Get(index));
+                }
+                return 0;
+            }
             if (LOWORD(wParam) == IDC_BTNADDRASTER &&
                 HIWORD(wParam) == BN_CLICKED &&
                 (HWND)lParam == m_hwndBtnAddRaster)
@@ -76,6 +105,15 @@ LRESULT MapListWindow::HandleMessage(
                     return 0;
                 }
                 LoadMap(m_maps, ofn.lpstrFile);
+
+                std::unique_ptr<PersistentStore> ps = CreatePersistentStore();
+                if (!m_maps.StoreTo(ps.get())) {
+                    MessageBox(m_hwnd,
+                               L"Couldn't save map preferences.\n"
+                               L"Map viewing will continue to work but the "
+                               L"added map will be gone when you restart.",
+                               L"Outdoormapper Error", MB_OK | MB_ICONWARNING);
+                }
 
                 m_listview->DeleteAllRows();
                 for (unsigned int index = 0; index < m_maps.Size(); index++) {
@@ -161,6 +199,15 @@ LRESULT MapListWindow::OnCreate() {
             rect.right - rect.left,
             rect.bottom - rect.top,
             m_hwnd, (HMENU)IDC_BTNADDRASTER, g_hinst, NULL);
+
+    m_sizer.GetDelRasterbutton(rect);
+    m_hwndBtnDelRaster = CreateWindow(
+            L"BUTTON", L"Del Rastermap",
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            rect.left, rect.top,
+            rect.right - rect.left,
+            rect.bottom - rect.top,
+            m_hwnd, (HMENU)IDC_BTNDELRASTER, g_hinst, NULL);
     return 0;
 }
 
@@ -213,5 +260,12 @@ void MapListSizer::GetTextbox(RECT &rect) {
 void MapListSizer::GetAddRasterbutton(RECT &rect) {
     GetClientRect(m_hwndParent, &rect);
     rect.right = rect.left + 150;
+    rect.bottom = rect.top + 30;
+}
+
+void MapListSizer::GetDelRasterbutton(RECT &rect) {
+    GetClientRect(m_hwndParent, &rect);
+    rect.right = rect.left + 150;
+    rect.top += 30;
     rect.bottom = rect.top + 30;
 }

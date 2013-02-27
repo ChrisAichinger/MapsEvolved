@@ -14,6 +14,7 @@ class MapListSizer {
         void GetListview(RECT &rect);
         void GetTextbox(RECT &rect);
         void GetAddRasterbutton(RECT &rect);
+        void GetDelRasterbutton(RECT &rect);
     private:
         HWND m_hwndParent;
 };
@@ -38,6 +39,7 @@ class MapListWindow : public Window
 
         HWND m_hwndStatic;
         HWND m_hwndBtnAddRaster;
+        HWND m_hwndBtnDelRaster;
         MapListSizer m_sizer;
         std::unique_ptr<class ListView> m_listview;
 };

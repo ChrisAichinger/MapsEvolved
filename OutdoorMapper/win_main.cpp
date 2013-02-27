@@ -194,9 +194,16 @@ LRESULT RootWindow::OnCreate()
         throw std::runtime_error("Error creating map window.");
     }
 
-    LoadMap(m_maps, MAPPATH);
-    LoadMap(m_maps, DHMPATH);
-    LoadMap(m_maps, L"dummyfile_doesn't_exist?.tif");
+    std::unique_ptr<PersistentStore> store = CreatePersistentStore();
+    if (!m_maps.RetrieveFrom(store.get())) {
+        MessageBox(m_hwnd,
+                   L"Couldn't load map preferences.\n"
+                   L"Using a default set of maps instead.",
+                   L"Outdoormapper Error", MB_OK | MB_ICONWARNING);
+        LoadMap(m_maps, MAPPATH);
+        LoadMap(m_maps, DHMPATH);
+        LoadMap(m_maps, L"dummyfile_doesn't_exist?.tif");
+    }
 
     std::shared_ptr<DevContext> dev_ctx(new DevContext(m_hwndMap));
     std::shared_ptr<OGLContext> ogl_ctx(new OGLContext(dev_ctx));

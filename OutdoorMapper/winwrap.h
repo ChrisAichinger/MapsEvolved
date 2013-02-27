@@ -323,6 +323,7 @@ class ListView {
         void RegisterEventHandlers(const ListViewEvents &events);
         bool HandleNotify(WPARAM wParam, LPARAM lParam);
 
+        int GetSelectedRow() const;
         HWND GetHWND() const { return m_hwnd; };
     private:
         HWND m_hwnd;
@@ -349,6 +350,8 @@ class RegistryKey {
                    enum reg_access access);
         ~RegistryKey();
 
+        bool IsOpen() const { return m_is_open; };
+
         bool GetStringList(const std::wstring &keyvalue,
                            std::vector<std::wstring> *strings);
         bool SetStringList(const std::wstring &keyvalue,
@@ -363,5 +366,6 @@ class RegistryKey {
 
         DISALLOW_COPY_AND_ASSIGN(RegistryKey);
 };
+
 
 #endif

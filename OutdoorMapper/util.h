@@ -3,7 +3,7 @@
 
 #include <string>
 #include <memory>
-
+#include <vector>
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&);               \
@@ -119,5 +119,25 @@ std::string GetProgramDir_char();
 
 extern const char *ODM_PathSep_char;
 extern const wchar_t *ODM_PathSep_wchar;
+
+class PersistentStore {
+    public:
+        virtual ~PersistentStore();
+        virtual bool OpenRead() = 0;
+        virtual bool OpenWrite() = 0;
+        virtual bool IsOpen() = 0;
+
+        virtual bool GetStringList(const std::wstring &keyvalue,
+                           std::vector<std::wstring> *strings) = 0;
+        virtual bool SetStringList(const std::wstring &keyvalue,
+                           const std::vector<std::wstring> &strings) = 0;
+
+        virtual bool GetUInt(const std::wstring &keyvalue,
+                             unsigned long int *value) = 0;
+        virtual bool SetUInt(const std::wstring &keyvalue,
+                             unsigned long int value) = 0;
+};
+
+std::unique_ptr<PersistentStore> CreatePersistentStore();
 
 #endif
