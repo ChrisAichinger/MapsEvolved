@@ -305,9 +305,18 @@ class ListViewColumn {
         friend class ListView;
 };
 
+struct EventResult {
+    EventResult() : was_handled(false), result(0) {};
+    EventResult(bool was_handled_, LRESULT result_)
+        : was_handled(was_handled_), result(result_) {};
+
+    bool was_handled;
+    LRESULT result;
+};
+
 struct ListViewEvents {
-    std::function<LRESULT(const class ListView& lv, LPNMLISTVIEW pnmlv)> ItemChanged;
-    std::function<LRESULT(const class ListView& lv, LPNMITEMACTIVATE pnmlv)> DoubleClick;
+    std::function<EventResult(const class ListView& lv, LPNMLISTVIEW pnmlv)> ItemChanged;
+    std::function<EventResult(const class ListView& lv, LPNMITEMACTIVATE pnmlv)> DoubleClick;
 };
 
 class ListView {
@@ -321,7 +330,7 @@ class ListView {
         void InsertColumns(int n_columns, const LVCOLUMN columns[]);
         void InsertRow(const ListViewRow &row, int desired_index);
         void RegisterEventHandlers(const ListViewEvents &events);
-        bool HandleNotify(WPARAM wParam, LPARAM lParam);
+        EventResult TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
         int GetSelectedRow() const;
         HWND GetHWND() const { return m_hwnd; };
@@ -339,6 +348,28 @@ class ListView {
                                                UINT_PTR uId, DWORD_PTR data);
 
         DISALLOW_COPY_AND_ASSIGN(ListView);
+};
+
+struct ButtonEvents {
+    std::function<EventResult(const class Button& btn)> Clicked;
+};
+
+class Button {
+    public:
+        Button() : m_hwnd(0) {};
+        ~Button();
+
+        void Create(HWND hwndParent, const RECT &rect,
+                    const std::wstring &title, int id);
+        void RegisterEventHandlers(const ButtonEvents &events);
+        EventResult TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+        HWND GetHWND() const { return m_hwnd; };
+    private:
+        HWND m_hwnd;
+        ButtonEvents m_events;
+
+        DISALLOW_COPY_AND_ASSIGN(Button);
 };
 
 class RegistryKey {

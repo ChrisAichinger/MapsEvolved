@@ -38,10 +38,10 @@ class MapListWindow : public Window
         void InsertRow(const class RasterMap &map);
 
         HWND m_hwndStatic;
-        HWND m_hwndBtnAddRaster;
-        HWND m_hwndBtnDelRaster;
         MapListSizer m_sizer;
         std::unique_ptr<class ListView> m_listview;
+        std::unique_ptr<class Button> m_btnAddRaster;
+        std::unique_ptr<class Button> m_btnDelRaster;
 };
 
 void ShowMapListWindow(class MapDisplayManager &mapdisplay,

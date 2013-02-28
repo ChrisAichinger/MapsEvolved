@@ -596,6 +596,10 @@ ListViewColumn::ListViewColumn(const ListViewColumn &rhs)
 ListView::~ListView() {
     if (m_hwnd) {
         RemoveWindowSubclass(m_hwnd, &s_SubClassProc, 0);
+        if (m_hwnd) {
+            DestroyWindow(m_hwnd);
+            m_hwnd = NULL;
+        }
     }
 }
 
@@ -741,29 +745,69 @@ void ListView::RegisterEventHandlers(const ListViewEvents &events) {
     m_events = events;
 }
 
-bool ListView::HandleNotify(WPARAM wParam, LPARAM lParam) {
+EventResult ListView::TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    if (uMsg != WM_NOTIFY)
+        return EventResult(false, 0);
+
     LPNMHDR pnmhdr = reinterpret_cast<LPNMHDR>(lParam);
     if (pnmhdr->hwndFrom != m_hwnd)
-        return false;
+        return EventResult(false, 0);
 
-    switch (pnmhdr->code) {
-    case LVN_ITEMCHANGED:
-        if (m_events.ItemChanged)
-            m_events.ItemChanged(*this,
-                                 reinterpret_cast<LPNMLISTVIEW>(lParam));
-        return true;
+    if (pnmhdr->code == LVN_ITEMCHANGED && m_events.ItemChanged)
+        return m_events.ItemChanged(*this,
+                                    reinterpret_cast<LPNMLISTVIEW>(lParam));
+    if (pnmhdr->code == NM_DBLCLK && m_events.DoubleClick)
+        return m_events.DoubleClick(*this,
+                                reinterpret_cast<LPNMITEMACTIVATE>(lParam));
 
-    case NM_DBLCLK:
-        if (m_events.DoubleClick)
-            m_events.DoubleClick(*this,
-                                 reinterpret_cast<LPNMITEMACTIVATE>(lParam));
-        return true;
-    }
-    return false;
+    return EventResult(false, 0);
 }
 
 int ListView::GetSelectedRow() const {
     return ListView_GetSelectionMark(m_hwnd);
+}
+
+
+Button::~Button() {
+    if (m_hwnd) {
+        if (m_hwnd) {
+            DestroyWindow(m_hwnd);
+            m_hwnd = NULL;
+        }
+    }
+}
+
+void Button::Create(HWND hwndParent, const RECT &rect,
+                    const std::wstring &title, int id)
+{
+    m_hwnd = CreateWindow(
+            L"button", title.c_str(),
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            rect.left, rect.top,
+            rect.right - rect.left,
+            rect.bottom - rect.top,
+            hwndParent, (HMENU)0, g_hinst, NULL);
+
+    if (!m_hwnd)
+        throw std::runtime_error("Failed to create list view.");
+}
+
+EventResult Button::TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    if (uMsg != WM_COMMAND)
+        return EventResult(false, 0);
+
+    if (HIWORD(wParam) == BN_CLICKED &&
+        reinterpret_cast<HWND>(lParam) == m_hwnd)
+    {
+        if (m_events.Clicked)
+            return m_events.Clicked(*this);
+    }
+    return EventResult(false, 0);
+}
+
+void Button::RegisterEventHandlers(const ButtonEvents &events) {
+    m_events = events;
 }
 
 RegistryKey::RegistryKey(HKEY hkey)
