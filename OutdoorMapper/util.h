@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <numeric>
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&);               \
@@ -141,5 +142,19 @@ class PersistentStore {
 std::unique_ptr<PersistentStore> CreatePersistentStore();
 
 double GetTimeMilliSecs();
+
+class TimeCounter {
+    public:
+        void Start() { m_time_started = GetTimeMilliSecs(); }
+        void Stop() {
+            m_vec.push_back(GetTimeMilliSecs() - m_time_started);
+            double sum = std::accumulate(m_vec.cbegin(), m_vec.cend(), 0);
+            m_average = sum / m_vec.size();
+        }
+    private:
+        double m_average;
+        double m_time_started;
+        std::vector<double> m_vec;
+};
 
 #endif

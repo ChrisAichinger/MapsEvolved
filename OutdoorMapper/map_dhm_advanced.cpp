@@ -1,10 +1,11 @@
+#include "map_dhm_advanced.h"
+
 #define _USE_MATH_DEFINES
 #include <memory>
 #include <cassert>
 
 #include "util.h"
 #include "bezier.h"
-#include "map_dhm_advanced.h"
 
 GradientMap::GradientMap(std::shared_ptr<const RasterMap> orig_map)
     : m_orig_map(orig_map)
@@ -43,8 +44,8 @@ const std::wstring &GradientMap::GetFname() const {
     return m_orig_map->GetFname();
 }
 
-static std::vector<double> TimeCounter;
 
+static TimeCounter time_counter;
 
 #define DEST(xx,yy) dest[(xx) + size.x * (yy)]
 #define SRC(xx,yy) src[(xx) + req_size.x * (yy)]
@@ -60,7 +61,7 @@ std::shared_ptr<unsigned int> GradientMap::GetRegion(
 
     unsigned int *src = orig_data.get();
     unsigned int *dest = data.get();
-    double tmStart = GetTimeMilliSecs();
+    time_counter.Start();
     for (int x=0; x < size.x; x++) {
         for (int y=0; y < size.y; y++) {
             unsigned int elevation = SRC(x+1, y+1);
@@ -75,7 +76,7 @@ std::shared_ptr<unsigned int> GradientMap::GetRegion(
                                    255));
         }
     }
-    TimeCounter.push_back(GetTimeMilliSecs() - tmStart);
+    time_counter.Stop();
     return data;
 }
 #undef DEST
