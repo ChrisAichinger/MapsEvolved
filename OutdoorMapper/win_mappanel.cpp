@@ -1,9 +1,10 @@
-#include <assert.h>
+#include "win_mappanel.h"
+
+#include <cassert>
 #include <stdexcept>
 
-#include <Windows.h>
 #include <Windowsx.h>
-#include "win_mappanel.h"
+
 #include "winwrap.h"
 
 extern HINSTANCE g_hinst;
@@ -42,12 +43,8 @@ IMapWindow *GetIMapWindow(HWND hwnd) {
     return (IMapWindow *)(MapWindow *)GetWindowLongPtr(hwnd, 0);
 }
 
-ATOM RegisterMapWindow() {
-    ATOM res = MapWindow::RegisterControl();
-    if (!res) {
-        throw std::runtime_error("Failed to register map window class.");
-    }
-    return res;
+bool RegisterMapWindow() {
+    return !!MapWindow::RegisterControl();
 }
 
 ATOM MapWindow::RegisterControl() {

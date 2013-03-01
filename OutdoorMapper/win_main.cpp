@@ -1,19 +1,13 @@
+#include "win_main.h"
 
 #include <sstream>
 #include <iomanip>
 #include <list>
-
-#include <windows.h>
-#include <windowsx.h>
-#include <assert.h>
-#include <commctrl.h>
-#include <shlwapi.h>
-#include <shlobj.h>
+#include <cassert>
 
 #include "resource.h"
 #include "rastermap.h"
 #include "disp_ogl.h"
-#include "win_main.h"
 #include "winwrap.h"
 #include "win_mappanel.h"
 #include "win_maplist.h"

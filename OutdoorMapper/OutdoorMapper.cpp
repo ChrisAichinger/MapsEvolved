@@ -1,51 +1,59 @@
 
-#include <sstream>
-
 #include <windows.h>
-#include <windowsx.h>
 #include <assert.h>
 #include <commctrl.h>
-#include <shlwapi.h>
-#include <shlobj.h>
 
 #include "resource.h"
 #include "winwrap.h"
 #include "win_main.h"
 #include "win_mappanel.h"
 
-
-HINSTANCE g_hinst;
-
-#pragma comment(linker,"\"/manifestdependency:type='win32' \
-  name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
-  processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
-
 int PASCAL
 WinMain(HINSTANCE hinst, HINSTANCE, LPSTR, int nShowCmd) {
     g_hinst = hinst;
 
-    if (!SUCCEEDED(CoInitialize(NULL)))
+    COM_Initialize com_init;
+    if (!com_init.Initialize()) {
+        MessageBox(0, L"Failed to initialize COM.", L"Outdoormapper Error",
+                   MB_OK | MB_ICONERROR);
         return 1;
+    }
 
     INITCOMMONCONTROLSEX icex;
     icex.dwSize = sizeof(icex);
     icex.dwICC = ICC_LISTVIEW_CLASSES;
-    if (!InitCommonControlsEx(&icex))
+    if (!InitCommonControlsEx(&icex)) {
+        MessageBox(0, L"Failed to initialize common controls.",
+                   L"Outdoormapper Error", MB_OK | MB_ICONERROR);
         return 1;
-
-    RegisterMapWindow();
-
-    RootWindow *prw = RootWindow::Create();
-    if (prw) {
-        ShowWindow(prw->GetHWND(), nShowCmd);
-        MSG msg;
-        while (GetMessage(&msg, NULL, 0, 0)) {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
     }
 
-    CoUninitialize();
-    return 0;
+    if (!RegisterMapWindow()) {
+        MessageBox(0, L"Failed to register window classes.",
+                   L"Outdoormapper Error", MB_OK | MB_ICONERROR);
+        return 1;
+    }
+
+    RootWindow *prw = RootWindow::Create();
+    if (!prw) {
+        MessageBox(0, L"Failed to create map window.",
+                   L"Outdoormapper Error", MB_OK | MB_ICONERROR);
+        return 1;
+    }
+
+    ShowWindow(prw->GetHWND(), nShowCmd);
+    MSG msg;
+    BOOL gm_result;
+    while ((gm_result = GetMessage(&msg, NULL, 0, 0)) != 0) {
+        if (gm_result == -1) {
+            MessageBox(0, L"Failed to pump messages.",
+                       L"Outdoormapper Error", MB_OK | MB_ICONERROR);
+            return 1;
+        }
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    // End of lifetime: COM_Initialize
+    return msg.wParam;
 }

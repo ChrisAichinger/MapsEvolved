@@ -8,10 +8,13 @@
 #include <codecvt>
 #include <iostream>
 #include <fstream>
+#include <cstdint>
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <wchar.h>
+
+#include "odm_config.h"
 
 int round_to_neg_inf(int value, int round_to) {
     if (value >= 0) {
@@ -183,18 +186,42 @@ void ShrinkImage(unsigned int *src,
 #undef DEST
 
 
-#include <Windows.h>
+PACKED_STRUCT(
+    struct BFH {
+            int16_t    bfType;
+            uint32_t   bfSize;
+            int16_t    bfReserved1;
+            int16_t    bfReserved2;
+            uint32_t   bfOffBits;
+    };
+);
+
+struct BIH {
+        uint32_t      biSize;
+        int32_t       biWidth;
+        int32_t       biHeight;
+        int16_t       biPlanes;
+        int16_t       biBitCount;
+        uint32_t      biCompression;
+        uint32_t      biSizeImage;
+        int32_t       biXPelsPerMeter;
+        int32_t       biYPelsPerMeter;
+        uint32_t      biClrUsed;
+        uint32_t      biClrImportant;
+};
+
+static const unsigned long int BIH_COMPRESSION_RGB = 0L;
 
 BasicBitmap LoadBufferFromBMP(const std::wstring &fname) {
-    BITMAPFILEHEADER bfh;
-    BITMAPINFOHEADER bih;
+    BFH bfh;
+    BIH bih;
     std::ifstream file(fname, std::ios::in | std::ios::binary);
     if (!file.is_open()) {
         throw std::runtime_error("Error opening BMP file for reading.");
     }
     file.read(reinterpret_cast<char*>(&bfh), sizeof(bfh));
     file.read(reinterpret_cast<char*>(&bih), sizeof(bih));
-    if (bih.biBitCount != 32 || bih.biCompression != BI_RGB) {
+    if (bih.biBitCount != 32 || bih.biCompression != BIH_COMPRESSION_RGB) {
         throw std::runtime_error("Format of  the BMP file is not supported.");
     }
 
@@ -212,12 +239,12 @@ void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
 {
     using std::ios;
     static const unsigned short int BMP_MAGIC = 0x4D42;
-    static const unsigned int SZ_BMP_HDR = sizeof(BITMAPFILEHEADER) +
-                                           sizeof(BITMAPINFOHEADER);
-    BITMAPFILEHEADER bfh = { BMP_MAGIC, SZ_BMP_HDR + width * height * bpp / 8,
-                             0, 0, SZ_BMP_HDR };
-    BITMAPINFOHEADER bih = { sizeof(BITMAPINFOHEADER),
-                             width, height, 1, bpp, BI_RGB, 0, 0, 0, 0, 0 };
+    static const unsigned int SZ_BMP_HDR = sizeof(BFH) +
+                                           sizeof(BIH);
+    BFH bfh = { BMP_MAGIC, SZ_BMP_HDR + width * height * bpp / 8,
+                0, 0, SZ_BMP_HDR };
+    BIH bih = { sizeof(BIH),
+                width, height, 1, bpp, BIH_COMPRESSION_RGB, 0, 0, 0, 0, 0 };
     std::ofstream file(fname, ios::out | ios::trunc | ios::binary);
     if (!file.is_open()) {
         throw std::runtime_error("Error opening BMP file for writing.");
@@ -227,6 +254,9 @@ void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
     file.write(reinterpret_cast<char*>(buffer), width * height * bpp / 8);
     file.close();
 }
+
+
+#include <Windows.h>
 
 #define ODM_GetProgramPath_imp(char_type, suffix)                         \
     char_type path[MAX_PATH + 1];                                         \
@@ -266,3 +296,8 @@ std::string GetProgramDir_char() {
 
 const char *ODM_PathSep_char = "\\";
 const wchar_t *ODM_PathSep_wchar = L"\\";
+
+double GetTimeMilliSecs() {
+    return timeGetTime();
+}
+

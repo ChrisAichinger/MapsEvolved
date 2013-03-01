@@ -6,9 +6,9 @@
 #include <algorithm>
 #include <assert.h>
 
-#include <Windows.h>
-#include <GL/gl.h>                      /* OpenGL header file */
-#include <GL/glu.h>                     /* OpenGL utilities header file */
+#include <Windows.h>        // Not used directly but needed for OpenGL includes
+#include <GL/gl.h>          // OpenGL header file
+#include <GL/glu.h>         // OpenGL utilities header file
 
 #include "disp_ogl.h"
 #include "tiles.h"

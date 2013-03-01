@@ -43,10 +43,9 @@ const std::wstring &GradientMap::GetFname() const {
     return m_orig_map->GetFname();
 }
 
-static std::vector<unsigned int> TimeCounter;
+static std::vector<double> TimeCounter;
 
 
-#include <Windows.h>
 #define DEST(xx,yy) dest[(xx) + size.x * (yy)]
 #define SRC(xx,yy) src[(xx) + req_size.x * (yy)]
 std::shared_ptr<unsigned int> GradientMap::GetRegion(
@@ -61,7 +60,7 @@ std::shared_ptr<unsigned int> GradientMap::GetRegion(
 
     unsigned int *src = orig_data.get();
     unsigned int *dest = data.get();
-    DWORD tmStart = timeGetTime();
+    double tmStart = GetTimeMilliSecs();
     for (int x=0; x < size.x; x++) {
         for (int y=0; y < size.y; y++) {
             unsigned int elevation = SRC(x+1, y+1);
@@ -76,8 +75,7 @@ std::shared_ptr<unsigned int> GradientMap::GetRegion(
                                    255));
         }
     }
-    DWORD diff = timeGetTime() - tmStart;
-    TimeCounter.push_back(diff);
+    TimeCounter.push_back(GetTimeMilliSecs() - tmStart);
     return data;
 }
 #undef DEST

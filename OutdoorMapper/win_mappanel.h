@@ -14,7 +14,7 @@ class ODM_INTERFACE IMapWindow {
 };
 
 IMapWindow *GetIMapWindow(HWND hwnd);
-ATOM RegisterMapWindow();
+bool RegisterMapWindow();
 
 
 // Extended NMHDR struct to pass additional data via WM_NOTIFY

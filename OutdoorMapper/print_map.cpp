@@ -1,7 +1,6 @@
-#include <Windows.h>
+#include "print_map.h"
 
 #include "util.h"
-#include "print_map.h"
 #include "mapdisplay.h"
 #include "projection.h"
 #include "rastermap.h"

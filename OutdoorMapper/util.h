@@ -140,4 +140,6 @@ class PersistentStore {
 
 std::unique_ptr<PersistentStore> CreatePersistentStore();
 
+double GetTimeMilliSecs();
+
 #endif

@@ -1,12 +1,19 @@
 #include <stdexcept>
 #include <cassert>
 
-#include <windows.h>
-#include <GL/gl.h>                      /* OpenGL header file */
-#include <GL/glu.h>                     /* OpenGL utilities header file */
+#include <Windows.h>        // Not used directly but needed for OpenGL includes
+#include <GL/gl.h>          // OpenGL header file
+#include <GL/glu.h>         // OpenGL utilities header file
 
 #include "winwrap.h"
 #include "odm_config.h"
+
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+  name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+  processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
+HINSTANCE g_hinst;
+
 
 TemporaryWindowDisable::TemporaryWindowDisable(HWND hwnd)
     : m_hwnd(hwnd)
@@ -989,4 +996,17 @@ bool WinRegistryStore::SetUInt(const std::wstring &keyvalue,
 
 std::unique_ptr<PersistentStore> CreatePersistentStore() {
     return std::unique_ptr<PersistentStore>(new WinRegistryStore());
+}
+
+
+COM_Initialize::~COM_Initialize() {
+    if (m_initialized) {
+        CoUninitialize();
+        m_initialized = false;
+    }
+}
+
+bool COM_Initialize::Initialize() {
+    m_initialized = SUCCEEDED(CoInitialize(NULL));
+    return m_initialized;
 }

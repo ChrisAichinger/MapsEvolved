@@ -398,5 +398,17 @@ class RegistryKey {
         DISALLOW_COPY_AND_ASSIGN(RegistryKey);
 };
 
+class COM_Initialize {
+    public:
+        COM_Initialize() : m_initialized(false) {}
+        ~COM_Initialize();
+        bool Initialize();
+    private:
+        bool m_initialized;
+
+        DISALLOW_COPY_AND_ASSIGN(COM_Initialize);
+};
+
+
 
 #endif
