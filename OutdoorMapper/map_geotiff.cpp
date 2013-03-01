@@ -144,25 +144,24 @@ bool GeoTiff::CheckVersion() const {
            versions[REV_MAJOR] <= GvCurrentRevision;
 }
 
-using std::tie;
 void GeoTiff::LoadCoordinates() {
     geocode_t model = GetKeySingle<geocode_t>(GTModelTypeGeoKey);
     assert(model == ModelTypeProjected); // The rest is not implemented
 
     GTIFDefn    defn;
-    if(GTIFGetDefn(m_rawgtif, &defn))
-    {
+    if(GTIFGetDefn(m_rawgtif, &defn)) {
         //printf( "\n" );
         //GTIFPrintDefn(&defn, stdout);
 
         std::shared_ptr<char> proj_str(GTIFGetProj4Defn(&defn),
-                                       FreeDeleter<char>());
+                                       [](char* mem) { GTIFFreeMemory(mem); });
         if (!proj_str) {
             throw std::runtime_error("Failed to get projection definition.");
         }
         m_proj = proj_str.get();
     }
 
+    using std::tie;
     tie(m_ntiepoints, m_tiepoints) = GetField<double>(TIFFTAG_GEOTIEPOINTS);
     tie(m_npixscale, m_pixscale) = GetField<double>(TIFFTAG_GEOPIXELSCALE);
     tie(m_ntransform, m_transform) = GetField<double>(TIFFTAG_GEOTRANSMATRIX);
