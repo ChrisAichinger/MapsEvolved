@@ -46,12 +46,14 @@ const std::wstring &GradientMap::GetFname() const {
 
 
 static TimeCounter time_counter;
+static TimeCounter time_counter_loaddisc;
 
 #define DEST(xx,yy) dest[(xx) + size.x * (yy)]
 #define SRC(xx,yy) src[(xx) + req_size.x * (yy)]
 std::shared_ptr<unsigned int> GradientMap::GetRegion(
         const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
 {
+    time_counter_loaddisc.Start();
     MapPixelCoordInt req_pos = pos - MapPixelDeltaInt(1, 1);
     MapPixelDeltaInt req_size = size + MapPixelDeltaInt(2, 2);
     auto orig_data = m_orig_map->GetRegion(req_pos, req_size);
@@ -61,12 +63,13 @@ std::shared_ptr<unsigned int> GradientMap::GetRegion(
 
     unsigned int *src = orig_data.get();
     unsigned int *dest = data.get();
+    time_counter_loaddisc.Stop();
     time_counter.Start();
     for (int x=0; x < size.x; x++) {
         for (int y=0; y < size.y; y++) {
             unsigned int elevation = SRC(x+1, y+1);
-            MapBezier bez(src, MapPixelCoordInt(x+1, y+1), req_size);
-            MapBezierGradient grad = bez.GetGradient(bez.GetCreationPos());
+            MapPixelCoordInt pos(x+1, y+1);
+            MapBezierGradient grad = Fast3x3CenterGradient(src, pos, req_size);
 
             DEST(x, y) = HSV_to_RGB(
                       255*240/360 - elevation*255/4000,

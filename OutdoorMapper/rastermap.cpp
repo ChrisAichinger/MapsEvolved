@@ -147,21 +147,27 @@ bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
             return false;
     }
     MapPixelCoord map_pos = m_active_dhm->LatLonToPixel(pos);
-    MapBezier bezier(*m_active_dhm, map_pos);
+    MapBezierPositioner bezier_position(map_pos, m_active_dhm->GetSize());
 
-    unsigned int bezier_pixels = bezier.N_POINTS - 1;
+    unsigned int bezier_pixels = Bezier::N_POINTS - 1;
     double bezier_meters = bezier_pixels *
-                     MetersPerPixel(*m_active_dhm, bezier.GetBezierCenter());
+                     MetersPerPixel(*m_active_dhm, bezier_position.GetBezierCenter());
 
-    MapBezierGradient grad = bezier.GetGradient(bezier.GetCreationPos());
+    MapBezierGradient grad = Gradient3x3(*m_active_dhm,
+                                         bezier_position.GetBezierCenter(),
+                                         bezier_position.GetBasePoint());
     grad /= bezier_meters;
-    double grad_direction = atan2(grad.y, grad.x);
+    // -grad.y corrects for the coordinate system of the image pixels not being
+    // the same as the map coordinates (y axis inverted)
+    double grad_direction = atan2(-grad.y, grad.x);
     double grad_steepness = atan(grad.Abs());
 
-    result->height_m = bezier.GetValue(bezier.GetCreationPos());
+    result->height_m = Value3x3(*m_active_dhm,
+                                bezier_position.GetBezierCenter(),
+                                bezier_position.GetBasePoint());
     result->steepness_deg = grad_steepness * RAD_to_DEG;
     result->slope_face_deg = normalize_direction(270 +
-                                                 grad_direction*RAD_to_DEG);
+                                                 grad_direction * RAD_to_DEG);
     return true;
 }
 

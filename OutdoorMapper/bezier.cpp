@@ -130,76 +130,25 @@ double Bezier::Bernstein(unsigned int degree, unsigned int v, double x) {
     return binomial(degree, v) * pow(x, (int)v) * pow(1-x, (int)(degree - v));
 }
 
-MapBezier::MapBezier(const RasterMap &map, const MapPixelCoordInt &pos)
-    : m_center_int(pos), m_creation_pos(0.5, 0.5)
-{
-    assert(pos.x > 0 && pos.y > 0 &&
-           static_cast<unsigned int>(pos.x) < map.GetWidth() - 1 &&
-           static_cast<unsigned int>(pos.y) < map.GetHeight() - 1);
 
-    InitPoints(map, m_center_int);
-    DoFitData();
-}
+MapBezierPositioner::MapBezierPositioner(const MapPixelCoordInt &pos)
+    : m_center(pos), m_bezier_coord(0.5, 0.5)
+{}
 
-MapBezier::MapBezier(const unsigned int *src,
-                     const MapPixelCoordInt &pos, const MapPixelDeltaInt &size)
-    : m_center_int(pos), m_creation_pos(0.5, 0.5)
-{
-    InitPoints(src, m_center_int, size, false);
-    DoFitData();
-}
-
-MapBezier::MapBezier(const class RasterMap &map, const MapPixelCoord &pos)
-    : m_center_int(FindCenter(pos, map.GetSize())),
-      m_creation_pos(FindCreationPos(pos, m_center_int))
-{
-    InitPoints(map, m_center_int);
-    DoFitData();
-}
-
-MapBezier::MapBezier(const unsigned int *src,
-                     const MapPixelCoord &pos, const MapPixelDeltaInt &size)
-    : m_center_int(FindCenter(pos, size)),
-      m_creation_pos(FindCreationPos(pos, m_center_int))
-{
-    InitPoints(src, m_center_int, size, false);
-    DoFitData();
-}
-
-#define SRC(xx,yy) src[(xx) + size.x * (yy)]
-void MapBezier::InitPoints(const unsigned int *src,
-                           const MapPixelCoordInt &pos,
-                           const MapPixelDeltaInt &size,
-                           bool invert_y)
-{
-    assert(pos.x > 0 && pos.y > 0 && pos.x < size.x - 1 && pos.y < size.y - 1);
-
-    int sign = invert_y ? (-1) : (+1);
-    for (int dy = -1; dy <= 1; dy++) {
-        for (int dx = -1; dx <= 1; dx++) {
-            MP(dx+1, dy+1) = SRC(pos.x + dx, pos.y + dy*sign);
-        }
-    }
-}
-#undef SRC
-#undef MP
-
-void MapBezier::InitPoints(const class RasterMap &map,
-                           const MapPixelCoordInt &pos)
-{
-    MapPixelDeltaInt center((N_POINTS - 1) / 2, (N_POINTS - 1) / 2);
-    MapPixelDeltaInt bez_size(N_POINTS, N_POINTS);
-    auto orig_data = map.GetRegion(pos - center, bez_size);
-    InitPoints(orig_data.get(), MapPixelCoordInt(center), bez_size, true);
-}
+MapBezierPositioner::MapBezierPositioner(const MapPixelCoord &pos,
+                                         const MapPixelDeltaInt &size)
+    : m_center(FindCenter(pos, size)),
+      m_bezier_coord(FindCreationPos(pos, m_center))
+{}
 
 // Turn floating point map coordinates into an integer center for Bezier
-MapPixelCoordInt MapBezier::FindCenter(const MapPixelCoord &pos,
-                                       const MapPixelDeltaInt &size) const
+MapPixelCoordInt
+MapBezierPositioner::FindCenter(const MapPixelCoord &pos,
+                                const MapPixelDeltaInt &size) const
 {
     // Clamp to make sure we don't sample outside of the source
     // +1 in off_max because ClampToRect uses inclusive upper bound
-    const int sampling_overhang = (N_POINTS - 1) / 2;
+    const int sampling_overhang = (Bezier::N_POINTS - 1) / 2;
     MapPixelCoordInt off_min(sampling_overhang, sampling_overhang);
     MapPixelDeltaInt off_max(sampling_overhang + 1, sampling_overhang + 1);
 
@@ -208,13 +157,97 @@ MapPixelCoordInt MapBezier::FindCenter(const MapPixelCoord &pos,
     return i_pos;
 }
 
-// Given the requested map position and resulting m_center_int, return a
-// BezierCoord which corresponds exactly to the requested map position.
-BezierCoord MapBezier::FindCreationPos(const MapPixelCoord &d_pos,
-                                       const MapPixelCoordInt &i_pos) const
+BezierCoord
+MapBezierPositioner::FindCreationPos(const MapPixelCoord &d_pos,
+                                     const MapPixelCoordInt &i_pos) const
 {
-    const int sampling_overhang = (N_POINTS - 1) / 2;
+    const int sampling_overhang = (Bezier::N_POINTS - 1) / 2;
     MapPixelDelta offset = d_pos - MapPixelCoord(i_pos) +
                            MapPixelDelta(sampling_overhang, sampling_overhang);
     return BezierCoord(0.5 * offset.x, 0.5 * offset.y);
 }
+
+
+static inline double FastBezierCalc(const unsigned int *src,
+                                    const MapPixelCoordInt &pos,
+                                    const MapPixelDeltaInt &size,
+                                    double x[3], double y[3])
+{
+    double X0 = 2.0 * x[0] - x[1];
+    double X2 = 2.0 * x[2] - x[1];
+    double Y0 = 2.0 * y[0] - y[1];
+    double Y2 = 2.0 * y[2] - y[1];
+
+// Sample a 3x3 area around pos.x/pos.y, thus the (-1)
+#define SRC(xx,yy) src[(xx + pos.x - 1) + size.x * (yy + pos.y - 1)]
+    return Y0 / 4 * (SRC(0, 0) * X0 + SRC(2, 0) * X2 + SRC(1, 0) * x[1] * 4) +
+           Y2 / 4 * (SRC(0, 2) * X0 + SRC(2, 2) * X2 + SRC(1, 2) * x[1] * 4) +
+           y[1] *   (SRC(0, 1) * X0 + SRC(2, 1) * X2 + SRC(1, 1) * 4 * x[1]);
+#undef SRC
+}
+
+MapBezierGradient Gradient3x3(const unsigned int *src,
+                              const MapPixelDeltaInt &src_size,
+                              const MapPixelCoordInt &center,
+                              const BezierCoord &bezier_pos)
+{
+    assert(center.x > 0 && center.x < src_size.x - 1 &&
+           center.y > 0 && center.y < src_size.y - 1 &&
+           bezier_pos.x >= 0 && bezier_pos.x <= 1 &&
+           bezier_pos.y >= 0 && bezier_pos.y <= 1);
+
+    double bx[Bezier::N_POINTS], by[Bezier::N_POINTS];
+    double bx_deriv[Bezier::N_POINTS], by_deriv[Bezier::N_POINTS];
+    Bezier::Bernstein_vec(Bezier::N_POINTS - 1, bezier_pos.x, bx);
+    Bezier::Bernstein_vec(Bezier::N_POINTS - 1, bezier_pos.y, by);
+    Bezier::Bernstein_deriv_vec(Bezier::N_POINTS - 1, bezier_pos.x, bx_deriv);
+    Bezier::Bernstein_deriv_vec(Bezier::N_POINTS - 1, bezier_pos.y, by_deriv);
+
+    double x = FastBezierCalc(src, center, src_size, bx_deriv, by);
+    double y = FastBezierCalc(src, center, src_size, bx, by_deriv);
+    return MapBezierGradient(x, y);
+}
+
+MapBezierGradient Gradient3x3(const RasterMap &map,
+                              const MapPixelCoordInt &center,
+                              const BezierCoord &bezier_pos)
+{
+    MapPixelDeltaInt sampling_overhang((Bezier::N_POINTS - 1) / 2,
+                                       (Bezier::N_POINTS - 1) / 2);
+    MapPixelDeltaInt bezier_size(Bezier::N_POINTS, Bezier::N_POINTS);
+
+    auto orig_data = map.GetRegion(center - sampling_overhang, bezier_size);
+    return Gradient3x3(orig_data.get(), bezier_size,
+                       MapPixelCoordInt(sampling_overhang), bezier_pos);
+}
+
+double Value3x3(const unsigned int *src,
+                const MapPixelDeltaInt &src_size,
+                const MapPixelCoordInt &center,
+                const BezierCoord &bezier_pos)
+{
+    assert(center.x > 0 && center.x < src_size.x - 1 &&
+           center.y > 0 && center.y < src_size.y - 1 &&
+           bezier_pos.x >= 0 && bezier_pos.x <= 1 &&
+           bezier_pos.y >= 0 && bezier_pos.y <= 1);
+
+    double bx[Bezier::N_POINTS], by[Bezier::N_POINTS];
+    Bezier::Bernstein_vec(Bezier::N_POINTS - 1, bezier_pos.x, bx);
+    Bezier::Bernstein_vec(Bezier::N_POINTS - 1, bezier_pos.y, by);
+
+    return FastBezierCalc(src, center, src_size, bx, by);
+}
+
+double Value3x3(const RasterMap &map,
+                const MapPixelCoordInt &center,
+                const BezierCoord &bezier_pos)
+{
+    MapPixelDeltaInt sampling_overhang((Bezier::N_POINTS - 1) / 2,
+                                       (Bezier::N_POINTS - 1) / 2);
+    MapPixelDeltaInt bezier_size(Bezier::N_POINTS, Bezier::N_POINTS);
+
+    auto orig_data = map.GetRegion(center - sampling_overhang, bezier_size);
+    return Value3x3(orig_data.get(), bezier_size,
+                    MapPixelCoordInt(sampling_overhang), bezier_pos);
+}
+

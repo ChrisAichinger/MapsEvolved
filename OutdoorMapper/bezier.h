@@ -28,58 +28,72 @@ class Bezier {
 
         double GetValue(double x, double y);
         void GetGradient(double *x, double *y);
+
+        static double Bernstein(unsigned int degree, unsigned int v, double x);
+        static void Bernstein_vec(unsigned int degree, double x, double *out);
+        static void Bernstein_deriv_vec(unsigned int degree, double x,
+                                        double *out);
     protected:
         Bezier() {};
         void DoFitData();
 
         double m_points[N_POINTS * N_POINTS];
-    private:
-        static double Bernstein(unsigned int degree, unsigned int v, double x);
-        static void Bernstein_vec(unsigned int degree, double x, double *out);
-        static void Bernstein_deriv_vec(unsigned int degree, double x,
-                                        double *out);
 };
 
-class MapBezier : public Bezier {
+
+class MapBezierPositioner {
     public:
-        MapBezier(const class RasterMap &map, const MapPixelCoordInt &pos);
-        MapBezier(const class RasterMap &map, const MapPixelCoord &pos);
-        MapBezier(const unsigned int *src,
-                  const MapPixelCoordInt &pos, const MapPixelDeltaInt &size);
-        MapBezier(const unsigned int *src,
-                  const MapPixelCoord &pos, const MapPixelDeltaInt &size);
+        explicit MapBezierPositioner(const MapPixelCoordInt &pos);
+        explicit MapBezierPositioner(const MapPixelCoord &pos,
+                                     const MapPixelDeltaInt &size);
 
-        const MapPixelCoordInt &GetBezierCenter() const {
-            return m_center_int;
-        }
-        const BezierCoord &GetCreationPos() const {
-            return m_creation_pos;
-        }
-
-        using Bezier::GetValue;
-        double GetValue(const BezierCoord &pos) {
-            return GetValue(pos.x, pos.y);
-        }
-        using Bezier::GetGradient;
-        MapBezierGradient GetGradient(const BezierCoord &pos) {
-            MapBezierGradient grad(pos.x, pos.y);
-            GetGradient(&grad.x, &grad.y);
-            return grad;
-        }
+        const MapPixelCoordInt &GetBezierCenter() const { return m_center; }
+        const BezierCoord &GetBasePoint() const { return m_bezier_coord; }
     private:
-        MapPixelCoordInt m_center_int;
-        BezierCoord m_creation_pos;
-
-        void InitPoints(const unsigned int *src,
-                        const MapPixelCoordInt &pos,
-                        const MapPixelDeltaInt &size,
-                        bool invert_y);
-        void InitPoints(const class RasterMap &map,
-                        const MapPixelCoordInt &pos);
         MapPixelCoordInt FindCenter(const MapPixelCoord &pos,
-                                 const MapPixelDeltaInt &size) const;
+                                    const MapPixelDeltaInt &size) const;
         BezierCoord FindCreationPos(const MapPixelCoord &d_pos,
                                     const MapPixelCoordInt &i_pos) const;
+
+        MapPixelCoordInt m_center;
+        BezierCoord m_bezier_coord;
 };
 
+
+template <typename T>
+static inline MapBezierGradient
+Fast3x3CenterGradient(const T *src,
+                      const MapPixelCoordInt &pos,
+                      const MapPixelDeltaInt &size)
+{
+    // sample at a cross pattern around pos:
+    //         src10
+    // src01    pos    src21
+    //         src12
+    double src01 = static_cast<double>(src[pos.x - 1 + size.x * pos.y]);
+    double src21 = static_cast<double>(src[pos.x + 1 + size.x * pos.y]);
+    double src10 = static_cast<double>(src[pos.x     + size.x * (pos.y - 1)]);
+    double src12 = static_cast<double>(src[pos.x     + size.x * (pos.y + 1)]);
+
+    // Bezier gradient at (0.5, 0.5) simplifies to this
+    return MapBezierGradient(src21 - src01, src12 - src10);
+}
+
+MapBezierGradient Gradient3x3(const unsigned int *src,
+                              const MapPixelDeltaInt &src_size,
+                              const MapPixelCoordInt &center,
+                              const BezierCoord &bezier_pos);
+
+MapBezierGradient Gradient3x3(const class RasterMap &map,
+                              const MapPixelCoordInt &center,
+                              const BezierCoord &bezier_pos);
+
+double Value3x3(const unsigned int *src,
+                const MapPixelDeltaInt &src_size,
+                const MapPixelCoordInt &center,
+                const BezierCoord &bezier_pos);
+
+double Value3x3(const class RasterMap &map,
+                const MapPixelCoordInt &center,
+                const BezierCoord &bezier_pos);
 #endif
