@@ -18,13 +18,15 @@ PROJ4_URL="http://download.osgeo.org/proj/proj-4.8.0.tar.gz"
 GEOGRAPHICLIB_DIR="geographiclib"
 GEOGRAPHICLIB_URL="http://heanet.dl.sourceforge.net/project/geographiclib/distrib/GeographicLib-1.28.tar.gz"
 
-
 COPY_TARGET1="../Debug"
-COPY_TARGET2="../tests"
+COPY_TARGET2="../Release"
+COPY_TARGET3="../tests"
 
-abspath () { 
-    case "$1" in 
-        /*) printf "%s\n" "$1";; 
+DO_MAKE="cscript.exe ..\\tools\\run_make.js"
+
+abspath () {
+    case "$1" in
+        /*) printf "%s\n" "$1";;
         *) printf "%s\n" "$PWD/$1";;
     esac;
 }
@@ -61,12 +63,13 @@ function download_one() {
         sleep 5
 
         shopt -s dotglob
-        find . -type d -mindepth 1 -maxdepth 1 -print0 | while IFS= read -r -d $'\0' subdir; do
+        find . -type d -mindepth 1 -maxdepth 1 -print0 | \
+        while IFS= read -r -d $'\0' subdir; do
             set -e
             mv $subdir/* . || { sleep 5; mv $subdir/* .; }
             rmdir "$subdir"
         done
-        
+
         popd
 
     else
@@ -93,14 +96,15 @@ function usage() {
     set +x
     echo 1>&2
     echo "$1" 1>&2
-    echo "commands: download                                 -- Download & unpack" 1>&2
-    echo "          build <DEBUG | RELEASE | CLEAN>          -- Build all" 1>&2
-    echo "          delete                                   -- Delete generated files" 1>&2
-    echo "          copydll                                  -- Copy dlls to ../Debug" 1>&2
-    echo "          buildjpeg <DEBUG | RELEASE | CLEAN>      -- Only build jpeg" 1>&2
-    echo "          buildproj <DEBUG | RELEASE | CLEAN>      -- Only build proj4" 1>&2
-    echo "          buildtiff <DEBUG | RELEASE | CLEAN>      -- Only build libtiff" 1>&2
-    echo "          buildgeotiff <DEBUG | RELEASE | CLEAN>   -- Only build geotiff" 1>&2
+    echo "commands:" 1>&2
+    echo "  download                            -- Download & unpack" 1>&2
+    echo "  build <DEBUG|RELEASE|CLEAN>         -- Build all" 1>&2
+    echo "  delete                              -- Delete generated files" 1>&2
+    echo "  copydll                             -- Copy dlls to ../Debug" 1>&2
+    echo "  buildjpeg <DEBUG|RELEASE|CLEAN>     -- Only build jpeg" 1>&2
+    echo "  buildproj <DEBUG|RELEASE|CLEAN>     -- Only build proj4" 1>&2
+    echo "  buildtiff <DEBUG|RELEASE|CLEAN>     -- Only build libtiff" 1>&2
+    echo "  buildgeotiff <DEBUG|RELEASE|CLEAN>  -- Only build geotiff" 1>&2
     exit 1
 }
 
@@ -154,36 +158,36 @@ while [ -n "$1" ]; do
 
         dflags=`debug_flags "$2"`   # cl.exe flags: /MDd, /MD, /Zi, ...
         mtargets=`targets "$2"`     # all, clean, install, etc.
-        cscript.exe run_make.js "$JPEG_DIR" Makefile.vc "cvars= $dflags" $mtargets
+        $DO_MAKE "$JPEG_DIR" Makefile.vc "cvars= $dflags" $mtargets
         shift
 
     elif [ "x$1" = "xbuildproj" ]; then
         dflags=`debug_flags "$2"`   # cl.exe flags: /MDd, /MD, /Zi, ...
         mtargets=`targets "$2"`     # all, clean, install, etc.
-        cscript.exe run_make.js $PROJ4_DIR Makefile.vc "OPTFLAGS= $dflags" $mtargets
+        $DO_MAKE $PROJ4_DIR Makefile.vc "OPTFLAGS= $dflags" $mtargets
         shift
 
     elif [ "x$1" = "xbuildgeographiclib" ]; then
         dflags=`debug_flags "$2"`   # cl.exe flags: /MDd, /MD, /Zi, ...
         mtargets=`targets "$2"`     # all, clean, install, etc.
-        cscript.exe run_make.js $GEOGRAPHICLIB_DIR Makefile.vc "OPTFLAGS= $dflags" $mtargets
+        $DO_MAKE $GEOGRAPHICLIB_DIR Makefile.vc "OPTFLAGS= $dflags" $mtargets
         shift
 
     elif [ "x$1" = "xbuildtiff" ]; then
         def_c_flags="-EHsc -W3 -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -DZFILLODER_LSB2MSB"
         dflags=`debug_flags "$2"`   # cl.exe flags: /MDd, /MD, /Zi, ...
         mtargets=`targets "$2"`     # all, clean, install, etc.
-        cscript.exe run_make.js $TIF_DIR Makefile.vc "OPTFLAGS= $def_c_flags $dflags" $mtargets
+        $DO_MAKE $TIF_DIR Makefile.vc "OPTFLAGS= $def_c_flags $dflags" $mtargets
         shift
 
     elif [ "x$1" = "xbuildgeotiff" ]; then
         # Force rebuilding geo_config.h
         touch "$GEOTIF_DIR"/geo_config.h.vc
-        cscript.exe run_make.js $GEOTIF_DIR Makefile.vc geo_config.h
+        $DO_MAKE $GEOTIF_DIR Makefile.vc geo_config.h
 
         dflags=`debug_flags "$2"`   # cl.exe flags: /MDd, /MD, /Zi, ...
         mtargets=`targets "$2"`     # all, clean, install, etc.
-        cscript.exe run_make.js $GEOTIF_DIR Makefile.vc WANT_PROJ4=1 "OPTFLAGS= -nologo $dflags" $mtargets
+        $DO_MAKE $GEOTIF_DIR Makefile.vc WANT_PROJ4=1 "OPTFLAGS= -nologo $dflags" $mtargets
         shift
 
     elif [ "x$1" = "xbuild" ]; then
@@ -191,11 +195,13 @@ while [ -n "$1" ]; do
         shift
 
     elif [ "x$1" = "xcopydll" ]; then
-        for target in "$COPY_TARGET1" "$COPY_TARGET2"; do
+        for target in "$COPY_TARGET1" "$COPY_TARGET2" "$COPY_TARGET3"; do
+            if [ ! -e "$target" ]; then mkdir -p "$target"; fi
             cp "$JPEG_DIR/libjpeg.dll" "$target"
             cp "$PROJ4_DIR/src/proj.dll" "$target"
             cp "$TIF_DIR/libtiff/libtiff.dll" "$target"
             cp "$GEOTIF_DIR/geotiff.dll" "$target"
+            cp -r "$GEOTIF_DIR/csv" "$target"
         done
 
     elif [ "x$1" = "xdelete" ]; then

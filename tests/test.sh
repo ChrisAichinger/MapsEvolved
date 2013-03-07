@@ -66,7 +66,7 @@ odm_src_targets=`basename_to_buildpath $odm_src_basenames | tr '\n/' ' \134'`
 
 
 # Final invocation of nmake through run_make.js
-cscript.exe run_make.js "" Makefile                                \
+cscript.exe ..\\tools\\run_make.js "" Makefile                     \
     "odm_path= $ODM_PATH" "build_path= $BUILD_PATH"                \
     "extra_include_dirs= $INCL"                                    \
     "extra_library_dirs= $LIBDIR" "extra_lib_dependencies= $DEPS"  \

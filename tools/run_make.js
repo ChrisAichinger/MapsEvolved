@@ -1,6 +1,6 @@
 // run_make.js - Execute VS2010's nmake in a target directory
 // Usage: cscript.exe run_make.js <DIRECTORY> <MAKEFILE> <ARGS>
-// 
+//
 // DIRECTORY  - The target directory; cd'ed to before executing nmake.
 // MAKEFILE   - The makefile to execute within DIRECTORY. Typically makefile.vc.
 // ARGS       - Further arguments to nmake.exe after /F MAKEFILE
@@ -25,7 +25,7 @@ for (var i = 1; i <= WScript.Arguments.length - 1; i++) {
 
 var cmd = 'cmd.exe /C ' +
           'call "%VS100COMNTOOLS%\\vsvars32.bat" && ' +
-          'cd "' + WScript.Arguments.Item(0) +'" && ' + 
+          'cd "' + WScript.Arguments.Item(0) +'" && ' +
           'nmake /f ' + file_and_args + " || pause";
 
 WScript.Echo(cmd);
