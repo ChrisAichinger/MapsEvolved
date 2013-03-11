@@ -368,12 +368,24 @@ void RootWindow::UpdateStatusbar() {
     DisplayCoord disp_p(point.x, point.y);
     MapPixelCoord base_point = m_mapdisplay->BaseCoordFromDisplay(disp_p);
 
-    LatLon ll = m_mapdisplay->GetBaseMap().PixelToLatLon(base_point);
+    SetSBText(5, string_format(L"Zoom: %.0f %%", m_mapdisplay->GetZoom()*100));
+    double mpp;
+    if (MetersPerPixel(m_mapdisplay->GetBaseMap(), base_point, &mpp)) {
+        SetSBText(4, string_format(L"Map: %.1f m/pix", mpp));
+    } else {
+        SetSBText(4, string_format(L"Uknown m/pix"));
+    }
+
+    LatLon ll;
+    if (!m_mapdisplay->GetBaseMap().PixelToLatLon(base_point, &ll)) {
+        SetSBText(0, L"lat/lon unknown");
+        SetSBText(1, L"Height unknown");
+        SetSBText(2, L"Terrain orientation unknown");
+        SetSBText(3, L"Steepness unknown");
+        return;
+    }
 
     SetSBText(0, string_format(L"lat/lon = %.5f / %.5f", ll.lat, ll.lon));
-    SetSBText(5, string_format(L"Zoom: %.0f %%", m_mapdisplay->GetZoom()*100));
-    double mpp = MetersPerPixel(m_mapdisplay->GetBaseMap(), base_point);
-    SetSBText(4, string_format(L"Map: %.1f m/pix", mpp));
 
     TerrainInfo ti;
     if (!m_heightfinder.CalcTerrain(ll, &ti)) {

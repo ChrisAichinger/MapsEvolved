@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <algorithm>
 #include <cctype>
+#include <limits>
 
 #include <GeographicLib\Geodesic.hpp>
 
@@ -90,11 +91,13 @@ class RasterMapError : public RasterMap {
             return Projection("");
         }
 
-        virtual LatLon PixelToLatLon(const MapPixelCoord &pos) const {
-            return LatLon();
+        virtual bool
+        PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const {
+            return false;
         }
-        virtual MapPixelCoord LatLonToPixel(const LatLon &pos) const {
-            return MapPixelCoord();
+        virtual bool
+        LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const {
+            return false;
         }
         virtual const std::wstring &GetFname() const { return m_fname; }
         virtual const std::wstring &GetDescription() const {
@@ -146,25 +149,39 @@ bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
         if (!m_active_dhm)
             return false;
     }
-    MapPixelCoord map_pos = m_active_dhm->LatLonToPixel(pos);
-    MapBezierPositioner bezier_position(map_pos, m_active_dhm->GetSize());
-
+    MapPixelCoord map_pos;
+    if (!m_active_dhm->LatLonToPixel(pos, &map_pos)) {
+        return false;
+    }
+    MapBezierPositioner bezier_pos(map_pos, m_active_dhm->GetSize());
+    if (!bezier_pos.IsValid()) {
+        return false;
+    }
+    double mpp;
+    if (!MetersPerPixel(*m_active_dhm, bezier_pos.GetBezierCenter(), &mpp)) {
+        return false;
+    }
     unsigned int bezier_pixels = Bezier::N_POINTS - 1;
-    double bezier_meters = bezier_pixels *
-                     MetersPerPixel(*m_active_dhm, bezier_position.GetBezierCenter());
+    double bezier_meters = bezier_pixels * mpp;
 
-    MapBezierGradient grad = Gradient3x3(*m_active_dhm,
-                                         bezier_position.GetBezierCenter(),
-                                         bezier_position.GetBasePoint());
+    MapBezierGradient grad;
+    if (!Gradient3x3(*m_active_dhm, bezier_pos.GetBezierCenter(),
+                     bezier_pos.GetBasePoint(), &grad))
+    {
+        return false;
+    }
+
     grad /= bezier_meters;
     // -grad.y corrects for the coordinate system of the image pixels not being
     // the same as the map coordinates (y axis inverted)
     double grad_direction = atan2(-grad.y, grad.x);
     double grad_steepness = atan(grad.Abs());
 
-    result->height_m = Value3x3(*m_active_dhm,
-                                bezier_position.GetBezierCenter(),
-                                bezier_position.GetBasePoint());
+    if (!Value3x3(*m_active_dhm, bezier_pos.GetBezierCenter(),
+                  bezier_pos.GetBasePoint(), &result->height_m))
+    {
+        return false;
+    }
     result->steepness_deg = grad_steepness * RAD_to_DEG;
     result->slope_face_deg = normalize_direction(270 +
                                                  grad_direction * RAD_to_DEG);
@@ -174,7 +191,9 @@ bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
 bool HeightFinder::LatLongWithinActiveDHM(const LatLon &pos) const {
     if (!m_active_dhm)
         return false;
-    MapPixelCoord map_pos = m_active_dhm->LatLonToPixel(pos);
+    MapPixelCoord map_pos;
+    if (!m_active_dhm->LatLonToPixel(pos, &map_pos))
+        return false;
     return map_pos.IsInRect(MapPixelCoord(0, 0),
                             MapPixelDelta(m_active_dhm->GetSize()));
 }
@@ -191,23 +210,38 @@ HeightFinder::FindBestMap(const LatLon &pos,
     return NULL;
 }
 
-double GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
-                      double dx, double dy)
+bool GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
+                    double dx, double dy, double *distance)
 {
     MapPixelCoord A(pos.x - dx, pos.y - dy);
     MapPixelCoord B(pos.x + dx, pos.y + dy);
-    LatLon lA = map.PixelToLatLon(A);
-    LatLon lB = map.PixelToLatLon(B);
+    LatLon lA, lB;
+    if (!map.PixelToLatLon(A, &lA) || !map.PixelToLatLon(B, &lB)) {
+        return false;
+    }
     Projection proj = map.GetProj();
-    return proj.CalcDistance(lA.lat, lA.lon, lB.lat, lB.lon);
+    *distance = proj.CalcDistance(lA.lat, lA.lon, lB.lat, lB.lon);
+    return true;
 }
 
-double MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos) {
-    double mppx = 0.5 * GetMapDistance(map, pos, 1, 0);
-    double mppy = 0.5 * GetMapDistance(map, pos, 0, 1);
-    return 0.5 * (mppx + mppy);
+bool MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
+                    double *mpp)
+{
+    double mppx, mppy;
+    if (!GetMapDistance(map, pos, 1, 0, &mppx) ||
+        !GetMapDistance(map, pos, 0, 1, &mppy))
+    {
+        return false;
+    }
+
+    // 0.5 -> average
+    // 0.5 -> 2 pixels difference calculated within GetMapDistance
+    *mpp = 0.5 * 0.5 * (mppx + mppy);
+    return true;
 }
 
-double MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos) {
-    return MetersPerPixel(map, MapPixelCoord(pos));
+bool MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos,
+                    double *mpp)
+{
+    return MetersPerPixel(map, MapPixelCoord(pos), mpp);
 }

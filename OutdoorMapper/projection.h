@@ -9,8 +9,8 @@ class Projection {
     public:
         explicit Projection(const std::string &proj_str);
 
-        void PCSToLatLong(double &x, double &y) const;
-        void LatLongToPCS(double &x, double &y) const;
+        bool PCSToLatLong(double &x, double &y) const;
+        bool LatLongToPCS(double &x, double &y) const;
         const std::string &GetProjString() const { return m_proj_str; };
 
         double CalcDistance(double lat1, double long1,

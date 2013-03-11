@@ -33,8 +33,10 @@ class ODM_INTERFACE RasterMap {
         virtual void PixelToPCS(double *x, double *y) const = 0;
         virtual void PCSToPixel(double *x, double *y) const = 0;
         virtual Projection GetProj() const = 0;
-        virtual LatLon PixelToLatLon(const MapPixelCoord &pos) const = 0;
-        virtual MapPixelCoord LatLonToPixel(const LatLon &pos) const = 0;
+        virtual bool
+        PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const = 0;
+        virtual bool
+        LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const = 0;
 
         virtual const std::wstring &GetFname() const = 0;
 };
@@ -80,9 +82,11 @@ class HeightFinder {
                                        RasterMap::RasterMapType type) const;
 };
 
-double GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
-                      double dx, double dy);
-double MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos);
-double MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos);
+bool GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
+                    double dx, double dy, double *distance);
+bool MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
+                    double *mpp);
+bool MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos,
+                    double *mpp);
 
 #endif

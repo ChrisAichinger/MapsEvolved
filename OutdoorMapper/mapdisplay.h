@@ -43,13 +43,13 @@ class MapDisplayManager {
                                          const RasterMap &map) const;
 
     private:
-        DISALLOW_COPY_AND_ASSIGN(MapDisplayManager);
-
         void PaintOneLayer(std::list<class DisplayOrder> *orders,
                            const class RasterMap &map,
                            const MapPixelCoordInt &tile_topleft,
                            const MapPixelCoordInt &tile_botright,
                            const MapPixelDeltaInt &tile_size);
+
+        bool TryChangeMapPreservePos(const RasterMap *new_map);
 
         static const int TILE_SIZE = 512;
         static const double ZOOM_STEP;
@@ -60,6 +60,8 @@ class MapDisplayManager {
 
         BaseMapCoord m_center;
         double m_zoom;
+
+        DISALLOW_COPY_AND_ASSIGN(MapDisplayManager);
 };
 
 #endif

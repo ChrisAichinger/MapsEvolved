@@ -1,9 +1,11 @@
+#include "mapdisplay.h"
+
 #include <vector>
 #include <list>
+#include <cassert>
 
 #include "rastermap.h"
 #include "disp_ogl.h"
-#include "mapdisplay.h"
 #include "tiles.h"
 #include "disp_ogl.h"
 
@@ -25,26 +27,47 @@ void MapDisplayManager::Resize(unsigned int width, unsigned int height) {
     m_display->Resize(width, height);
 }
 
+bool MapDisplayManager::TryChangeMapPreservePos(const RasterMap *new_map) {
+    // Calc position of display center on earth
+    LatLon point;
+    if (!m_base_map->PixelToLatLon(m_center, &point))
+        return false;
+
+    // Convert that to map display coordinates on the new map
+    MapPixelCoord new_center;
+    if (!new_map->LatLonToPixel(point, &new_center))
+        return false;
+
+    // Check if old map center is within new map
+    if (!new_center.IsInRect(MapPixelCoordInt(0, 0), new_map->GetSize()))
+        return false;
+
+    // Success in preserving the map position
+    double new_zoom = m_zoom;
+    double factor;
+    if (!MetersPerPixel(*new_map, new_center, &factor)) {
+        return false;
+    }
+    new_zoom *= factor;
+
+    if (!MetersPerPixel(*m_base_map, m_center, &factor)) {
+        return false;
+    }
+    new_zoom /= factor;
+
+    m_zoom = new_zoom;
+    m_center = BaseMapCoord(new_center);
+
+    return true;
+}
 void MapDisplayManager::ChangeMap(const RasterMap *new_map,
                                   bool try_preserve_pos)
 {
     if (new_map == m_base_map)
         return;
 
-    if (try_preserve_pos) {
-        LatLon point = m_base_map->PixelToLatLon(m_center);
-        MapPixelCoord new_center = new_map->LatLonToPixel(point);
-        // Check if old map position is within new map
-        if (new_center.IsInRect(MapPixelCoordInt(0, 0), new_map->GetSize())) {
-            m_zoom *= MetersPerPixel(*new_map, new_center);
-            m_zoom /= MetersPerPixel(*m_base_map, m_center);
-            m_center = BaseMapCoord(new_center);
-        } else {
-            try_preserve_pos = false;
-        }
-    }
-
-    if (!try_preserve_pos) {
+    bool preserve_pos = try_preserve_pos && TryChangeMapPreservePos(new_map);
+    if (!preserve_pos) {
         m_center = BaseMapCoord(BaseMapDelta(m_base_map->GetSize() / 2.0));
         m_zoom = 1.0;
     }
@@ -173,8 +196,15 @@ MapDisplayManager::DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
     if (&map == m_base_map)
         return DisplayCoordCenteredFromBase(BaseMapCoord(mpc));
 
-    LatLon world_pos = map.PixelToLatLon(mpc);
-    BaseMapCoord base_pos(m_base_map->LatLonToPixel(world_pos));
+    LatLon world_pos;
+    if (!map.PixelToLatLon(mpc, &world_pos)) {
+        assert(false);
+    }
+
+    BaseMapCoord base_pos;
+    if (!m_base_map->LatLonToPixel(world_pos, &base_pos)) {
+        assert(false);
+    }
     return DisplayCoordCenteredFromBase(base_pos);
 }
 

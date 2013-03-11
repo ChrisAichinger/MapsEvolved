@@ -37,24 +37,26 @@ Projection::Projection(const std::string &proj_str)
     }
 }
 
-void Projection::PCSToLatLong(double &x, double &y) const {
+bool Projection::PCSToLatLong(double &x, double &y) const {
     projXY pcs = {x, y};
     projLP latlong = pj_inv(pcs, m_proj->Get());
     if (latlong.u == HUGE_VAL || latlong.v == HUGE_VAL) {
-        throw std::runtime_error("Can't convert projected CS to Lat/Long.");
+        return false;
     }
     x = latlong.u * RAD_to_DEG;
     y = latlong.v * RAD_to_DEG;
+    return true;
 }
 
-void Projection::LatLongToPCS(double &x, double &y) const {
+bool Projection::LatLongToPCS(double &x, double &y) const {
     projLP latlong = {x * DEG_to_RAD, y * DEG_to_RAD};
     projXY pcs = pj_fwd(latlong, m_proj->Get());
     if (pcs.u == HUGE_VAL || pcs.v == HUGE_VAL) {
-        throw std::runtime_error("Can't convert projected CS to Lat/Long.");
+        return false;
     }
     x = pcs.u;
     y = pcs.v;
+    return true;
 }
 
 double flattening_from_excentricity_squared(double e2) {

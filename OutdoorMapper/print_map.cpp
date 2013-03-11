@@ -27,8 +27,18 @@ bool MapPrinter::Print(HDC hdc) {
     const RasterMap &map = m_display->GetBaseMap();
     const MapPixelCoord &map_center = m_display->GetCenter();
     int dx, dy;
-    for (dx=1; GetMapDistance(map, map_center, dx, 0) < map_width_m; dx++);
-    for (dy=1; GetMapDistance(map, map_center, 0, dy) < map_height_m; dy++);
+    for (dx=1; true; dx++) {
+        double dist;
+        GetMapDistance(map, map_center, dx, 0, &dist);
+        if (dist < map_width_m)
+            break;
+    }
+    for (dy=1; true; dy++) {
+        double dist;
+        GetMapDistance(map, map_center, 0, dy, &dist);
+        if (dist < map_width_m)
+            break;
+    }
     MapPixelCoordInt center(map_center);
     auto pixels = map.GetRegion(center, MapPixelDeltaInt(2*dx, 2*dy));
 

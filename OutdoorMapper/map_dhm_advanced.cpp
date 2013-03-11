@@ -34,11 +34,13 @@ void GradientMap::PCSToPixel(double *x, double *y) const {
 Projection GradientMap::GetProj() const {
     return m_orig_map->GetProj();
 }
-LatLon GradientMap::PixelToLatLon(const MapPixelCoord &pos) const {
-    return m_orig_map->PixelToLatLon(pos);
+bool GradientMap::PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const
+{
+    return m_orig_map->PixelToLatLon(pos, result);
 }
-MapPixelCoord GradientMap::LatLonToPixel(const LatLon &pos) const {
-    return m_orig_map->LatLonToPixel(pos);
+bool GradientMap::LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const
+{
+    return m_orig_map->LatLonToPixel(pos, result);
 }
 const std::wstring &GradientMap::GetFname() const {
     return m_orig_map->GetFname();

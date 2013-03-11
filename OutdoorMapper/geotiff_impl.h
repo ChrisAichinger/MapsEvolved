@@ -102,6 +102,8 @@ class GeoTiff : public Tiff {
 
         bool HasKey(geokey_t) const;
 
+        geocode_t GetModel() const { return m_model; }
+
     protected:
         GeoTiffHandle m_gtifhandle;
         GTIF *m_rawgtif;
@@ -110,6 +112,7 @@ class GeoTiff : public Tiff {
     private:
         bool CheckDHMValid() const;
 
+        geocode_t m_model;
         const double *m_tiepoints;
         const double *m_pixscale;
         const double *m_transform;

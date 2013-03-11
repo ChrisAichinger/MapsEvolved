@@ -18,8 +18,10 @@ class GradientMap : public RasterMap {
         virtual void PCSToPixel(double *x, double *y) const;
         virtual Projection GetProj() const;
 
-        virtual LatLon PixelToLatLon(const MapPixelCoord &pos) const;
-        virtual MapPixelCoord LatLonToPixel(const LatLon &pos) const;
+        virtual bool
+        PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const;
+        virtual bool
+        LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const;
 
         virtual const std::wstring &GetFname() const;
     private:

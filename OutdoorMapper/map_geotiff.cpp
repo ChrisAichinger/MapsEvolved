@@ -145,8 +145,10 @@ bool GeoTiff::CheckVersion() const {
 }
 
 void GeoTiff::LoadCoordinates() {
-    geocode_t model = GetKeySingle<geocode_t>(GTModelTypeGeoKey);
-    assert(model == ModelTypeProjected); // The rest is not implemented
+    m_model = GetKeySingle<geocode_t>(GTModelTypeGeoKey);
+
+    // The rest is not implemented
+    assert(m_model == ModelTypeProjected || m_model == ModelTypeGeographic);
 
     GTIFDefn    defn;
     if(GTIFGetDefn(m_rawgtif, &defn)) {
@@ -209,7 +211,6 @@ bool GeoTiff::HasKey(geokey_t key) const {
 }
 
 void GeoTiff::PixelToPCS(double *x, double *y) const {
-
     if (m_ntiepoints > 6 && m_npixscale == 0) {
         // Interpolate between multiple tiepoints
         assert(false);  // Not implemented
@@ -231,7 +232,6 @@ void GeoTiff::PixelToPCS(double *x, double *y) const {
 }
 
 void GeoTiff::PCSToPixel(double *x, double *y) const {
-
     if (m_ntiepoints > 6 && m_npixscale == 0) {
         // Interpolate between multiple tiepoints
         assert(false);  // Not implemented
@@ -304,18 +304,28 @@ const std::wstring &TiffMap::GetFname() const
 Projection TiffMap::GetProj() const
     { return m_proj; }
 
-LatLon TiffMap::PixelToLatLon(const MapPixelCoord &pos) const {
+bool TiffMap::PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const {
     double x = pos.x;
     double y = pos.y;
     PixelToPCS(&x, &y);
-    GetProj().PCSToLatLong(x, y);
-    return LatLon(y, x);
+    if (m_geotiff->GetModel() == ModelTypeProjected) {
+        if (!GetProj().PCSToLatLong(x, y)) {
+            return false;
+        }
+    }
+    *result = LatLon(y, x);
+    return true;
 }
 
-MapPixelCoord TiffMap::LatLonToPixel(const LatLon &pos) const {
+bool TiffMap::LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const {
     double x = pos.lon;
     double y = pos.lat;
-    GetProj().LatLongToPCS(x, y);
+    if (m_geotiff->GetModel() == ModelTypeProjected) {
+        if (!GetProj().LatLongToPCS(x, y)) {
+            return false;
+        }
+    }
     PCSToPixel(&x, &y);
-    return MapPixelCoord(x, y);
+    *result = MapPixelCoord(x, y);
+    return true;
 }

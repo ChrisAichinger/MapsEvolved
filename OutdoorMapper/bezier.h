@@ -43,12 +43,14 @@ class Bezier {
 
 class MapBezierPositioner {
     public:
-        explicit MapBezierPositioner(const MapPixelCoordInt &pos);
+        explicit MapBezierPositioner(const MapPixelCoordInt &pos,
+                                     const MapPixelDeltaInt &size);
         explicit MapBezierPositioner(const MapPixelCoord &pos,
                                      const MapPixelDeltaInt &size);
 
         const MapPixelCoordInt &GetBezierCenter() const { return m_center; }
         const BezierCoord &GetBasePoint() const { return m_bezier_coord; }
+        bool IsValid() const { return m_is_valid; }
     private:
         MapPixelCoordInt FindCenter(const MapPixelCoord &pos,
                                     const MapPixelDeltaInt &size) const;
@@ -57,6 +59,7 @@ class MapBezierPositioner {
 
         MapPixelCoordInt m_center;
         BezierCoord m_bezier_coord;
+        bool m_is_valid;
 };
 
 
@@ -79,21 +82,25 @@ Fast3x3CenterGradient(const T *src,
     return MapBezierGradient(src21 - src01, src12 - src10);
 }
 
-MapBezierGradient Gradient3x3(const unsigned int *src,
-                              const MapPixelDeltaInt &src_size,
-                              const MapPixelCoordInt &center,
-                              const BezierCoord &bezier_pos);
+bool Gradient3x3(const unsigned int *src,
+                 const MapPixelDeltaInt &src_size,
+                 const MapPixelCoordInt &center,
+                 const BezierCoord &bezier_pos,
+                 MapBezierGradient *gradient);
 
-MapBezierGradient Gradient3x3(const class RasterMap &map,
-                              const MapPixelCoordInt &center,
-                              const BezierCoord &bezier_pos);
+bool Gradient3x3(const class RasterMap &map,
+                 const MapPixelCoordInt &center,
+                 const BezierCoord &bezier_pos,
+                 MapBezierGradient *gradient);
 
-double Value3x3(const unsigned int *src,
-                const MapPixelDeltaInt &src_size,
-                const MapPixelCoordInt &center,
-                const BezierCoord &bezier_pos);
+bool Value3x3(const unsigned int *src,
+              const MapPixelDeltaInt &src_size,
+              const MapPixelCoordInt &center,
+              const BezierCoord &bezier_pos,
+              double *value);
 
-double Value3x3(const class RasterMap &map,
-                const MapPixelCoordInt &center,
-                const BezierCoord &bezier_pos);
+bool Value3x3(const class RasterMap &map,
+              const MapPixelCoordInt &center,
+              const BezierCoord &bezier_pos,
+              double *value);
 #endif
