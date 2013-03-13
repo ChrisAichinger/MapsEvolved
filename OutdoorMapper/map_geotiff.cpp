@@ -133,7 +133,9 @@ GeoTiff::GeoTiff(const std::wstring &fname)
     if (!CheckVersion()) {
         throw std::runtime_error("GeoTIFF version not supported.");
     }
-    LoadCoordinates();
+    if (!LoadCoordinates()) {
+        m_type = RasterMap::TYPE_IMAGE;
+    }
 };
 
 bool GeoTiff::CheckVersion() const {
@@ -144,24 +146,29 @@ bool GeoTiff::CheckVersion() const {
            versions[REV_MAJOR] <= GvCurrentRevision;
 }
 
-void GeoTiff::LoadCoordinates() {
-    m_model = GetKeySingle<geocode_t>(GTModelTypeGeoKey);
+bool GeoTiff::LoadCoordinates() {
+    if (!GetKeySingle<geocode_t>(GTModelTypeGeoKey, &m_model)) {
+        return false;
+    }
 
     // The rest is not implemented
-    assert(m_model == ModelTypeProjected || m_model == ModelTypeGeographic);
+    if (m_model != ModelTypeProjected && m_model != ModelTypeGeographic) {
+        throw std::runtime_error("Map type not supported yet");
+    }
 
     GTIFDefn    defn;
-    if(GTIFGetDefn(m_rawgtif, &defn)) {
-        //printf( "\n" );
-        //GTIFPrintDefn(&defn, stdout);
-
-        std::shared_ptr<char> proj_str(GTIFGetProj4Defn(&defn),
-                                       [](char* mem) { GTIFFreeMemory(mem); });
-        if (!proj_str) {
-            throw std::runtime_error("Failed to get projection definition.");
-        }
-        m_proj = proj_str.get();
+    if(!GTIFGetDefn(m_rawgtif, &defn)) {
+        return false;
     }
+
+    std::shared_ptr<char> proj_str(GTIFGetProj4Defn(&defn),
+                                   [](char* mem) { GTIFFreeMemory(mem); });
+    if (!proj_str)
+        return false;
+
+    m_proj = proj_str.get();
+    if (!m_proj[0])
+        return false;
 
     using std::tie;
     tie(m_ntiepoints, m_tiepoints) = GetField<double>(TIFFTAG_GEOTIEPOINTS);
@@ -174,6 +181,8 @@ void GeoTiff::LoadCoordinates() {
     } else {
         m_type = RasterMap::TYPE_MAP;
     }
+
+    return true;
 }
 
 template <typename T>
@@ -198,19 +207,23 @@ GeoTiff::GetKey(geokey_t key) const
 };
 
 template <typename T>
-T GeoTiff::GetKeySingle(geokey_t key) const {
+bool GeoTiff::GetKeySingle(geokey_t key, T *output) const {
     auto result = GetKey<T>(key);
     if (std::get<0>(result) != 1) {
-        throw std::runtime_error("Couldn't read GeoTIFF key.");
+        return false;
     }
-    return *std::get<1>(result).get();
+    *output = *std::get<1>(result).get();
+    return true;
 }
 
 bool GeoTiff::HasKey(geokey_t key) const {
     return 0 != GTIFKeyInfo(m_rawgtif, key, NULL, NULL);
 }
 
-void GeoTiff::PixelToPCS(double *x, double *y) const {
+bool GeoTiff::PixelToPCS(double *x, double *y) const {
+    if (m_type == RasterMap::TYPE_IMAGE)
+        return false;
+
     if (m_ntiepoints > 6 && m_npixscale == 0) {
         // Interpolate between multiple tiepoints
         assert(false);  // Not implemented
@@ -229,9 +242,13 @@ void GeoTiff::PixelToPCS(double *x, double *y) const {
     else {
         throw std::runtime_error("Couldn't find GeoTIFF coordinates.");
     }
+    return true;
 }
 
-void GeoTiff::PCSToPixel(double *x, double *y) const {
+bool GeoTiff::PCSToPixel(double *x, double *y) const {
+    if (m_type == RasterMap::TYPE_IMAGE)
+        return false;
+
     if (m_ntiepoints > 6 && m_npixscale == 0) {
         // Interpolate between multiple tiepoints
         assert(false);  // Not implemented
@@ -248,11 +265,16 @@ void GeoTiff::PCSToPixel(double *x, double *y) const {
     else {
         throw std::runtime_error("Couldn't find GeoTIFF coordinates.");
     }
+    return true;
 }
 
 bool GeoTiff::CheckDHMValid() const {
+    short int vert_units;
+    if (!GetKeySingle<short int>(VerticalUnitsGeoKey, &vert_units))
+        return false;
+
     // Other vertical formats not supported at the moment
-    return GetKeySingle<short int>(VerticalUnitsGeoKey) == Linear_Meter;
+    return vert_units == Linear_Meter;
 }
 
 // If we have a DHM map, the pixel values typically represent height in m
@@ -295,9 +317,9 @@ std::shared_ptr<unsigned int> TiffMap::GetRegion(
                       const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const
     { return m_geotiff->GetRegion(pos, size); };
-void TiffMap::PixelToPCS(double *x, double *y) const
+bool TiffMap::PixelToPCS(double *x, double *y) const
     { return m_geotiff->PixelToPCS(x, y); }
-void TiffMap::PCSToPixel(double *x, double *y) const
+bool TiffMap::PCSToPixel(double *x, double *y) const
     { return m_geotiff->PCSToPixel(x, y); }
 const std::wstring &TiffMap::GetFname() const
     { return m_geotiff->GetFilename(); }
@@ -307,7 +329,9 @@ Projection TiffMap::GetProj() const
 bool TiffMap::PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const {
     double x = pos.x;
     double y = pos.y;
-    PixelToPCS(&x, &y);
+    if (!PixelToPCS(&x, &y))
+        return false;
+
     if (m_geotiff->GetModel() == ModelTypeProjected) {
         if (!GetProj().PCSToLatLong(x, y)) {
             return false;
@@ -325,7 +349,9 @@ bool TiffMap::LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const {
             return false;
         }
     }
-    PCSToPixel(&x, &y);
+    if (!PCSToPixel(&x, &y))
+        return false;
+
     *result = MapPixelCoord(x, y);
     return true;
 }

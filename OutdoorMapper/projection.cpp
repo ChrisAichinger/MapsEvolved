@@ -32,12 +32,13 @@ Projection::Projection(const std::string &proj_str)
     : m_proj(new ProjWrap(pj_init_plus(proj_str.c_str()))),
       m_proj_str(proj_str)
 {
-    if (!*m_proj) {
-        throw std::runtime_error("Failed to initialize projection.");
-    }
+    m_is_valid = !*m_proj;
 }
 
 bool Projection::PCSToLatLong(double &x, double &y) const {
+    if (!m_is_valid)
+        return false;
+
     projXY pcs = {x, y};
     projLP latlong = pj_inv(pcs, m_proj->Get());
     if (latlong.u == HUGE_VAL || latlong.v == HUGE_VAL) {
@@ -49,6 +50,9 @@ bool Projection::PCSToLatLong(double &x, double &y) const {
 }
 
 bool Projection::LatLongToPCS(double &x, double &y) const {
+    if (!m_is_valid)
+        return false;
+
     projLP latlong = {x * DEG_to_RAD, y * DEG_to_RAD};
     projXY pcs = pj_fwd(latlong, m_proj->Get());
     if (pcs.u == HUGE_VAL || pcs.v == HUGE_VAL) {
@@ -64,9 +68,13 @@ double flattening_from_excentricity_squared(double e2) {
     return 1 - sqrt(1 - e2);
 }
 
-double Projection::CalcDistance(double lat1, double long1,
-                                double lat2, double long2) const
+bool Projection::CalcDistance(double lat1, double long1,
+                                double lat2, double long2,
+                                double *distance) const
 {
+    if (!m_is_valid)
+        return false;
+
     double a, e2; // major axis and excentricity squared
     pj_get_spheroid_defn(m_proj->Get(), &a, &e2);
 
@@ -74,5 +82,6 @@ double Projection::CalcDistance(double lat1, double long1,
     double f = flattening_from_excentricity_squared(e2);
     GeographicLib::Geodesic geod(a, f);
     geod.Inverse(lat1, long1, lat2, long2, s12);
-    return s12;
+    *distance = s12;
+    return true;
 }

@@ -211,6 +211,7 @@ void MapListWindow::InsertRow(const RasterMap &map) {
         case RasterMap::TYPE_GRADIENT: str = L"Gradient height map"; break;
         case RasterMap::TYPE_LEGEND: str = L"Legend"; break;
         case RasterMap::TYPE_OVERVIEW: str = L"Overview"; break;
+        case RasterMap::TYPE_IMAGE: str = L"Plain image"; break;
         case RasterMap::TYPE_ERROR:
             str = L"Error loading map";
             lvrow.SetColor(makeRGB(0xdd, 0, 0));

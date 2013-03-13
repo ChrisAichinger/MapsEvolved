@@ -25,10 +25,10 @@ unsigned int GradientMap::GetHeight() const {
 MapPixelDeltaInt GradientMap::GetSize() const {
     return m_orig_map->GetSize();
 }
-void GradientMap::PixelToPCS(double *x, double *y) const {
+bool GradientMap::PixelToPCS(double *x, double *y) const {
     return m_orig_map->PixelToPCS(x, y);
 }
-void GradientMap::PCSToPixel(double *x, double *y) const {
+bool GradientMap::PCSToPixel(double *x, double *y) const {
     return m_orig_map->PCSToPixel(x, y);
 }
 Projection GradientMap::GetProj() const {

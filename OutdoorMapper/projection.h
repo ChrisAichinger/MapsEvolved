@@ -13,12 +13,16 @@ class Projection {
         bool LatLongToPCS(double &x, double &y) const;
         const std::string &GetProjString() const { return m_proj_str; };
 
-        double CalcDistance(double lat1, double long1,
-                            double lat2, double long2) const;
+        bool CalcDistance(double lat1, double long1,
+                          double lat2, double long2,
+                          double *distance) const;
+
+        bool IsValid() const { return m_is_valid; }
 
     private:
         std::shared_ptr<class ProjWrap> m_proj;
         std::string m_proj_str;
+        bool m_is_valid;
 };
 
 

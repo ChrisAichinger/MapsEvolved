@@ -84,8 +84,8 @@ class RasterMapError : public RasterMap {
             return std::shared_ptr<unsigned int>(new unsigned int[sz.x*sz.y](),
                                                  ArrayDeleter<unsigned int>());
         }
-        virtual void PixelToPCS(double *x, double *y) const {}
-        virtual void PCSToPixel(double *x, double *y) const {}
+        virtual bool PixelToPCS(double *x, double *y) const { return false; }
+        virtual bool PCSToPixel(double *x, double *y) const { return false; }
         virtual Projection GetProj() const {
             assert(false);
             return Projection("");
@@ -220,8 +220,7 @@ bool GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
         return false;
     }
     Projection proj = map.GetProj();
-    *distance = proj.CalcDistance(lA.lat, lA.lon, lB.lat, lB.lon);
-    return true;
+    return proj.CalcDistance(lA.lat, lA.lon, lB.lat, lB.lon, distance);
 }
 
 bool MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,

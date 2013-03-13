@@ -14,8 +14,8 @@ class GradientMap : public RasterMap {
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
 
-        virtual void PixelToPCS(double *x, double *y) const;
-        virtual void PCSToPixel(double *x, double *y) const;
+        virtual bool PixelToPCS(double *x, double *y) const;
+        virtual bool PCSToPixel(double *x, double *y) const;
         virtual Projection GetProj() const;
 
         virtual bool

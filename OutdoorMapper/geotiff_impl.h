@@ -86,10 +86,10 @@ class GeoTiff : public Tiff {
         virtual ~GeoTiff() { };
 
         bool CheckVersion() const;
-        void LoadCoordinates();
+        bool LoadCoordinates();
 
-        void PixelToPCS(double *x, double *y) const;
-        void PCSToPixel(double *x, double *y) const;
+        bool PixelToPCS(double *x, double *y) const;
+        bool PCSToPixel(double *x, double *y) const;
         const std::string &GetProj4String() const { return m_proj; };
         RasterMap::RasterMapType GetType() const { return m_type; };
 
@@ -98,7 +98,7 @@ class GeoTiff : public Tiff {
         GetKey(geokey_t key) const;
 
         template <typename T>
-        T GetKeySingle(geokey_t key) const;
+        bool GetKeySingle(geokey_t key, T *result) const;
 
         bool HasKey(geokey_t) const;
 

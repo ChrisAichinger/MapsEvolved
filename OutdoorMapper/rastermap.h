@@ -19,6 +19,7 @@ class ODM_INTERFACE RasterMap {
             TYPE_LEGEND,
             TYPE_OVERVIEW,
             TYPE_ERROR,
+            TYPE_IMAGE,
         };
         virtual ~RasterMap();
 
@@ -30,8 +31,8 @@ class ODM_INTERFACE RasterMap {
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const = 0;
 
-        virtual void PixelToPCS(double *x, double *y) const = 0;
-        virtual void PCSToPixel(double *x, double *y) const = 0;
+        virtual bool PixelToPCS(double *x, double *y) const = 0;
+        virtual bool PCSToPixel(double *x, double *y) const = 0;
         virtual Projection GetProj() const = 0;
         virtual bool
         PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const = 0;
