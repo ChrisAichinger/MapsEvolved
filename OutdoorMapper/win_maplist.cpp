@@ -214,6 +214,7 @@ void MapListWindow::InsertRow(const RasterMap &map) {
         case RasterMap::TYPE_MAP: str = L"Map"; break;
         case RasterMap::TYPE_DHM: str = L"DHM"; break;
         case RasterMap::TYPE_GRADIENT: str = L"Gradient height map"; break;
+        case RasterMap::TYPE_STEEPNESS: str = L"Steepness height map"; break;
         case RasterMap::TYPE_LEGEND: str = L"Legend"; break;
         case RasterMap::TYPE_OVERVIEW: str = L"Overview"; break;
         case RasterMap::TYPE_IMAGE: str = L"Plain image"; break;

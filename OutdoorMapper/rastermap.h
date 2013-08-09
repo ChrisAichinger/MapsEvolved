@@ -16,6 +16,7 @@ class ODM_INTERFACE RasterMap {
             TYPE_MAP = 1,
             TYPE_DHM,
             TYPE_GRADIENT,
+            TYPE_STEEPNESS,
             TYPE_LEGEND,
             TYPE_OVERVIEW,
             TYPE_ERROR,

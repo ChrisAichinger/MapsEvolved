@@ -128,8 +128,11 @@ void LoadMap(RasterMapCollection &maps, const std::wstring &fname) {
         }
 
         if (map->GetType() == RasterMap::TYPE_DHM) {
-            map.reset(new GradientMap(map));
-            maps.AddMap(map);
+            std::shared_ptr<class RasterMap> deriv_map;
+            deriv_map.reset(new GradientMap(map));
+            maps.AddMap(deriv_map);
+            deriv_map.reset(new SteepnessMap(map));
+            maps.AddMap(deriv_map);
         }
     } catch (const std::runtime_error &) {
         map.reset(new RasterMapError(fname.c_str(), L"Exception"));

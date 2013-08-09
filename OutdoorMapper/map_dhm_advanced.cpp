@@ -3,6 +3,7 @@
 #define _USE_MATH_DEFINES
 #include <memory>
 #include <cassert>
+#include <math.h>
 
 #include "util.h"
 #include "bezier.h"
@@ -87,3 +88,87 @@ std::shared_ptr<unsigned int> GradientMap::GetRegion(
 #undef DEST
 #undef SRC
 
+
+SteepnessMap::SteepnessMap(std::shared_ptr<const RasterMap> orig_map)
+    : m_orig_map(orig_map)
+{
+    assert(orig_map->GetType() == RasterMap::TYPE_DHM);
+}
+
+RasterMap::RasterMapType SteepnessMap::GetType() const {
+    return RasterMap::TYPE_STEEPNESS;
+}
+unsigned int SteepnessMap::GetWidth() const {
+    return m_orig_map->GetWidth();
+}
+unsigned int SteepnessMap::GetHeight() const {
+    return m_orig_map->GetHeight();
+}
+MapPixelDeltaInt SteepnessMap::GetSize() const {
+    return m_orig_map->GetSize();
+}
+bool SteepnessMap::PixelToPCS(double *x, double *y) const {
+    return m_orig_map->PixelToPCS(x, y);
+}
+bool SteepnessMap::PCSToPixel(double *x, double *y) const {
+    return m_orig_map->PCSToPixel(x, y);
+}
+Projection SteepnessMap::GetProj() const {
+    return m_orig_map->GetProj();
+}
+bool SteepnessMap::PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const
+{
+    return m_orig_map->PixelToLatLon(pos, result);
+}
+bool SteepnessMap::LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const
+{
+    return m_orig_map->LatLonToPixel(pos, result);
+}
+const std::wstring &SteepnessMap::GetFname() const {
+    return m_orig_map->GetFname();
+}
+
+static unsigned int steepness_colors[] = {
+    0xffffff, 0xedffed, 0x95fd95, 0x63f563,
+    0x00e600, 0x00dca2, 0x009ff6, 0x0078ff,
+    0x0019ff, 0x0007e5, 0x1700b3, 0x5a00b0,
+    0x80009b, 0x66006d, 0x5d475d, 0x5d5d5d,
+    0x3f3f3f, 0x272727, 0x000000,
+};
+
+#define DEST(xx,yy) dest[(xx) + size.x * (yy)]
+#define SRC(xx,yy) src[(xx) + req_size.x * (yy)]
+std::shared_ptr<unsigned int> SteepnessMap::GetRegion(
+        const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
+{
+    double mpp;
+    if (!MetersPerPixel(*this, pos + size/2, &mpp)) {
+        // Return zero-initialized memory block (notice the parentheses)
+        return std::shared_ptr<unsigned int>(new unsigned int[size.x*size.y](),
+                                             ArrayDeleter<unsigned int>());
+    }
+    unsigned int bezier_pixels = Bezier::N_POINTS - 1;
+    double inv_bezier_meters = 1 / (bezier_pixels * mpp);
+
+    MapPixelCoordInt req_pos = pos - MapPixelDeltaInt(1, 1);
+    MapPixelDeltaInt req_size = size + MapPixelDeltaInt(2, 2);
+    auto orig_data = m_orig_map->GetRegion(req_pos, req_size);
+    std::shared_ptr<unsigned int> data(new unsigned int[size.x * size.y],
+                                       ArrayDeleter<unsigned int>());
+
+    unsigned int *src = orig_data.get();
+    unsigned int *dest = data.get();
+    for (int x=0; x < size.x; x++) {
+        for (int y=0; y < size.y; y++) {
+            MapPixelCoordInt pos(x+1, y+1);
+            MapBezierGradient grad = Fast3x3CenterGradient(src, pos, req_size);
+            grad *= inv_bezier_meters;
+            double grad_steepness = atan(grad.Abs());
+            int color_index = static_cast<int>(grad_steepness / (M_PI / 2) * 18);
+            DEST(x, y) = steepness_colors[color_index];
+        }
+    }
+    return data;
+}
+#undef DEST
+#undef SRC
