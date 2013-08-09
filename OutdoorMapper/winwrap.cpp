@@ -693,7 +693,7 @@ LRESULT ListView::SubClassProc(HWND hwnd, UINT msg,
 
         int idxTop = ListView_GetTopIndex(hwnd);        // First visible row
         int idxItems = ListView_GetCountPerPage(hwnd);  // Number rows visible
-        int idxLast = min(idxTop + idxItems, ListView_GetItemCount(hwnd) - 1);
+        int idxLast = std::min(idxTop + idxItems, ListView_GetItemCount(hwnd) - 1);
 
         for (int i = idxTop; i <= idxLast; i++) {
             ListView_GetItemRect(hwnd, i, &rectItem, LVIR_BOUNDS);
@@ -723,7 +723,7 @@ LRESULT ListView::SubClassProc(HWND hwnd, UINT msg,
 
         int idxTop = ListView_GetTopIndex(hwnd);        // First visible row
         int idxItems = ListView_GetCountPerPage(hwnd);  // Number rows visible
-        int idxLast = min(idxTop + idxItems, ListView_GetItemCount(hwnd) - 1);
+        int idxLast = std::min(idxTop + idxItems, ListView_GetItemCount(hwnd) - 1);
 
         for (int i = idxTop; i <= idxLast; i++) {
             if (!m_rows[i].WantColor())

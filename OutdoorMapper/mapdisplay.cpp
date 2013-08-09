@@ -145,8 +145,6 @@ bool MapDisplayManager::CalcOverlayTiles(const RasterMap *overlay_map,
     LatLon point;
     MapPixelCoord overlay_point;
     long int x_min, x_max, y_min, y_max;
-#undef min
-#undef max
     x_min = y_min = std::numeric_limits<long int>::max();
     x_max = y_max = std::numeric_limits<long int>::min();
 

@@ -74,14 +74,6 @@ inline unsigned char extractA(unsigned int pix) { return pix >> 24; }
 unsigned int HSV_to_RGB(unsigned char H, unsigned char S, unsigned char V);
 
 
-#ifndef max
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef min
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-#endif
-
 static const int FULL_CIRCLE = 360;
 static const double RAD_to_DEG = 57.29577951308232;
 static const double DEG_to_RAD = .0174532925199432958;
