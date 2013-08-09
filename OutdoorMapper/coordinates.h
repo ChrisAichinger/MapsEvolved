@@ -92,7 +92,8 @@ class MapPixelCoordInt {
         // Round MapPixelCoord to nearest pixel
         explicit MapPixelCoordInt(const class MapPixelCoord &coord);
 
-        // Find top-left tile corner from MapPixelCoord
+        // Find top-left tile corner from MapPixelCoord/MapPixelCoordInt
+        MapPixelCoordInt(const class MapPixelCoordInt &coord, int tile_size);
         MapPixelCoordInt(const class MapPixelCoord &coord, int tile_size);
 
         MapPixelCoordInt& operator+=(const class MapPixelDeltaInt &rhs);

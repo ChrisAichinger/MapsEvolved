@@ -113,6 +113,12 @@ LRESULT MapListWindow::OnCreate() {
         m_mapdisplay.ChangeMap(&m_maps.Get(pnmia->iItem));
         return EventResult(true, 0);
     };
+    events.RightClick = [this](const ListView& lv, LPNMITEMACTIVATE pnmia)
+                               -> EventResult
+    {
+        m_mapdisplay.AddOverlayMap(&m_maps.Get(pnmia->iItem));
+        return EventResult(true, 0);
+    };
     m_listview->RegisterEventHandlers(events);
 
     for (unsigned int index = 0; index < m_maps.Size(); index++) {

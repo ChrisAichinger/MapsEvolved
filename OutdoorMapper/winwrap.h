@@ -317,6 +317,7 @@ struct EventResult {
 struct ListViewEvents {
     std::function<EventResult(const class ListView& lv, LPNMLISTVIEW pnmlv)> ItemChanged;
     std::function<EventResult(const class ListView& lv, LPNMITEMACTIVATE pnmlv)> DoubleClick;
+    std::function<EventResult(const class ListView& lv, LPNMITEMACTIVATE pnmlv)> RightClick;
 };
 
 class ListView {

@@ -139,6 +139,12 @@ MapPixelCoordInt::MapPixelCoordInt(const class MapPixelCoord &coord)
     : x(round_to_int(coord.x)), y(round_to_int(coord.y))
 {}
 
+MapPixelCoordInt::MapPixelCoordInt(const class MapPixelCoordInt &coord,
+                                   int tile_size)
+    : x(round_to_neg_inf(coord.x, tile_size)),
+      y(round_to_neg_inf(coord.y, tile_size))
+{}
+
 MapPixelCoordInt::MapPixelCoordInt(const class MapPixelCoord &coord,
                                    int tile_size)
     : x(round_to_neg_inf(coord.x, tile_size)),

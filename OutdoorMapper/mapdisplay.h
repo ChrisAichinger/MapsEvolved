@@ -18,6 +18,8 @@ class MapDisplayManager {
         const BaseMapCoord &GetCenter() const;
 
         void ChangeMap(const RasterMap *new_map, bool try_preserve_pos=true);
+        void AddOverlayMap(const RasterMap *new_map);
+
         void Resize(unsigned int width, unsigned int height);
         void StepZoom(double steps);
         // The map location under the mouse is held constant
@@ -47,7 +49,17 @@ class MapDisplayManager {
                            const class RasterMap &map,
                            const MapPixelCoordInt &tile_topleft,
                            const MapPixelCoordInt &tile_botright,
-                           const MapPixelDeltaInt &tile_size);
+                           const MapPixelDeltaInt &tile_size,
+                           double transparency = 0.0);
+
+        bool AdvanceAlongBorder(MapPixelCoordInt *base_point,
+                                const MapPixelCoordInt &base_tl,
+                                const MapPixelCoordInt &base_br);
+        bool CalcOverlayTiles(const class RasterMap *overlay_map,
+                              const MapPixelCoordInt &base_tl,
+                              const MapPixelCoordInt &base_br,
+                              MapPixelCoordInt *overlay_tl,
+                              MapPixelCoordInt *overlay_br);
 
         bool TryChangeMapPreservePos(const RasterMap *new_map);
 
@@ -57,6 +69,7 @@ class MapDisplayManager {
         std::shared_ptr<class DispOpenGL> m_display;
         const class RasterMapCollection &m_maps;
         const class RasterMap *m_base_map;
+        std::list<const class RasterMap *> m_overlays;
 
         BaseMapCoord m_center;
         double m_zoom;

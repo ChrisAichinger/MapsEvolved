@@ -15,6 +15,8 @@
 #include "winwrap.h"
 #include "external/glext.h"
 
+static PFNGLBLENDCOLORPROC glBlendColor = 0;
+
 DisplayCoordCentered CenteredCoordFromDisplay(const DisplayCoord& dc,
                                               const Display& disp)
 {
@@ -95,7 +97,12 @@ class TextureCache {
 DispOpenGL::DispOpenGL(const std::shared_ptr<OGLContext> &ogl_context)
     : m_opengl(ogl_context),
       m_texcache(new TextureCache())
-{ }
+{
+    if (!glBlendColor)
+        glBlendColor = (PFNGLBLENDCOLORPROC)wglGetProcAddress("glBlendColor");
+    if (!glBlendColor)
+        throw std::runtime_error("Could not access glBlendColor to initialize OpenGL");
+}
 
 void DispOpenGL::Resize(unsigned int width, unsigned int height) {
     glViewport(0, 0, width, height);
@@ -109,6 +116,8 @@ void DispOpenGL::Render(std::list<class DisplayOrder> &orders) {
     DisplayDelta target_size(GetDisplaySize());
 
     glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
 
     for (auto it=orders.cbegin(); it != orders.cend(); ++it) {
         std::shared_ptr<Texture> tex = m_texcache->Get(it->GetTileCode());
@@ -116,6 +125,9 @@ void DispOpenGL::Render(std::list<class DisplayOrder> &orders) {
             tex.reset(new Texture(it->GetTileCode()));
             m_texcache->Insert(it->GetTileCode(), tex);
         }
+
+        glBlendColor(0.0f, 0.0f, 0.0f,
+                     static_cast<GLfloat>(1.0 - it->GetTransparency()));
 
         tex->Activate();
         glBegin(GL_QUADS);
@@ -127,6 +139,7 @@ void DispOpenGL::Render(std::list<class DisplayOrder> &orders) {
         tex->Deactivate();
     }
     glFlush();
+    glDisable(GL_BLEND);
 
     GLenum gl_error = glGetError();
     if (gl_error != GL_NO_ERROR) {

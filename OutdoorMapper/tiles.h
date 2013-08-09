@@ -64,27 +64,30 @@ inline bool operator>=(const TileCode& lhs, const TileCode& rhs) {
 class DisplayOrder {
     public:
         DisplayOrder(const DisplayCoordCentered &pos, const DisplayDelta &size,
-                     const TileCode& tilecode)
+                     const TileCode& tilecode,
+                     const double transparency = 0)
             : m_topleft  (pos.x         , pos.y),
               m_topright (pos.x + size.x, pos.y),
               m_botleft  (pos.x         , pos.y + size.y),
               m_botright (pos.x + size.x, pos.y + size.y),
-              m_tilecode(tilecode)
+              m_tilecode(tilecode), m_transparency(transparency)
             {};
         DisplayOrder(const DisplayCoordCentered &TopLeft,
                      const DisplayCoordCentered &TopRight,
                      const DisplayCoordCentered &BotLeft,
                      const DisplayCoordCentered &BotRight,
-                     const TileCode& tilecode)
+                     const TileCode& tilecode,
+                     const double transparency = 0)
             : m_topleft(TopLeft), m_topright(TopRight),
               m_botleft(BotLeft), m_botright(BotRight),
-              m_tilecode(tilecode)
+              m_tilecode(tilecode), m_transparency(transparency)
             {};
         const DisplayCoordCentered &GetTopLeft()  const { return m_topleft; };
         const DisplayCoordCentered &GetTopRight() const { return m_topright; };
         const DisplayCoordCentered &GetBotLeft()  const { return m_botleft; };
         const DisplayCoordCentered &GetBotRight() const { return m_botright; };
         const TileCode &GetTileCode() const { return m_tilecode; };
+        double GetTransparency() const { return m_transparency; };
 
     private:
         DisplayCoordCentered m_topleft;
@@ -92,6 +95,7 @@ class DisplayOrder {
         DisplayCoordCentered m_botleft;
         DisplayCoordCentered m_botright;
         const TileCode m_tilecode;
+        double m_transparency;
 };
 
 #endif

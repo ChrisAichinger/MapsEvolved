@@ -3,6 +3,7 @@
 #include <vector>
 #include <list>
 #include <cassert>
+#include <limits>
 
 #include "rastermap.h"
 #include "disp_ogl.h"
@@ -20,7 +21,7 @@ MapDisplayManager::MapDisplayManager(
         const class RasterMapCollection &maps)
     : m_display(display), m_maps(maps), m_base_map(&maps.Get(0)),
       m_center(BaseMapCoord(BaseMapDelta(m_base_map->GetSize() * 0.5))),
-      m_zoom(1.0)
+      m_zoom(1.0), m_overlays()
 { }
 
 void MapDisplayManager::Resize(unsigned int width, unsigned int height) {
@@ -73,6 +74,14 @@ void MapDisplayManager::ChangeMap(const RasterMap *new_map,
     }
 
     m_base_map = new_map;
+    m_overlays.clear();
+    m_display->ForceRepaint();
+}
+
+void MapDisplayManager::AddOverlayMap(const RasterMap *new_map) {
+    // Add new overlay or move existing overlay to last (topmost) position
+    m_overlays.remove(new_map);
+    m_overlays.push_back(new_map);
     m_display->ForceRepaint();
 }
 
@@ -87,14 +96,85 @@ void MapDisplayManager::Paint() {
     std::list<DisplayOrder> orders;
     PaintOneLayer(&orders, *m_base_map,
                   tile_topleft, tile_botright, tile_size);
+    for (auto ci = m_overlays.cbegin(); ci != m_overlays.cend(); ++ci) {
+        MapPixelCoordInt overlay_pixel_tl, overlay_pixel_br;
+        if (!CalcOverlayTiles(*ci,
+                              MapPixelCoordInt(m_center - half_disp_size),
+                              MapPixelCoordInt(m_center + half_disp_size),
+                              &overlay_pixel_tl, &overlay_pixel_br))
+        {
+            // Failed to paint overlay
+            assert(false);
+        }
+        MapPixelCoordInt overlay_tiles_tl(overlay_pixel_tl, TILE_SIZE);
+        MapPixelCoordInt overlay_tiles_br(overlay_pixel_br, TILE_SIZE);
+        PaintOneLayer(&orders, **ci, overlay_tiles_tl, overlay_tiles_br,
+                      tile_size, 0.5);
+    }
     m_display->Render(orders);
+}
+
+bool MapDisplayManager::AdvanceAlongBorder(MapPixelCoordInt *base_point,
+                                           const MapPixelCoordInt &base_tl,
+                                           const MapPixelCoordInt &base_br)
+{
+    if (base_point->y == base_tl.y && base_point->x != base_br.x) {
+        base_point->x++;  // top border
+    }
+    if (base_point->x == base_br.x && base_point->y != base_br.y) {
+        base_point->y++;  // right border
+    }
+    if (base_point->y == base_br.y && base_point->x != base_tl.x) {
+        base_point->x--;  // bottom border
+    }
+    if (base_point->x == base_tl.x && base_point->y != base_tl.y) {
+        base_point->y--;  // right border
+    }
+    // Abort if we are back at the tl corner, otherwise continue
+    if (*base_point == base_tl)
+        return false;
+    return true;
+}
+
+bool MapDisplayManager::CalcOverlayTiles(const RasterMap *overlay_map,
+                                         const MapPixelCoordInt &base_tl,
+                                         const MapPixelCoordInt &base_br,
+                                         MapPixelCoordInt *overlay_tl,
+                                         MapPixelCoordInt *overlay_br)
+{
+    LatLon point;
+    MapPixelCoord overlay_point;
+    long int x_min, x_max, y_min, y_max;
+#undef min
+#undef max
+    x_min = y_min = std::numeric_limits<long int>::max();
+    x_max = y_max = std::numeric_limits<long int>::min();
+
+    // Iterate along the display border and find min/max overlay map pixels
+    MapPixelCoordInt base_border = base_tl;
+    do {
+        if (!m_base_map->PixelToLatLon(MapPixelCoord(base_border), &point))
+            return false;
+        if (!overlay_map->LatLonToPixel(point, &overlay_point))
+            return false;
+
+        if (overlay_point.x < x_min) x_min = round_to_int(overlay_point.x);
+        if (overlay_point.y < y_min) y_min = round_to_int(overlay_point.y);
+        if (overlay_point.x > x_max) x_max = round_to_int(overlay_point.x);
+        if (overlay_point.y > y_max) y_max = round_to_int(overlay_point.y);
+    } while (AdvanceAlongBorder(&base_border, base_tl, base_br));
+
+    *overlay_tl = MapPixelCoordInt(x_min, y_min);
+    *overlay_br = MapPixelCoordInt(x_max, y_max);
+    return true;
 }
 
 void MapDisplayManager::PaintOneLayer(std::list<class DisplayOrder> *orders,
                                       const class RasterMap &map,
                                       const MapPixelCoordInt &tile_topleft,
                                       const MapPixelCoordInt &tile_botright,
-                                      const MapPixelDeltaInt &tile_size)
+                                      const MapPixelDeltaInt &tile_size,
+                                      double transparency)
 {
     MapPixelDeltaInt tile_size_h(tile_size.x, 0);
     MapPixelDeltaInt tile_size_v(0, tile_size.y);
@@ -114,7 +194,7 @@ void MapDisplayManager::PaintOneLayer(std::list<class DisplayOrder> *orders,
                                            map_pos + tile_size, map);
 
             orders->push_back(DisplayOrder(disp_tl, disp_tr, disp_bl, disp_br,
-                                           tilecode));
+                                           tilecode, transparency));
         }
     }
 }

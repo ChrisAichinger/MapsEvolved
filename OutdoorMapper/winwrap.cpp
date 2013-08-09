@@ -767,7 +767,9 @@ EventResult ListView::TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
     if (pnmhdr->code == NM_DBLCLK && m_events.DoubleClick)
         return m_events.DoubleClick(*this,
                                 reinterpret_cast<LPNMITEMACTIVATE>(lParam));
-
+    if (pnmhdr->code == NM_RCLICK && m_events.RightClick)
+        return m_events.RightClick(*this,
+                                reinterpret_cast<LPNMITEMACTIVATE>(lParam));
     return EventResult(false, 0);
 }
 
