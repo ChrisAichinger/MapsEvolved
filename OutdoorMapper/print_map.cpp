@@ -39,6 +39,7 @@ bool MapPrinter::Print(HDC hdc) {
         if (dist < map_width_m)
             break;
     }
+    dx = dy = 20000;
     MapPixelCoordInt center(map_center);
     auto pixels = map.GetRegion(center, MapPixelDeltaInt(2*dx, 2*dy));
 

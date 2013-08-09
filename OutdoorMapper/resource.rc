@@ -16,6 +16,7 @@
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDB_DATABASE       BITMAP "resource\\famfamfam_silk_icons\\database.bmp"
 IDB_PRINTER        BITMAP "resource\\famfamfam_silk_icons\\printer.bmp"
+IDB_SAVEMAPBMP     BITMAP "resource\\famfamfam_silk_icons\\disk.bmp"
 IDB_MAP            BITMAP "resource\\famfamfam_silk_icons\\map.bmp"
 
 

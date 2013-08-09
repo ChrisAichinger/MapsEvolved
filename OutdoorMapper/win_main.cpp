@@ -21,6 +21,7 @@
 
 #define ID_OPEN_MAPLIST       0x8000
 #define ID_PRINT              0x8001
+#define ID_SAVEMAPBMP         0x8002
 
 
 static const wchar_t *MAPPATH = L"..\\..\\ok500_v5_wt99.tif";
@@ -169,9 +170,11 @@ LRESULT RootWindow::OnCreate()
     m_toolbar.reset(new Toolbar(m_hwnd));
     std::list<ToolbarButton> button_list;
     button_list.push_back(
-            ToolbarButton(IDB_DATABASE, ID_OPEN_MAPLIST, true, false, L"TT1"));
+            ToolbarButton(IDB_DATABASE, ID_OPEN_MAPLIST, true, false, L"Database"));
     button_list.push_back(
-            ToolbarButton(IDB_PRINTER, ID_PRINT, true, false, L"TT2"));
+            ToolbarButton(IDB_PRINTER, ID_PRINT, true, false, L"Print"));
+    button_list.push_back(
+            ToolbarButton(IDB_SAVEMAPBMP, ID_SAVEMAPBMP, true, false, L"Save Map as Image"));
     m_toolbar->SetButtons(button_list);
 
     RECT rect;
@@ -339,6 +342,14 @@ LRESULT RootWindow::HandleMessage(
                                          mprint,
                                        };
                 Print(m_hwnd, po);
+            }
+            if (id == ID_SAVEMAPBMP) {
+                const RasterMap &map = m_mapdisplay->GetBaseMap();
+                MapPixelCoordInt center(m_mapdisplay->GetCenter());
+                MapPixelDeltaInt SaveSize(4096, 4096);
+                auto pixels = map.GetRegion(center - SaveSize / 2, SaveSize);
+                SaveBufferAsBMP(L"out.bmp", pixels.get(),
+                                SaveSize.x, SaveSize.y, 32);
             }
     }
 

@@ -6,5 +6,6 @@
 #define IDB_DATABASE                            107
 #define IDB_PRINTER                             108
 #define IDB_MAP                                 109
+#define IDB_SAVEMAPBMP                          110
 #define IDS_MLV_COL_FNAME                       40000
 #define IDS_MLV_COL_TYPE                        40001
