@@ -244,6 +244,11 @@ void MapDisplayManager::StepZoom(double steps, const DisplayCoord &mouse_pos) {
     DragMap(old_pos - new_pos);
 }
 
+void MapDisplayManager::SetZoomOneToOne() {
+    m_zoom = 1.0;
+    m_display->ForceRepaint();
+}
+
 BaseMapCoord
 MapDisplayManager::BaseCoordFromDisplay(const DisplayCoord &disp) const {
     return BaseCoordFromDisplay(CenteredCoordFromDisplay(disp, *m_display));

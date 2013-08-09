@@ -19,10 +19,6 @@
 #define IDC_MAP               101
 #define IDC_TOOLBAR           102
 
-#define ID_OPEN_MAPLIST       0x8000
-#define ID_PRINT              0x8001
-#define ID_SAVEMAPBMP         0x8002
-
 
 static const wchar_t *MAPPATH = L"..\\..\\ok500_v5_wt99.tif";
 static const wchar_t *DHMPATH = L"..\\..\\dhm.tif";
@@ -30,13 +26,16 @@ static const wchar_t *DHMPATH = L"..\\..\\dhm.tif";
 class ToolbarButton {
     friend class Toolbar;
     public:
+        static const int CHECKABLE = (1<<0);
+        static const int CHECKED = (1<<1);
+        static const int SEPARATOR = (1<<2);
         ToolbarButton(int bitmap_res, int command_id, bool enabled,
-                      bool checked, const std::wstring &alt_text);
+                      int options, const std::wstring &alt_text);
     private:
         int m_bitmap_res;
         int m_command_id;
         bool m_enabled;
-        bool m_checked;
+        int m_options;
         std::wstring m_alt_text;
 };
 
@@ -59,9 +58,9 @@ class Toolbar {
 };
 
 ToolbarButton::ToolbarButton(int bitmap_res, int command_id, bool enabled,
-                             bool checked, const std::wstring &alt_text)
+                             int options, const std::wstring &alt_text)
     : m_bitmap_res(bitmap_res), m_command_id(command_id),
-      m_enabled(enabled), m_checked(checked), m_alt_text(alt_text)
+      m_enabled(enabled), m_options(options), m_alt_text(alt_text)
 {}
 
 Toolbar::Toolbar(HWND hwndParent)
@@ -69,7 +68,7 @@ Toolbar::Toolbar(HWND hwndParent)
       m_hwndTool(CreateWindowEx(
             0, TOOLBARCLASSNAME, NULL,
             WS_CHILD | WS_VISIBLE | TBSTYLE_WRAPABLE | TBSTYLE_TOOLTIPS |
-            CCS_ADJUSTABLE | CCS_NODIVIDER,
+            TBSTYLE_FLAT | CCS_ADJUSTABLE | BTNS_AUTOSIZE,
             0, 0, 0, 0,
             hwndParent, (HMENU)IDC_TOOLBAR, g_hinst, NULL))
 
@@ -136,14 +135,26 @@ LRESULT Toolbar::AddBitmap(int resource_id, unsigned int num_images) {
 
 void Toolbar::FillButtonStruct(TBBUTTON *button, const ToolbarButton &tbb) {
     memset(button, 0, sizeof(*button));
-    button->iBitmap = AddBitmap(tbb.m_bitmap_res, 1);
+    if (tbb.m_options & ToolbarButton::SEPARATOR) {
+        button->iBitmap = 0;
+    } else {
+        button->iBitmap = AddBitmap(tbb.m_bitmap_res, 1);
+    }
     button->idCommand = tbb.m_command_id;
     button->fsState |= (tbb.m_enabled ? TBSTATE_ENABLED : 0);
-    button->fsState |= (tbb.m_checked ? TBSTATE_CHECKED : 0);
-    button->fsStyle = BTNS_AUTOSIZE;
+    button->fsState |= (tbb.m_options & ToolbarButton::CHECKED ? TBSTATE_CHECKED : 0);
+
+    button->fsStyle = 0;   
+    button->fsStyle |= (tbb.m_options & ToolbarButton::CHECKABLE ? BTNS_CHECK : 0);
+    button->fsStyle |= (tbb.m_options & ToolbarButton::SEPARATOR ? BTNS_SEP : 0);
+
     button->iString = (INT_PTR)tbb.m_alt_text.c_str();
 }
 
+BOOL RootWindow::WinRegisterClass(WNDCLASS *pwc) {
+    pwc->lpszMenuName = MAKEINTRESOURCE(IDR_MAINMENU);
+    return __super::WinRegisterClass(pwc);
+}
 
 void RootWindow::CreateStatusbar() {
     m_hwndStatus = CreateWindowEx(
@@ -170,11 +181,20 @@ LRESULT RootWindow::OnCreate()
     m_toolbar.reset(new Toolbar(m_hwnd));
     std::list<ToolbarButton> button_list;
     button_list.push_back(
-            ToolbarButton(IDB_DATABASE, ID_OPEN_MAPLIST, true, false, L"Database"));
+            ToolbarButton(IDB_DATABASE, ID_MANAGE_MAPS, true, 0, L"Manage Maps"));
     button_list.push_back(
-            ToolbarButton(IDB_PRINTER, ID_PRINT, true, false, L"Print"));
+            ToolbarButton(IDB_SAVEMAPBMP, ID_SAVEMAPBMP, true, 0, L"Save Map as Image"));
     button_list.push_back(
-            ToolbarButton(IDB_SAVEMAPBMP, ID_SAVEMAPBMP, true, false, L"Save Map as Image"));
+            ToolbarButton(IDB_PRINTER, ID_PRINT, true, 0, L"Print"));
+    button_list.push_back(
+            ToolbarButton(0, 0, true, ToolbarButton::SEPARATOR, L""));
+    button_list.push_back(
+            ToolbarButton(IDB_ZOOMIN, ID_ZOOMIN, true, 0, L"Zoom in"));
+    button_list.push_back(
+            ToolbarButton(IDB_ZOOMOUT, ID_ZOOMOUT, true, 0, L"Zoom out"));
+    button_list.push_back(
+            ToolbarButton(IDB_ZOOMEXACT, ID_ZOOMEXACT, true, 0, L"Zoom 1:1"));
+
     m_toolbar->SetButtons(button_list);
 
     RECT rect;
@@ -340,7 +360,7 @@ LRESULT RootWindow::HandleMessage(
 
         case WM_COMMAND:
             WORD id = LOWORD(wParam);
-            if (id == ID_OPEN_MAPLIST) {
+            if (id == ID_MANAGE_MAPS) {
                 ShowMapListWindow(*m_mapdisplay, m_maps);
             }
             if (id == ID_PRINT) {
@@ -359,6 +379,15 @@ LRESULT RootWindow::HandleMessage(
                 auto pixels = map.GetRegion(center - SaveSize / 2, SaveSize);
                 SaveBufferAsBMP(L"out.bmp", pixels.get(),
                                 SaveSize.x, SaveSize.y, 32);
+            }
+            if (id == ID_ZOOMIN) {
+                m_mapdisplay->StepZoom(+1);
+            }
+            if (id == ID_ZOOMOUT) {
+                m_mapdisplay->StepZoom(-1);
+            }
+            if (id == ID_ZOOMEXACT) {
+                m_mapdisplay->SetZoomOneToOne();
             }
     }
 

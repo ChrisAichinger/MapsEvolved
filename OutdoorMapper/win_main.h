@@ -17,6 +17,8 @@ class RootWindow : public Window
         virtual UINT WCStyle() {
             return CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
         }
+        virtual BOOL WinRegisterClass(WNDCLASS *pwc);
+
         static RootWindow *Create();
         virtual void PaintContent(PAINTSTRUCT *pps);
 

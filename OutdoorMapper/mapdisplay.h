@@ -24,6 +24,7 @@ class MapDisplayManager {
         void StepZoom(double steps);
         // The map location under the mouse is held constant
         void StepZoom(double steps, const DisplayCoord &mouse_pos);
+        void SetZoomOneToOne();
         void DragMap(const DisplayDelta &delta);
         void CenterToDisplayCoord(const DisplayCoord &center);
         void Paint();
