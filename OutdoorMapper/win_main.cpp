@@ -393,7 +393,7 @@ void RootWindow::UpdateStatusbar() {
     if (MetersPerPixel(m_mapdisplay->GetBaseMap(), base_point, &mpp)) {
         SetSBText(4, string_format(L"Map: %.1f m/pix", mpp));
     } else {
-        SetSBText(4, string_format(L"Uknown m/pix"));
+        SetSBText(4, string_format(L"Unknown m/pix"));
     }
 
     LatLon ll;
