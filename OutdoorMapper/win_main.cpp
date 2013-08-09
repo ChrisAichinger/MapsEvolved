@@ -196,10 +196,19 @@ LRESULT RootWindow::OnCreate()
         MessageBox(m_hwnd,
                    L"Couldn't load map preferences.\n"
                    L"Using a default set of maps instead.",
-                   L"Outdoormapper Error", MB_OK | MB_ICONWARNING);
+                   L"Outdoormapper Warning", MB_OK | MB_ICONWARNING);
         LoadMap(m_maps, MAPPATH);
         LoadMap(m_maps, DHMPATH);
         LoadMap(m_maps, L"dummyfile_doesn't_exist?.tif");
+
+        // Store newly loaded maps right back to the registry
+        if (!m_maps.StoreTo(store.get())) {
+            MessageBox(m_hwnd,
+                       L"Couldn't save map preferences.\n"
+                       L"Map viewing will continue to work but the "
+                       L"added mapss will be gone when you restart.",
+                       L"Outdoormapper Error", MB_OK | MB_ICONWARNING);
+        }
     }
 
     std::shared_ptr<DevContext> dev_ctx(new DevContext(m_hwndMap));

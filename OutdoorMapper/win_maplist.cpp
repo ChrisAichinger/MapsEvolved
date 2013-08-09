@@ -96,7 +96,12 @@ LRESULT MapListWindow::OnCreate() {
     {
         if (!(pnmlv->uNewState & LVIS_SELECTED))
             return EventResult(false, 0);
+
         const RasterMap &map = m_maps.Get(pnmlv->iItem);
+        if (map.GetType() == RasterMap::TYPE_ERROR) {
+            SetWindowText(m_hwndStatic, L"Failed to open the map.");
+            return EventResult(true, 0);
+        }
         std::string char_proj(map.GetProj().GetProjString());
         std::wstring proj(WStringFromUTF8(char_proj));
         SetWindowText(m_hwndStatic, proj.c_str());
