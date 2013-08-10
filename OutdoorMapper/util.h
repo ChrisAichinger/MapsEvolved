@@ -113,6 +113,8 @@ std::string GetProgramDir_char();
 extern const char *ODM_PathSep_char;
 extern const wchar_t *ODM_PathSep_wchar;
 
+std::pair<std::wstring, std::wstring> GetAbsPath(const std::wstring &rel_path);
+
 class PersistentStore {
     public:
         virtual ~PersistentStore();

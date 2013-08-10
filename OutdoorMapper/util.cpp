@@ -270,7 +270,7 @@ void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
     char_type *p_fname;                                                   \
     chars_written = GetFullPathName##suffix(path, ARRAY_SIZE(abspath),    \
                                             abspath, &p_fname);           \
-    if (chars_written == 0 || chars_written >= ARRAY_SIZE(path)) {        \
+    if (chars_written == 0 || chars_written >= ARRAY_SIZE(abspath)) {     \
         throw std::runtime_error("Could not get absolute program path."); \
     }                                                                     \
 
@@ -301,3 +301,15 @@ double GetTimeMilliSecs() {
     return timeGetTime();
 }
 
+std::pair<std::wstring, std::wstring>
+GetAbsPath(const std::wstring &rel_path) {
+    wchar_t abspath[MAX_PATH + 1];
+    wchar_t *p_fname;
+    DWORD c_written;
+    c_written = GetFullPathName(rel_path.c_str(), ARRAY_SIZE(abspath), abspath, &p_fname);
+    if (c_written == 0 || c_written >= ARRAY_SIZE(abspath)) {
+        throw std::runtime_error("Could not get absolute program path.");
+    }
+    return std::pair<std::wstring, std::wstring>(
+              std::wstring(abspath, p_fname - abspath), std::wstring(p_fname));
+}

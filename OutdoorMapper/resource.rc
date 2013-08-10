@@ -97,6 +97,7 @@ STRINGTABLE
 {
     IDS_MLV_COL_FNAME             "Filename"
     IDS_MLV_COL_TYPE              "Map Type"
+    IDS_MLV_COL_PATH              "Directory"
 }
 
 

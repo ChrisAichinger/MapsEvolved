@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <functional>
+#include <tuple>
 
 #include "win_main.h"
 #include "rastermap.h"
@@ -86,6 +87,11 @@ LRESULT MapListWindow::OnCreate() {
                           LVCFMT_LEFT,
                           200,
                           const_cast<LPWSTR>(LoadResPWCHAR(IDS_MLV_COL_TYPE)),
+                        },
+                        { LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM,
+                          LVCFMT_LEFT,
+                          400,
+                          const_cast<LPWSTR>(LoadResPWCHAR(IDS_MLV_COL_PATH)),
                         }
                       };
     m_listview->InsertColumns(ARRAY_SIZE(lvcs), lvcs);
@@ -128,7 +134,7 @@ LRESULT MapListWindow::OnCreate() {
 
     m_sizer.GetTextbox(rect);
     m_hwndStatic = CreateWindow(
-            L"STATIC", L"TEST",
+            L"STATIC", L"",
             WS_CHILD | WS_VISIBLE,
             rect.left, rect.top,
             rect.right - rect.left,
@@ -214,7 +220,9 @@ LRESULT MapListWindow::OnCreate() {
 
 void MapListWindow::InsertRow(const RasterMap &map) {
     ListViewRow lvrow;
-    lvrow.AddItem(ListViewTextImageItem(map.GetFname(), 0));
+    std::wstring directory, fname;
+    std::tie(directory, fname) = GetAbsPath(map.GetFname());
+    lvrow.AddItem(ListViewTextImageItem(fname, 0));
     wchar_t *str;
     switch (map.GetType()) {
         case RasterMap::TYPE_MAP: str = L"Map"; break;
@@ -232,6 +240,7 @@ void MapListWindow::InsertRow(const RasterMap &map) {
             assert(false); // Unknown raster map type
     }
     lvrow.AddItem(ListViewTextItem(str));
+    lvrow.AddItem(ListViewTextItem(directory));
     m_listview->InsertRow(lvrow, INT_MAX);
 }
 

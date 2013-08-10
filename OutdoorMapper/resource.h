@@ -20,6 +20,7 @@
 #define IDS_MLV_COL_FNAME                       40000
 #define IDM_TOGGLE_GRID                         40001
 #define IDS_MLV_COL_TYPE                        40001
+#define IDS_MLV_COL_PATH                        40003
 #define IDM_TOGGLE_SCALE                        40002
 #define IDM_COORD_FORMAT                        40003
 #define ID_PRINT                                40004
