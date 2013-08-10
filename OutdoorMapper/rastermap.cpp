@@ -43,7 +43,9 @@ bool RasterMapCollection::StoreTo(PersistentStore *store) const {
     filenames.reserve(m_maps.size());
     for (auto it = m_maps.cbegin(); it != m_maps.cend(); ++it) {
         std::shared_ptr<RasterMap> map = *it;
-        if (map->GetType() == RasterMap::TYPE_GRADIENT) {
+        if (map->GetType() == RasterMap::TYPE_GRADIENT ||
+            map->GetType() == RasterMap::TYPE_STEEPNESS)
+        {
             continue;
         }
         filenames.push_back(map->GetFname());
