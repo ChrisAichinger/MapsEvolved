@@ -28,7 +28,6 @@ class MapListWindow : public Window
         virtual UINT WCStyle() { return CS_HREDRAW | CS_VREDRAW; };
         static MapListWindow *Create(class MapDisplayManager &mapdisplay,
                                      class RasterMapCollection &maps);
-        virtual void PaintContent(PAINTSTRUCT *pps);
     private:
         class MapDisplayManager &m_mapdisplay;
         class RasterMapCollection &m_maps;

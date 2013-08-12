@@ -39,9 +39,6 @@ MapListWindow::MapListWindow(MapDisplayManager &mapdisplay,
       m_hwndStatic(0)
 { }
 
-void MapListWindow::PaintContent(PAINTSTRUCT *pps) {
-}
-
 LRESULT MapListWindow::HandleMessage(
         UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

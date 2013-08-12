@@ -1,3 +1,5 @@
+#include "winwrap.h"
+
 #include <stdexcept>
 #include <cassert>
 
@@ -5,7 +7,7 @@
 #include <GL/gl.h>          // OpenGL header file
 #include <GL/glu.h>         // OpenGL utilities header file
 
-#include "winwrap.h"
+
 #include "odm_config.h"
 
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
@@ -1011,4 +1013,100 @@ COM_Initialize::~COM_Initialize() {
 bool COM_Initialize::Initialize() {
     m_initialized = SUCCEEDED(CoInitialize(NULL));
     return m_initialized;
+}
+
+
+ToolbarButton::ToolbarButton(int bitmap_res, int command_id, bool enabled,
+                             int options, const std::wstring &alt_text)
+    : m_bitmap_res(bitmap_res), m_command_id(command_id),
+      m_enabled(enabled), m_options(options), m_alt_text(alt_text)
+{}
+
+Toolbar::Toolbar(HWND hwndParent, int bitmapSize, int controlID)
+    : m_hwndParent(hwndParent),
+      m_hwndTool(CreateWindowEx(
+            0, TOOLBARCLASSNAME, NULL,
+            WS_CHILD | WS_VISIBLE | TBSTYLE_WRAPABLE | TBSTYLE_TOOLTIPS |
+            TBSTYLE_FLAT | CCS_ADJUSTABLE | BTNS_AUTOSIZE,
+            0, 0, 0, 0,
+            hwndParent, (HMENU)controlID, g_hinst, NULL)),
+      m_bitmapSize(bitmapSize)
+
+{
+    if (!m_hwndTool) {
+        throw std::runtime_error("Failed to create toolbar.");
+    }
+
+    // Tell COMCTRL which version we support; no return value to check
+    SendMsg(TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
+
+    // Set bitmap size
+    SendMsg_NotNull(TB_SETBITMAPSIZE, 0, MAKELPARAM(m_bitmapSize, m_bitmapSize),
+                    "Failed: set toolbar bitmap size");
+
+    // Set max text rows to zero to use TBBUTTON::iString as tooltip
+    SendMsg_NotNull(TB_SETMAXTEXTROWS, 0, 0, "Failed: set toolbar text rows");
+
+    // Resize the toolbar, and then show it; no return value to check
+    SendMsg(TB_AUTOSIZE, 0, 0);
+}
+
+void Toolbar::Resize() {
+    SendMsg(WM_SIZE, 0, 0);
+}
+
+void Toolbar::SetButtons(const std::list<ToolbarButton> &buttons) {
+    const int n_buttons = buttons.size();
+    std::unique_ptr<TBBUTTON> tb_buttons(new TBBUTTON[n_buttons]);
+    TBBUTTON *tb_ptr = tb_buttons.get();
+    for (auto it=buttons.cbegin(); it != buttons.cend(); ++it) {
+        FillButtonStruct(tb_ptr, *it);
+        tb_ptr++;
+    }
+    SendMsg_NotNull(TB_ADDBUTTONS, (WPARAM)n_buttons, (LPARAM)tb_buttons.get(),
+                    "Failed: add buttons to toolbar.");
+
+    // Resize the toolbar, and then show it; no return value to check
+    SendMsg(TB_AUTOSIZE, 0, 0);
+}
+
+LRESULT Toolbar::SendMsg(UINT Msg, WPARAM wParam, LPARAM lParam) {
+    return SendMessage(m_hwndTool, Msg, wParam, lParam);
+}
+
+LRESULT Toolbar::SendMsg_NotNull(UINT Msg, WPARAM wParam, LPARAM lParam,
+                                 const char* fail_msg)
+{
+    LRESULT res = SendMsg(Msg, wParam, lParam);
+    if (!res) {
+        throw std::runtime_error(fail_msg);
+    }
+    return res;
+}
+
+LRESULT Toolbar::AddBitmap(int resource_id, unsigned int num_images) {
+    TBADDBITMAP tbaddbmp = { g_hinst, resource_id };
+    LRESULT res = SendMsg(TB_ADDBITMAP, num_images, (LPARAM)&tbaddbmp);
+    if (res == -1) {
+        throw std::runtime_error("Failed to add bitmap to toolbar.");
+    }
+    return res;
+}
+
+void Toolbar::FillButtonStruct(TBBUTTON *button, const ToolbarButton &tbb) {
+    memset(button, 0, sizeof(*button));
+    if (tbb.m_options & ToolbarButton::SEPARATOR) {
+        button->iBitmap = 0;
+    } else {
+        button->iBitmap = AddBitmap(tbb.m_bitmap_res, 1);
+    }
+    button->idCommand = tbb.m_command_id;
+    button->fsState |= (tbb.m_enabled ? TBSTATE_ENABLED : 0);
+    button->fsState |= (tbb.m_options & ToolbarButton::CHECKED ? TBSTATE_CHECKED : 0);
+
+    button->fsStyle = 0;
+    button->fsStyle |= (tbb.m_options & ToolbarButton::CHECKABLE ? BTNS_CHECK : 0);
+    button->fsStyle |= (tbb.m_options & ToolbarButton::SEPARATOR ? BTNS_SEP : 0);
+
+    button->iString = (INT_PTR)tbb.m_alt_text.c_str();
 }

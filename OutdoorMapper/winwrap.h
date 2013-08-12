@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <list>
 
 #include <Windows.h>
 #include <commctrl.h>
@@ -411,5 +412,38 @@ class COM_Initialize {
 };
 
 
+class ToolbarButton {
+    friend class Toolbar;
+    public:
+        static const int CHECKABLE = (1<<0);
+        static const int CHECKED = (1<<1);
+        static const int SEPARATOR = (1<<2);
+        ToolbarButton(int bitmap_res, int command_id, bool enabled,
+                      int options, const std::wstring &alt_text);
+    private:
+        int m_bitmap_res;
+        int m_command_id;
+        bool m_enabled;
+        int m_options;
+        std::wstring m_alt_text;
+};
+
+class Toolbar {
+    public:
+        Toolbar(HWND hwndParent, int bitmapSize, int controlID);
+        void Resize();
+        void SetButtons(const std::list<ToolbarButton> &buttons);
+    private:
+        DISALLOW_COPY_AND_ASSIGN(Toolbar);
+        HWND m_hwndParent, m_hwndTool;
+
+        LRESULT SendMsg(UINT Msg, WPARAM wParam, LPARAM lParam);
+        LRESULT SendMsg_NotNull(UINT Msg, WPARAM wParam, LPARAM lParam,
+                                const char* fail_msg);
+        LRESULT AddBitmap(int resource_id, unsigned int num_images);
+        void FillButtonStruct(TBBUTTON *button, const ToolbarButton &tbb);
+
+        int m_bitmapSize;
+};
 
 #endif
