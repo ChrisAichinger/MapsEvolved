@@ -108,7 +108,7 @@ LRESULT RootWindow::OnCreate()
     std::shared_ptr<OGLContext> ogl_ctx(new OGLContext(dev_ctx));
     std::shared_ptr<DispOpenGL> display(new DispOpenGL(ogl_ctx));
 
-    m_mapdisplay.reset(new MapDisplayManager(display, m_maps));
+    m_mapdisplay.reset(new MapDisplayManager(display, m_maps.Get(0)));
     m_mode.reset(new UIModeNormal(this, m_mapdisplay));
 
     return 0;

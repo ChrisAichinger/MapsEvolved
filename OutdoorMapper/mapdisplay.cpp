@@ -18,8 +18,8 @@ const double MapDisplayManager::ZOOM_STEP =
 
 MapDisplayManager::MapDisplayManager(
         std::shared_ptr<class DispOpenGL> &display,
-        const class RasterMapCollection &maps)
-    : m_display(display), m_maps(maps), m_base_map(&maps.Get(0)),
+        const class RasterMap &initial_map)
+    : m_display(display), m_base_map(&initial_map),
       m_center(BaseMapCoord(BaseMapDelta(m_base_map->GetSize() * 0.5))),
       m_zoom(1.0), m_overlays()
 { }

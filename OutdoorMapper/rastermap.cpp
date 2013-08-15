@@ -23,6 +23,19 @@
 
 RasterMap::~RasterMap() {};
 
+void GetAlternateRepresentation(std::shared_ptr<const RasterMap> map,
+                std::vector<std::shared_ptr<RasterMap> > &representations)
+{
+    representations.clear();
+    if (map->GetType() == RasterMap::TYPE_DHM) {
+        std::shared_ptr<class RasterMap> deriv_map(new GradientMap(map));
+        representations.push_back(deriv_map);
+        deriv_map.reset(new SteepnessMap(map));
+        representations.push_back(deriv_map);
+    }
+}
+
+
 RasterMapCollection::RasterMapCollection()
     : m_maps()
 { }

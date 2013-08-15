@@ -9,7 +9,7 @@
 class MapDisplayManager {
     public:
         MapDisplayManager(std::shared_ptr<class DispOpenGL> &display,
-                          const class RasterMapCollection &maps);
+                          const class RasterMap &initial_map);
 
         const class RasterMap &GetBaseMap() const;
         double GetZoom() const;
@@ -68,7 +68,6 @@ class MapDisplayManager {
         static const double ZOOM_STEP;
 
         std::shared_ptr<class DispOpenGL> m_display;
-        const class RasterMapCollection &m_maps;
         const class RasterMap *m_base_map;
         std::list<const class RasterMap *> m_overlays;
 

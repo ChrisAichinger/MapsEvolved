@@ -41,7 +41,14 @@ class ODM_INTERFACE RasterMap {
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const = 0;
 
         virtual const std::wstring &GetFname() const = 0;
+
+        virtual bool IsViewable() const {
+            return GetType() != TYPE_DHM && GetType() != TYPE_ERROR;
+        };
 };
+
+void GetAlternateRepresentation(std::shared_ptr<const RasterMap>,
+                std::vector<std::shared_ptr<RasterMap> > &representations);
 
 class RasterMapCollection {
     public:
