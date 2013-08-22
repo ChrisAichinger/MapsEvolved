@@ -43,11 +43,16 @@ LRESULT MapListWindow::HandleMessage(
         UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     EventResult res;
-    res = m_btnAddRaster->TryHandleMessage(uMsg, wParam, lParam);
+    if (m_btnAddRaster)
+        res = m_btnAddRaster->TryHandleMessage(uMsg, wParam, lParam);
     if (res.was_handled) return res.result;
-    res = m_btnDelRaster->TryHandleMessage(uMsg, wParam, lParam);
+
+    if (m_btnDelRaster)
+        res = m_btnDelRaster->TryHandleMessage(uMsg, wParam, lParam);
     if (res.was_handled) return res.result;
-    res = m_listview->TryHandleMessage(uMsg, wParam, lParam);
+
+    if (m_listview)
+        res = m_listview->TryHandleMessage(uMsg, wParam, lParam);
     if (res.was_handled) return res.result;
 
     switch (uMsg) {
@@ -64,7 +69,7 @@ LRESULT MapListWindow::OnCreate() {
     RECT rect;
     m_sizer.GetListview(rect);
 
-    m_listview.reset(new ListView());
+    m_listview.reset(new TreeList());
     m_listview->Create(m_hwnd, rect);
 
     std::unique_ptr<ImageList> imglist(
@@ -100,12 +105,12 @@ LRESULT MapListWindow::OnCreate() {
         if (!(pnmlv->uNewState & LVIS_SELECTED))
             return EventResult(false, 0);
 
-        const RasterMap &map = m_maps.Get(pnmlv->iItem);
-        if (map.GetType() == RasterMap::TYPE_ERROR) {
+        auto map = m_maps_from_item_id[pnmlv->iItem];
+        if (map->GetType() == RasterMap::TYPE_ERROR) {
             SetWindowText(m_hwndStatic, L"Failed to open the map.");
             return EventResult(true, 0);
         }
-        std::string char_proj(map.GetProj().GetProjString());
+        std::string char_proj(map->GetProj().GetProjString());
         std::wstring proj(WStringFromUTF8(char_proj));
         SetWindowText(m_hwndStatic, proj.c_str());
         return EventResult(true, 0);
@@ -113,20 +118,20 @@ LRESULT MapListWindow::OnCreate() {
     events.DoubleClick = [this](const ListView& lv, LPNMITEMACTIVATE pnmia)
                                -> EventResult
     {
-        m_mapdisplay.ChangeMap(&m_maps.Get(pnmia->iItem));
+        if (pnmia->iItem < 0) return EventResult(true, 0);
+        m_mapdisplay.ChangeMap(m_maps_from_item_id[pnmia->iItem].get());
         return EventResult(true, 0);
     };
     events.RightClick = [this](const ListView& lv, LPNMITEMACTIVATE pnmia)
                                -> EventResult
     {
-        m_mapdisplay.AddOverlayMap(&m_maps.Get(pnmia->iItem));
+        if (pnmia->iItem < 0) return EventResult(true, 0);
+        m_mapdisplay.AddOverlayMap(m_maps_from_item_id[pnmia->iItem].get());
         return EventResult(true, 0);
     };
     m_listview->RegisterEventHandlers(events);
 
-    for (unsigned int index = 0; index < m_maps.Size(); index++) {
-        InsertRow(m_maps.Get(index));
-    }
+    InsertMaps();
     ShowWindow(m_listview->GetHWND(), SW_SHOW);
 
     m_sizer.GetTextbox(rect);
@@ -176,9 +181,7 @@ LRESULT MapListWindow::OnCreate() {
         }
 
         m_listview->DeleteAllRows();
-        for (unsigned int index = 0; index < m_maps.Size(); index++) {
-            InsertRow(m_maps.Get(index));
-        }
+        InsertMaps();
         return EventResult(true, 0);
     };
     m_btnAddRaster->RegisterEventHandlers(btnevents);
@@ -205,9 +208,7 @@ LRESULT MapListWindow::OnCreate() {
         }
 
         m_listview->DeleteAllRows();
-        for (unsigned int index = 0; index < m_maps.Size(); index++) {
-            InsertRow(m_maps.Get(index));
-        }
+        InsertMaps();
         return EventResult(true, 0);
     };
     m_btnDelRaster->RegisterEventHandlers(btnevents);
@@ -215,13 +216,14 @@ LRESULT MapListWindow::OnCreate() {
     return 0;
 }
 
-void MapListWindow::InsertRow(const RasterMap &map) {
+void MapListWindow::InsertRow(const std::shared_ptr<const RasterMap> &map, unsigned int level) {
     ListViewRow lvrow;
     std::wstring directory, fname;
-    std::tie(directory, fname) = GetAbsPath(map.GetFname());
+    std::tie(directory, fname) = GetAbsPath(map->GetFname());
+    lvrow.SetDepth(level);
     lvrow.AddItem(ListViewTextImageItem(fname, 0));
     wchar_t *str;
-    switch (map.GetType()) {
+    switch (map->GetType()) {
         case RasterMap::TYPE_MAP: str = L"Map"; break;
         case RasterMap::TYPE_DHM: str = L"DHM"; break;
         case RasterMap::TYPE_GRADIENT: str = L"Gradient height map"; break;
@@ -238,7 +240,19 @@ void MapListWindow::InsertRow(const RasterMap &map) {
     }
     lvrow.AddItem(ListViewTextItem(str));
     lvrow.AddItem(ListViewTextItem(directory));
-    m_listview->InsertRow(lvrow, INT_MAX);
+    int index = m_listview->InsertRow(lvrow, INT_MAX);
+    m_maps_from_item_id[index] = map;
+}
+
+void MapListWindow::InsertMaps() {
+    std::vector<std::shared_ptr<RasterMap> > representations;
+    for (unsigned int index = 0; index < m_maps.Size(); index++) {
+        InsertRow(m_maps.GetSharedPtr(index), 0);
+        auto representations = m_maps.GetAlternateRepresentations(index);
+        for (auto it = representations.cbegin(); it != representations.cend(); ++it) {
+            InsertRow(*it, 1);
+        }
+    }
 }
 
 void ShowMapListWindow(MapDisplayManager &mapdisplay,

@@ -28,6 +28,12 @@ class FreeDeleter {
         }
 };
 
+template <typename Iter>
+Iter iter_next(Iter iter) {
+    return ++iter;
+}
+
+
 int round_to_neg_inf(double value);
 int round_to_neg_inf(int value, int round_to);
 int round_to_neg_inf(double value, int round_to);

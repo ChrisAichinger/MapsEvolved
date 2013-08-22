@@ -47,9 +47,6 @@ class ODM_INTERFACE RasterMap {
         };
 };
 
-void GetAlternateRepresentation(std::shared_ptr<const RasterMap>,
-                std::vector<std::shared_ptr<RasterMap> > &representations);
-
 class RasterMapCollection {
     public:
         RasterMapCollection();
@@ -59,13 +56,26 @@ class RasterMapCollection {
             return m_maps.size();
         }
         const RasterMap &Get(size_t i) const {
-            return *m_maps[i];
+            return *m_maps[i].map;
+        }
+        std::shared_ptr<const RasterMap> GetSharedPtr(size_t i) const {
+            return m_maps[i].map;
+        }
+        const std::vector<const std::shared_ptr<const RasterMap> >
+        GetAlternateRepresentations(size_t i) const {
+            const std::vector<const std::shared_ptr<const RasterMap> > res(m_maps[i].reps.cbegin(),
+                                                                           m_maps[i].reps.cend());
+            return res;
         }
 
         bool StoreTo(PersistentStore *store) const;
         bool RetrieveFrom(PersistentStore *store);
     private:
-        std::vector<std::shared_ptr<RasterMap>> m_maps;
+        struct MapAndReps {
+            std::shared_ptr<RasterMap> map;
+            std::vector<std::shared_ptr<RasterMap> > reps;
+        };
+        std::vector<MapAndReps> m_maps;
 
         DISALLOW_COPY_AND_ASSIGN(RasterMapCollection);
 };

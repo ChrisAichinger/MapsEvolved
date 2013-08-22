@@ -117,6 +117,11 @@ void ImageList::AddIcon(const class IconHandle &icon) {
     ImageList_AddIcon(m_handle, icon.Get());
 }
 
+std::unique_ptr<class IconHandle> ImageList::GetIcon(int index) {
+    IconHandle *ptr = new IconHandle(ImageList_ExtractIcon(0, m_handle, index));
+    return std::unique_ptr<class IconHandle>(ptr);
+}
+
 IconHandle::IconHandle(HINSTANCE hInstance, LPCTSTR lpIconName)
     : m_handle((HICON)LoadImage(hInstance, lpIconName, IMAGE_ICON, 0, 0, 0))
 {
@@ -124,6 +129,10 @@ IconHandle::IconHandle(HINSTANCE hInstance, LPCTSTR lpIconName)
         throw std::runtime_error("Failed to load icon.");
     }
 }
+
+IconHandle::IconHandle(HICON hIcon)
+    : m_handle(hIcon)
+{}
 
 IconHandle::~IconHandle() {
     DestroyIcon(m_handle);
@@ -140,6 +149,19 @@ BitmapHandle::BitmapHandle(HINSTANCE hInstance, LPCTSTR lpBitmapName)
 }
 
 BitmapHandle::~BitmapHandle() {
+    DeleteObject(m_handle);
+}
+
+
+PenHandle::PenHandle(DWORD dwStyle, DWORD dwWidth, const LOGBRUSH *pBrush)
+    : m_handle(ExtCreatePen(dwStyle, dwWidth, pBrush, 0, NULL))
+{
+    if (!m_handle) {
+        throw std::runtime_error("Failed to create pen.");
+    }
+}
+
+PenHandle::~PenHandle() {
     DeleteObject(m_handle);
 }
 
@@ -655,10 +677,11 @@ void ListView::InsertColumns(int n_columns, const LVCOLUMN columns[]) {
     }
 }
 
-void ListView::InsertRow(const ListViewRow &row, int desired_index) {
+int ListView::InsertRow(const ListViewRow &row, int desired_index) {
     int subitem_index = 0;
     auto it = row.cbegin();
     assert(it != row.cend());
+    assert(row.GetDepth() <= ListViewRow::MAX_DEPTH);
 
     LVITEM item;
     item = it->GetLVITEM();
@@ -678,6 +701,7 @@ void ListView::InsertRow(const ListViewRow &row, int desired_index) {
             throw std::runtime_error("Failed to insert listview item");
     }
     m_rows.insert(m_rows.begin() + index, row);
+    return index;
 }
 
 LRESULT ListView::SubClassProc(HWND hwnd, UINT msg,
@@ -779,6 +803,185 @@ int ListView::GetSelectedRow() const {
     return ListView_GetSelectionMark(m_hwnd);
 }
 
+
+struct DottedLineParams {
+    HDC hdc;
+    COLORREF color;
+    const RECT* cliprect;
+};
+void CALLBACK DottedLineCB(int x, int y, LPARAM data) {
+    const DottedLineParams *params = reinterpret_cast<const DottedLineParams*>(data);
+    if (params->cliprect &&
+        !(x >= params->cliprect->left && x < params->cliprect->right &&
+          y >= params->cliprect->top && y < params->cliprect->bottom))
+    {
+        return;
+    }
+    if (x % 2 == 0 && y % 2 == 0) {
+        SetPixel(params->hdc, x, y, params->color);
+    }
+};
+void DottedLine(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color,
+                const RECT* cliprect)
+{
+    DottedLineParams params = { hdc, color, cliprect };
+    LineDDA(x1, y1, x2, y2, &DottedLineCB, (LPARAM)&params);
+}
+
+
+void TreeList::Create(HWND hwndParent, const RECT &rect) {
+    __super::Create(hwndParent, rect);
+    m_row_tree_valid = false;
+}
+
+EventResult TreeList::TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    if (uMsg != WM_NOTIFY)
+        return __super::TryHandleMessage(uMsg, wParam, lParam);
+
+    LPNMHDR pnmhdr = reinterpret_cast<LPNMHDR>(lParam);
+    if (pnmhdr->hwndFrom != m_hwnd)
+        return __super::TryHandleMessage(uMsg, wParam, lParam);
+
+    if (pnmhdr->code != NM_CUSTOMDRAW)
+        return __super::TryHandleMessage(uMsg, wParam, lParam);
+
+    LPNMLVCUSTOMDRAW pnmrcd = reinterpret_cast<LPNMLVCUSTOMDRAW>(lParam);
+    if (pnmrcd->nmcd.dwDrawStage == CDDS_PREPAINT) {
+        return EventResult(true, CDRF_NOTIFYITEMDRAW | CDRF_NOTIFYPOSTPAINT);
+    }
+    if (pnmrcd->nmcd.dwDrawStage == CDDS_ITEMPREPAINT) {
+        return EventResult(true, CDRF_NOTIFYPOSTPAINT);
+    }
+    if (pnmrcd->nmcd.dwDrawStage == CDDS_ITEMPOSTPAINT) {
+        if (IsRectEmpty(&pnmrcd->nmcd.rc)) {
+            return EventResult(true, CDRF_DODEFAULT);
+        }
+        unsigned int idxItem = pnmrcd->nmcd.dwItemSpec;
+
+        RECT rectIcon;
+        if (!ListView_GetSubItemRect(m_hwnd, idxItem, 0, LVIR_ICON, &rectIcon)) {
+            return EventResult(true, CDRF_DODEFAULT);
+        }
+        RECT rectItem;
+        if (!ListView_GetItemRect(m_hwnd, idxItem, &rectItem, LVIR_BOUNDS)) {
+            return EventResult(true, CDRF_DODEFAULT);
+        }
+        rectItem.right = rectItem.left + ListView_GetColumnWidth(m_hwnd, 0);
+
+        int iconWidth = rectIcon.right - rectIcon.left;
+        rectIcon.left -= iconWidth;
+        rectIcon.right -= iconWidth;
+        RECT rectRedraw;
+        if (!IntersectRect(&rectRedraw, &pnmrcd->nmcd.rc, &rectIcon))
+            return EventResult(true, CDRF_DODEFAULT);
+
+        // & ~1 -> make xmid/ymid even so the dot pattern works out
+        int xmid = ((rectIcon.left + rectIcon.right) / 2) & ~1;
+        int ymid = ((rectIcon.top + rectIcon.bottom) / 2) & ~1;
+
+        int ystart = (idxItem == 0) ? ymid : rectIcon.top;
+        int yend = rectIcon.bottom;
+        if (!(GetTreeIndex(idxItem) & (1 << m_rows[idxItem].GetDepth()))) {
+            yend = ymid;
+        }
+
+        DottedLine(pnmrcd->nmcd.hdc, xmid, ystart, xmid, yend,
+                   GetSysColor(COLOR_GRAYTEXT), &rectItem);
+        DottedLine(pnmrcd->nmcd.hdc, xmid, ymid, rectIcon.right, ymid,
+                   GetSysColor(COLOR_GRAYTEXT), &rectItem);
+
+        for (int i = m_rows[idxItem].GetDepth() - 1; i >= 0; i--) {
+            rectIcon.left -= iconWidth;
+            rectIcon.right -= iconWidth;
+            if (!IntersectRect(&rectRedraw, &pnmrcd->nmcd.rc, &rectIcon))
+                continue;
+            if (!(GetTreeIndex(idxItem) & (1 << i)))
+                continue;
+
+            xmid = ((rectIcon.left + rectIcon.right) / 2) & ~1;
+            DottedLine(pnmrcd->nmcd.hdc, xmid, rectIcon.top,
+                       xmid, rectIcon.bottom,
+                       GetSysColor(COLOR_GRAYTEXT), &rectItem);
+        }
+        return EventResult(true, CDRF_NOTIFYPOSTPAINT);
+    }
+    return __super::TryHandleMessage(uMsg, wParam, lParam);
+}
+
+struct TreeIdx {
+    int index;
+    int level;
+    unsigned int paint_mask;
+    bool last_on_level;
+    std::list<struct TreeIdx> children;
+};
+
+void IterMask(TreeIdx *ptr, std::vector<unsigned int> &row_tree_index) {
+    for (auto it = ptr->children.begin(); it != ptr->children.end(); ++it) {
+        it->paint_mask = ptr->paint_mask;
+        if (iter_next(it) == ptr->children.end()) {   // last element
+            it->paint_mask &= ~(1 << it->level);
+        }
+        IterMask(&(*it), row_tree_index);
+    }
+    if (ptr->index >= 0)
+        row_tree_index[ptr->index] = ptr->paint_mask;
+}
+
+void TreeList::RecalcTreeIndex() {
+    TreeIdx tree_head = { -1, -1, -1, 0, std::list<TreeIdx>() };
+    std::vector<TreeIdx*> stack(1, &tree_head);
+
+    for (auto it = m_rows.cbegin(); it != m_rows.cend(); ++it) {
+        int this_level = it->GetDepth();
+
+        TreeIdx *parent_node = stack.back();
+        while (parent_node->level >= this_level) {
+            stack.pop_back();
+            parent_node = stack.back();
+        }
+
+        TreeIdx this_node = { it - m_rows.cbegin(), this_level, -1, false,
+                              std::list<TreeIdx>() };
+        parent_node->children.push_back(this_node);
+        stack.push_back(&parent_node->children.back());
+    }
+
+    m_row_tree_index.clear();
+    m_row_tree_index.resize(m_rows.size());
+    IterMask(&tree_head, m_row_tree_index);
+    m_row_tree_valid = true;
+}
+
+int TreeList::InsertRow(const ListViewRow &row, int desired_index) {
+    int subitem_index = 0;
+    auto it = row.cbegin();
+    assert(it != row.cend());
+    assert(row.GetDepth() <= ListViewRow::MAX_DEPTH);
+
+    LVITEM item = it->GetLVITEM();
+    item.iIndent = 1 + row.GetDepth();
+    item.mask |= LVIF_INDENT;
+    item.iItem = desired_index;
+    item.iSubItem = subitem_index;
+    int index = ListView_InsertItem(m_hwnd, &item);
+    if (index == -1)
+        throw std::runtime_error("Failed to insert listview item");
+
+    ++it;
+    ++subitem_index;
+    for (; it != row.cend(); ++it, ++subitem_index) {
+        item = it->GetLVITEM();
+        item.iItem = index;
+        item.iSubItem = subitem_index;
+        if (!ListView_SetItem(m_hwnd, &item))
+            throw std::runtime_error("Failed to insert listview item");
+    }
+    m_rows.insert(m_rows.begin() + index, row);
+    m_row_tree_valid = false;
+    return index;
+}
 
 Button::~Button() {
     if (m_hwnd) {

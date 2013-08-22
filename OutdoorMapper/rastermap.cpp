@@ -41,7 +41,15 @@ RasterMapCollection::RasterMapCollection()
 { }
 
 void RasterMapCollection::AddMap(std::shared_ptr<class RasterMap> map) {
-    m_maps.push_back(map);
+    struct RasterMapCollection::MapAndReps insert;
+    insert.map = map;
+    if (map->GetType() == RasterMap::TYPE_DHM) {
+        std::shared_ptr<class RasterMap> deriv_map(new GradientMap(map));
+        insert.reps.push_back(deriv_map);
+        deriv_map.reset(new SteepnessMap(map));
+        insert.reps.push_back(deriv_map);
+    }
+    m_maps.push_back(insert);
 }
 
 void RasterMapCollection::DeleteMap(unsigned int index) {
@@ -55,13 +63,7 @@ bool RasterMapCollection::StoreTo(PersistentStore *store) const {
     std::vector<std::wstring> filenames;
     filenames.reserve(m_maps.size());
     for (auto it = m_maps.cbegin(); it != m_maps.cend(); ++it) {
-        std::shared_ptr<RasterMap> map = *it;
-        if (map->GetType() == RasterMap::TYPE_GRADIENT ||
-            map->GetType() == RasterMap::TYPE_STEEPNESS)
-        {
-            continue;
-        }
-        filenames.push_back(map->GetFname());
+        filenames.push_back(it->map->GetFname());
     }
     return store->SetStringList(L"maps", filenames);
 }
@@ -140,14 +142,6 @@ void LoadMap(RasterMapCollection &maps, const std::wstring &fname) {
             maps.AddMap(map);
         } else {
             assert(false);  // Not implemented
-        }
-
-        if (map->GetType() == RasterMap::TYPE_DHM) {
-            std::shared_ptr<class RasterMap> deriv_map;
-            deriv_map.reset(new GradientMap(map));
-            maps.AddMap(deriv_map);
-            deriv_map.reset(new SteepnessMap(map));
-            maps.AddMap(deriv_map);
         }
     } catch (const std::runtime_error &) {
         map.reset(new RasterMapError(fname.c_str(), L"Exception"));

@@ -2,6 +2,7 @@
 #define ODM__WIN_MAPLIST_H
 
 #include <vector>
+#include <map>
 
 #include "util.h"
 #include "winwrap.h"
@@ -34,11 +35,13 @@ class MapListWindow : public Window
         LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
         LRESULT OnCreate();
 
-        void InsertRow(const class RasterMap &map);
+        std::map<int, std::shared_ptr<const class RasterMap> > m_maps_from_item_id;
+        void InsertRow(const std::shared_ptr<const class RasterMap> &map, unsigned int level);
+        void InsertMaps();
 
         HWND m_hwndStatic;
         MapListSizer m_sizer;
-        std::unique_ptr<class ListView> m_listview;
+        std::unique_ptr<class TreeList> m_listview;
         std::unique_ptr<class Button> m_btnAddRaster;
         std::unique_ptr<class Button> m_btnDelRaster;
 };

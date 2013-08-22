@@ -15,6 +15,8 @@
 
 extern HINSTANCE g_hinst;
 
+void DottedLine(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color,
+                const RECT* cliprect = NULL);
 
 class PrinterDC {
     public:
@@ -101,6 +103,7 @@ class ImageList {
         ~ImageList();
         HIMAGELIST Get() { return m_handle; };
         void AddIcon(const class IconHandle &icon);
+        std::unique_ptr<class IconHandle> GetIcon(int index);
     private:
         DISALLOW_COPY_AND_ASSIGN(ImageList);
         HIMAGELIST m_handle;
@@ -109,12 +112,12 @@ class ImageList {
 class IconHandle {
     public:
         IconHandle(HINSTANCE hInstance, LPCTSTR lpIconName);
+        IconHandle(HICON hIcon);
         ~IconHandle();
         HICON Get() const { return m_handle; };
     private:
         DISALLOW_COPY_AND_ASSIGN(IconHandle);
         HICON m_handle;
-
 };
 
 class BitmapHandle {
@@ -125,6 +128,16 @@ class BitmapHandle {
     private:
         DISALLOW_COPY_AND_ASSIGN(BitmapHandle);
         HBITMAP m_handle;
+};
+
+class PenHandle {
+    public:
+        PenHandle(DWORD dwStyle, DWORD dwWidth, const LOGBRUSH *pBrush);
+        ~PenHandle();
+        HPEN Get() const { return m_handle; };
+    private:
+        DISALLOW_COPY_AND_ASSIGN(PenHandle);
+        HPEN m_handle;
 };
 
 class Window
@@ -259,15 +272,22 @@ ListViewItem ListViewTextImageItem(const std::wstring &text, int image_id);
 
 class ListViewRow {
     public:
-        ListViewRow() : m_vec(), m_color(0), m_want_color(false) {};
+        ListViewRow() : m_vec(), m_color(0), m_want_color(false), m_depth(0) {};
         void AddItem(const ListViewItem& item);
         unsigned int GetColor() const { return m_color; }
-        unsigned int WantColor() const { return m_want_color; }
+        bool WantColor() const { return m_want_color; }
         void SetColor(unsigned int color) {
             m_want_color = true;
             m_color = color;
         }
 
+        static const unsigned int MAX_DEPTH = sizeof(unsigned int) * 8 - 1;
+        unsigned int GetDepth() const { return m_depth; }
+        void SetDepth(unsigned int depth) { m_depth = depth; }
+
+        const ListViewItem &operator[](size_t index) const {
+            return m_vec[index];
+        }
         std::vector<const ListViewItem>::const_iterator cbegin() const {
             return m_vec.cbegin();
         }
@@ -278,6 +298,7 @@ class ListViewRow {
         std::vector<const ListViewItem> m_vec;
         unsigned int m_color;
         bool m_want_color;
+        unsigned int m_depth;
 };
 
 class ListViewColumn {
@@ -323,20 +344,22 @@ struct ListViewEvents {
 
 class ListView {
     public:
-        ListView() : m_hwnd(0), m_imagelist(), m_columns() {};
-        ~ListView();
+        ListView()
+            : m_hwnd(0), m_imagelist(), m_columns(), m_rows()
+            {};
+        virtual ~ListView();
 
-        void Create(HWND hwndParent, const RECT &rect);
-        void SetImageList(std::unique_ptr<class ImageList> &&imagelist);
-        void DeleteAllRows();
-        void InsertColumns(int n_columns, const LVCOLUMN columns[]);
-        void InsertRow(const ListViewRow &row, int desired_index);
-        void RegisterEventHandlers(const ListViewEvents &events);
-        EventResult TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+        virtual void Create(HWND hwndParent, const RECT &rect);
+        virtual void SetImageList(std::unique_ptr<class ImageList> &&imagelist);
+        virtual void DeleteAllRows();
+        virtual void InsertColumns(int n_columns, const LVCOLUMN columns[]);
+        virtual int InsertRow(const ListViewRow &row, int desired_index);
+        virtual void RegisterEventHandlers(const ListViewEvents &events);
+        virtual EventResult TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-        int GetSelectedRow() const;
-        HWND GetHWND() const { return m_hwnd; };
-    private:
+        virtual int GetSelectedRow() const;
+        virtual HWND GetHWND() const { return m_hwnd; };
+    protected:
         HWND m_hwnd;
         std::unique_ptr<class ImageList> m_imagelist;
         std::vector<ListViewColumn> m_columns;
@@ -349,7 +372,28 @@ class ListView {
                                                WPARAM wParam, LPARAM lParam,
                                                UINT_PTR uId, DWORD_PTR data);
 
+    private:
         DISALLOW_COPY_AND_ASSIGN(ListView);
+};
+
+class TreeList : public ListView {
+    public:
+        TreeList() : ListView(), m_row_tree_index(), m_row_tree_valid(false) {};
+        virtual void Create(HWND hwndParent, const RECT &rect);
+        virtual int InsertRow(const ListViewRow &row, int desired_index);
+        virtual EventResult TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+    protected:
+        void RecalcTreeIndex();
+        unsigned int GetTreeIndex(size_t index) {
+            if (!m_row_tree_valid) RecalcTreeIndex();
+            return m_row_tree_index[index];
+        };
+        std::vector<unsigned int> m_row_tree_index;
+        bool m_row_tree_valid;
+
+    private:
+        DISALLOW_COPY_AND_ASSIGN(TreeList);
 };
 
 struct ButtonEvents {
