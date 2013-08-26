@@ -14,11 +14,23 @@
 // Bitmap resources
 //
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_EYE            BITMAP         ".\\resource\\famfamfam_silk_icons\\eye.bmp"
+
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDB_DATABASE       BITMAP         "resource\\famfamfam_silk_icons\\database.bmp"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDB_MAP            BITMAP         "resource\\famfamfam_silk_icons\\map.bmp"
+
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_MAP_ADD        BITMAP         ".\\resource\\famfamfam_silk_icons\\map_add.bmp"
+
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_MAP_DEL        BITMAP         ".\\resource\\famfamfam_silk_icons\\map_delete.bmp"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL

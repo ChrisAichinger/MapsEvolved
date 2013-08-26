@@ -15,8 +15,10 @@
 
 extern HINSTANCE g_hinst;
 
+
 void DottedLine(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color,
                 const RECT* cliprect = NULL);
+
 
 class PrinterDC {
     public:
@@ -336,13 +338,23 @@ struct EventResult {
     LRESULT result;
 };
 
-struct ListViewEvents {
-    std::function<EventResult(const class ListView& lv, LPNMLISTVIEW pnmlv)> ItemChanged;
-    std::function<EventResult(const class ListView& lv, LPNMITEMACTIVATE pnmlv)> DoubleClick;
-    std::function<EventResult(const class ListView& lv, LPNMITEMACTIVATE pnmlv)> RightClick;
+
+class ControlInterface {
+    public:
+        virtual EventResult TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;
 };
 
-class ListView {
+
+struct ListViewEvents {
+    std::function<EventResult(const class ListView& lv, LPNMLISTVIEW pnmlv)> ItemChanged;
+    std::function<EventResult(const class ListView& lv, LPNMITEMACTIVATE pnmlv)> LeftClick;
+    std::function<EventResult(const class ListView& lv, LPNMITEMACTIVATE pnmlv)> DoubleClick;
+    std::function<EventResult(const class ListView& lv, LPNMITEMACTIVATE pnmlv)> RightClick;
+    std::function<EventResult(const class ListView& lv, LPNMLVKEYDOWN pnmlv)> KeyDown;
+    std::function<EventResult(const class ListView& lv, LPNMHDR pnmlv)> EnterPressed;
+};
+
+class ListView : public ControlInterface {
     public:
         ListView()
             : m_hwnd(0), m_imagelist(), m_columns(), m_rows()
@@ -350,6 +362,7 @@ class ListView {
         virtual ~ListView();
 
         virtual void Create(HWND hwndParent, const RECT &rect);
+        virtual void Resize(const RECT &rect);
         virtual void SetImageList(std::unique_ptr<class ImageList> &&imagelist);
         virtual void DeleteAllRows();
         virtual void InsertColumns(int n_columns, const LVCOLUMN columns[]);
@@ -400,7 +413,7 @@ struct ButtonEvents {
     std::function<EventResult(const class Button& btn)> Clicked;
 };
 
-class Button {
+class Button : public ControlInterface {
     public:
         Button() : m_hwnd(0) {};
         ~Button();
@@ -408,7 +421,7 @@ class Button {
         void Create(HWND hwndParent, const RECT &rect,
                     const std::wstring &title, int id);
         void RegisterEventHandlers(const ButtonEvents &events);
-        EventResult TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+        virtual EventResult TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
         HWND GetHWND() const { return m_hwnd; };
     private:
@@ -472,11 +485,14 @@ class ToolbarButton {
         std::wstring m_alt_text;
 };
 
-class Toolbar {
+class Toolbar : public ControlInterface {
     public:
         Toolbar(HWND hwndParent, int bitmapSize, int controlID);
         void Resize();
         void SetButtons(const std::list<ToolbarButton> &buttons);
+        HWND GetHWND() { return m_hwndTool; };
+
+        virtual EventResult TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
     private:
         DISALLOW_COPY_AND_ASSIGN(Toolbar);
         HWND m_hwndParent, m_hwndTool;

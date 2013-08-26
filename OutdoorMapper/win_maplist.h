@@ -9,15 +9,27 @@
 
 class MapListSizer {
     public:
-        explicit MapListSizer(HWND parent) : m_hwndParent(parent) {};
+        explicit MapListSizer(HWND parent)
+            : m_hwndParent(parent), m_hwndToolbar(0), m_hwndStatusbar(0)
+        {};
         void SetHWND(HWND hwnd) { m_hwndParent = hwnd; };
 
         void GetListview(RECT &rect);
         void GetTextbox(RECT &rect);
         void GetAddRasterbutton(RECT &rect);
         void GetDelRasterbutton(RECT &rect);
+
+        void RegisterToolbar(HWND hwndToolbar) {
+            m_hwndToolbar = hwndToolbar;
+        };
+        void RegisterStatusbar(HWND hwndStatusbar) {
+            m_hwndStatusbar = hwndStatusbar;
+        };
     private:
+        void GetClientRect(RECT &rect);
         HWND m_hwndParent;
+        HWND m_hwndToolbar;
+        HWND m_hwndStatusbar;
 };
 
 class MapListWindow : public Window
@@ -38,12 +50,15 @@ class MapListWindow : public Window
         std::map<int, std::shared_ptr<const class RasterMap> > m_maps_from_item_id;
         void InsertRow(const std::shared_ptr<const class RasterMap> &map, unsigned int level);
         void InsertMaps();
+        void HandleAddMap();
+        void HandleDelMap(bool ErrorIfNoSelection);
 
         HWND m_hwndStatic;
         MapListSizer m_sizer;
         std::unique_ptr<class TreeList> m_listview;
         std::unique_ptr<class Button> m_btnAddRaster;
         std::unique_ptr<class Button> m_btnDelRaster;
+        std::shared_ptr<class Toolbar> m_toolbar;
 };
 
 void ShowMapListWindow(class MapDisplayManager &mapdisplay,

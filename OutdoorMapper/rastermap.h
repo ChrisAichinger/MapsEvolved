@@ -67,6 +67,7 @@ class RasterMapCollection {
                                                                            m_maps[i].reps.cend());
             return res;
         }
+        bool IsToplevelMap(const std::shared_ptr<const RasterMap> &map) const;
 
         bool StoreTo(PersistentStore *store) const;
         bool RetrieveFrom(PersistentStore *store);

@@ -39,25 +39,41 @@ MapListWindow::MapListWindow(MapDisplayManager &mapdisplay,
       m_hwndStatic(0)
 { }
 
+
 LRESULT MapListWindow::HandleMessage(
         UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    EventResult res;
-    if (m_btnAddRaster)
-        res = m_btnAddRaster->TryHandleMessage(uMsg, wParam, lParam);
-    if (res.was_handled) return res.result;
-
-    if (m_btnDelRaster)
-        res = m_btnDelRaster->TryHandleMessage(uMsg, wParam, lParam);
-    if (res.was_handled) return res.result;
-
-    if (m_listview)
-        res = m_listview->TryHandleMessage(uMsg, wParam, lParam);
-    if (res.was_handled) return res.result;
+    ControlInterface* controls[] = { m_btnAddRaster.get(),
+                                     m_btnDelRaster.get(),
+                                     m_listview.get(),
+                                     m_toolbar.get(),
+    };
+    for (int i=0; i < ARRAY_SIZE(controls); ++i) {
+        EventResult res;
+        if (controls[i])
+            res = controls[i]->TryHandleMessage(uMsg, wParam, lParam);
+        if (res.was_handled)
+            return res.result;
+    }
 
     switch (uMsg) {
         case WM_CREATE:
             return OnCreate();
+        case WM_SIZE:
+            RECT rect;
+            m_sizer.GetListview(rect);
+            m_listview->Resize(rect);
+            return 0;
+        case WM_COMMAND:
+            WORD id = LOWORD(wParam);
+            if (id == ID_MAP_ADD) {
+                HandleAddMap();
+                return 0;
+            }
+            if (id == ID_MAP_DEL) {
+                HandleDelMap(true);
+                return 0;
+            }
     }
     return __super::HandleMessage(uMsg, wParam, lParam);
 }
@@ -66,6 +82,17 @@ LRESULT MapListWindow::HandleMessage(
 LRESULT MapListWindow::OnCreate() {
     m_sizer.SetHWND(m_hwnd);
 
+    const int IDC_TOOLBAR = 800;
+    m_toolbar.reset(new Toolbar(m_hwnd, 16, IDC_TOOLBAR));
+    std::list<ToolbarButton> button_list;
+    ToolbarButton buttons[] = {
+            ToolbarButton(IDB_MAP_ADD, ID_MAP_ADD, true, 0, L"Add Map"),
+            ToolbarButton(IDB_MAP_DEL, ID_MAP_DEL, true, 0, L"Delete Map"),
+            ToolbarButton(0, 0, true, ToolbarButton::SEPARATOR, L""),
+            ToolbarButton(IDB_ZOOMIN, ID_MAP_ADD, false, 0, L"Not implemented"),
+    };
+    m_toolbar->SetButtons(std::list<ToolbarButton>(buttons, buttons + ARRAY_SIZE(buttons)));
+    m_sizer.RegisterToolbar(m_toolbar->GetHWND());
     RECT rect;
     m_sizer.GetListview(rect);
 
@@ -129,6 +156,23 @@ LRESULT MapListWindow::OnCreate() {
         m_mapdisplay.AddOverlayMap(m_maps_from_item_id[pnmia->iItem].get());
         return EventResult(true, 0);
     };
+    events.KeyDown = [this](const ListView& lv, LPNMLVKEYDOWN pnmkd)
+                               -> EventResult
+    {
+        if (pnmkd->wVKey == VK_DELETE) {
+            HandleDelMap(false);
+            return EventResult(true, 0);
+        }
+        return EventResult(false, 0);
+    };
+    events.EnterPressed = [this](const ListView& lv, LPNMHDR pnmhdr)
+                               -> EventResult
+    {
+        int index = m_listview->GetSelectedRow();
+        if (index < 0) return EventResult(true, 0);
+        m_mapdisplay.ChangeMap(m_maps_from_item_id[index].get());
+        return EventResult(true, 0);
+    };
     m_listview->RegisterEventHandlers(events);
 
     InsertMaps();
@@ -148,40 +192,7 @@ LRESULT MapListWindow::OnCreate() {
     m_btnAddRaster->Create(m_hwnd, rect, L"Add Rastermap", 1018);
     ButtonEvents btnevents;
     btnevents.Clicked = [this](const Button& btn) -> EventResult {
-        wchar_t buf[MAX_PATH] = {0};
-        wchar_t filters[] = L"Supported files\0*.tif;*.tiff\0"
-                            L"Geotiff Files\0*.tif;*.tiff\0"
-                            L"All Files (*.*)\0*.*\0"
-                            L"\0\0";
-        OPENFILENAME ofn = {
-                    sizeof(ofn),
-                    m_hwnd,
-                    g_hinst,
-                    filters,
-                    NULL, 0, 0,
-                    buf, sizeof(buf),
-                    NULL, 0,
-                    NULL, L"Open Raster Map",
-                    OFN_FILEMUSTEXIST,
-                    0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-        BOOL success = GetOpenFileName(&ofn);
-        if (!success) {
-            int error = CommDlgExtendedError();
-            return EventResult(true, 0);
-        }
-        LoadMap(m_maps, ofn.lpstrFile);
-
-        std::unique_ptr<PersistentStore> ps = CreatePersistentStore();
-        if (!m_maps.StoreTo(ps.get())) {
-            MessageBox(m_hwnd,
-                       L"Couldn't save map preferences.\n"
-                       L"Map viewing will continue to work but the "
-                       L"added map will be gone when you restart.",
-                       L"Outdoormapper Error", MB_OK | MB_ICONWARNING);
-        }
-
-        m_listview->DeleteAllRows();
-        InsertMaps();
+        HandleAddMap();
         return EventResult(true, 0);
     };
     m_btnAddRaster->RegisterEventHandlers(btnevents);
@@ -190,30 +201,79 @@ LRESULT MapListWindow::OnCreate() {
     m_btnDelRaster.reset(new Button());
     m_btnDelRaster->Create(m_hwnd, rect, L"Del Rastermap", 1019);
     btnevents.Clicked = [this](const Button& btn) -> EventResult {
-        int index = m_listview->GetSelectedRow();
-        if (index == -1) {
-            MessageBox(m_hwnd, L"You must select a map to delete.",
-                       L"Error", MB_OK | MB_ICONWARNING);
-            return EventResult(true, 0);
-        }
-        m_maps.DeleteMap(index);
-
-        std::unique_ptr<PersistentStore> ps = CreatePersistentStore();
-        if (!m_maps.StoreTo(ps.get())) {
-            MessageBox(m_hwnd,
-                       L"Couldn't save map preferences.\n"
-                       L"Map viewing will continue to work but the "
-                       L"changes will be gone when you restart.",
-                       L"Outdoormapper Error", MB_OK | MB_ICONWARNING);
-        }
-
-        m_listview->DeleteAllRows();
-        InsertMaps();
+        HandleDelMap(true);
         return EventResult(true, 0);
     };
     m_btnDelRaster->RegisterEventHandlers(btnevents);
 
     return 0;
+}
+
+void MapListWindow::HandleAddMap() {
+    wchar_t buf[MAX_PATH] = {0};
+    wchar_t filters[] = L"Supported files\0*.tif;*.tiff\0"
+                        L"Geotiff Files\0*.tif;*.tiff\0"
+                        L"All Files (*.*)\0*.*\0"
+                        L"\0\0";
+    OPENFILENAME ofn = {
+                sizeof(ofn),
+                m_hwnd,
+                g_hinst,
+                filters,
+                NULL, 0, 0,
+                buf, sizeof(buf),
+                NULL, 0,
+                NULL, L"Open Raster Map",
+                OFN_FILEMUSTEXIST,
+                0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    BOOL success = GetOpenFileName(&ofn);
+    if (!success) {
+        int error = CommDlgExtendedError();
+        return;
+    }
+    LoadMap(m_maps, ofn.lpstrFile);
+
+    std::unique_ptr<PersistentStore> ps = CreatePersistentStore();
+    if (!m_maps.StoreTo(ps.get())) {
+        MessageBox(m_hwnd,
+                   L"Couldn't save map preferences.\n"
+                   L"Map viewing will continue to work but the "
+                   L"added map will be gone when you restart.",
+                   L"Outdoormapper Error", MB_OK | MB_ICONWARNING);
+    }
+
+    m_listview->DeleteAllRows();
+    InsertMaps();
+}
+
+void MapListWindow::HandleDelMap(bool ErrorIfNoSelection) {
+    int index = m_listview->GetSelectedRow();
+    if (m_maps_from_item_id.count(index) == 0) {
+        if (ErrorIfNoSelection) {
+            MessageBox(m_hwnd, L"You must select a map to delete.",
+                       L"Error", MB_OK | MB_ICONWARNING);
+        }
+        return;
+    }
+    std::shared_ptr<const RasterMap> map = m_maps_from_item_id[index];
+    if (!m_maps.IsToplevelMap(map)) {
+        MessageBox(m_hwnd, L"You can only delete map files, not their sub-views.",
+                   L"Error", MB_OK | MB_ICONWARNING);
+        return;
+    }
+    m_maps.DeleteMap(index);
+
+    std::unique_ptr<PersistentStore> ps = CreatePersistentStore();
+    if (!m_maps.StoreTo(ps.get())) {
+        MessageBox(m_hwnd,
+                   L"Couldn't save map preferences.\n"
+                   L"Map viewing will continue to work but the "
+                   L"changes will be gone when you restart.",
+                   L"Outdoormapper Error", MB_OK | MB_ICONWARNING);
+    }
+
+    m_listview->DeleteAllRows();
+    InsertMaps();
 }
 
 void MapListWindow::InsertRow(const std::shared_ptr<const RasterMap> &map, unsigned int level) {
@@ -269,26 +329,40 @@ void ShowMapListWindow(MapDisplayManager &mapdisplay,
 }
 
 void MapListSizer::GetListview(RECT &rect) {
-    GetClientRect(m_hwndParent, &rect);
+    GetClientRect(rect);
     rect.left += 150;
     rect.bottom /= 2;
 }
 
 void MapListSizer::GetTextbox(RECT &rect) {
-    GetClientRect(m_hwndParent, &rect);
+    GetClientRect(rect);
     rect.left += 150;
     rect.top += (rect.bottom - rect.top) / 2;
 }
 
 void MapListSizer::GetAddRasterbutton(RECT &rect) {
-    GetClientRect(m_hwndParent, &rect);
+    GetClientRect(rect);
     rect.right = rect.left + 150;
     rect.bottom = rect.top + 30;
 }
 
 void MapListSizer::GetDelRasterbutton(RECT &rect) {
-    GetClientRect(m_hwndParent, &rect);
+    GetClientRect(rect);
     rect.right = rect.left + 150;
     rect.top += 30;
     rect.bottom = rect.top + 30;
+}
+
+void MapListSizer::GetClientRect(RECT &rect) {
+    ::GetClientRect(m_hwndParent, &rect);
+    if (m_hwndToolbar) {
+        RECT rectTB;
+        GetWindowRect(m_hwndToolbar, &rectTB);
+        rect.top += rectTB.bottom - rectTB.top;
+    }
+    if (m_hwndStatusbar) {
+        RECT rectSB;
+        GetWindowRect(m_hwndStatusbar, &rectSB);
+        rect.bottom -= rectSB.bottom - rectSB.top;
+    }
 }

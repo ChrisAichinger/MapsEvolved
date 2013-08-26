@@ -637,7 +637,7 @@ ListView::~ListView() {
 void ListView::Create(HWND hwndParent, const RECT &rect) {
     m_hwnd = CreateWindow(
             WC_LISTVIEW, L"",
-            WS_CHILD | LVS_REPORT | LVS_SHAREIMAGELISTS,
+            WS_CHILD | LVS_REPORT | LVS_SHAREIMAGELISTS | LVS_SHOWSELALWAYS,
             rect.left, rect.top,
             rect.right - rect.left,
             rect.bottom - rect.top,
@@ -652,6 +652,10 @@ void ListView::Create(HWND hwndParent, const RECT &rect) {
         DestroyWindow(m_hwnd);
         throw std::runtime_error("Failed to subclass list view.");
     }
+}
+
+void ListView::Resize(const RECT &rect) {
+    MoveWindow(m_hwnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, TRUE);
 }
 
 void ListView::SetImageList(std::unique_ptr<ImageList> &&imagelist) {
@@ -787,15 +791,18 @@ EventResult ListView::TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
     if (pnmhdr->hwndFrom != m_hwnd)
         return EventResult(false, 0);
 
-    if (pnmhdr->code == LVN_ITEMCHANGED && m_events.ItemChanged)
-        return m_events.ItemChanged(*this,
-                                    reinterpret_cast<LPNMLISTVIEW>(lParam));
-    if (pnmhdr->code == NM_DBLCLK && m_events.DoubleClick)
-        return m_events.DoubleClick(*this,
-                                reinterpret_cast<LPNMITEMACTIVATE>(lParam));
-    if (pnmhdr->code == NM_RCLICK && m_events.RightClick)
-        return m_events.RightClick(*this,
-                                reinterpret_cast<LPNMITEMACTIVATE>(lParam));
+#define ODM_LV_HANDLE_NM(_code, _handler, _cast)                             \
+    if (pnmhdr->code == _code && m_events.##_handler)                        \
+        return m_events.##_handler(*this, reinterpret_cast<_cast>(lParam));
+
+    ODM_LV_HANDLE_NM(LVN_ITEMCHANGED, ItemChanged, LPNMLISTVIEW);
+    ODM_LV_HANDLE_NM(NM_CLICK, LeftClick, LPNMITEMACTIVATE);
+    ODM_LV_HANDLE_NM(NM_DBLCLK, DoubleClick, LPNMITEMACTIVATE);
+    ODM_LV_HANDLE_NM(NM_RCLICK, RightClick, LPNMITEMACTIVATE);
+    ODM_LV_HANDLE_NM(LVN_KEYDOWN, KeyDown, LPNMLVKEYDOWN);
+    ODM_LV_HANDLE_NM(NM_RETURN, EnterPressed, LPNMHDR);
+
+#undef ODM_LV_HANDLE_NM
     return EventResult(false, 0);
 }
 
@@ -1271,6 +1278,16 @@ void Toolbar::SetButtons(const std::list<ToolbarButton> &buttons) {
 
     // Resize the toolbar, and then show it; no return value to check
     SendMsg(TB_AUTOSIZE, 0, 0);
+}
+
+EventResult Toolbar::TryHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    if (uMsg == WM_SIZE) {
+        // On window resize, force Toolbar resize, but allow further processing
+        // of the message
+        Resize();
+        return EventResult(false, 0);
+    }
+    return EventResult(false, 0);
 }
 
 LRESULT Toolbar::SendMsg(UINT Msg, WPARAM wParam, LPARAM lParam) {

@@ -83,6 +83,13 @@ bool RasterMapCollection::RetrieveFrom(PersistentStore *store) {
     return true;
 }
 
+bool RasterMapCollection::IsToplevelMap(const std::shared_ptr<const RasterMap> &map) const {
+    for (auto it = m_maps.cbegin(); it != m_maps.cend(); ++it) {
+        if (it->map == map)
+            return true;
+    }
+    return false;
+}
 
 class RasterMapError : public RasterMap {
     public:
