@@ -6,13 +6,22 @@
 #define ODM_OS WINDOWS
 #define ODM_REG_PATH L"Software\\OutdoorMapper"
 
-#endif
-
 
 #ifdef _MSC_VER
 #define PACKED_STRUCT(...) __pragma(pack(push, 1)); \
                            __VA_ARGS__;             \
                            __pragma(pack(pop));
+
+#ifdef ODM_SHARED_LIB
+#  define EXPORT __declspec(dllexport)
+#else
+#  define EXPORT __declspec(dllimport)
+#endif
+
 #elif defined(__GNUC__)
+#  error missing implementation for gcc
+#else
 #  error missing implementation
+#endif
+
 #endif
