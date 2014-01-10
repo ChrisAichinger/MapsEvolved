@@ -52,26 +52,40 @@ LRESULT RootWindow::OnCreate()
 {
     CreateStatusbar();
     m_toolbar.reset(new Toolbar(m_hwnd, 16, IDC_TOOLBAR));
-    std::list<ToolbarButton> button_list;
-    button_list.push_back(
-            ToolbarButton(IDB_DATABASE, ID_MANAGE_MAPS, true, 0, L"Manage Maps"));
-    button_list.push_back(
-            ToolbarButton(IDB_SAVEMAPBMP, ID_SAVEMAPBMP, true, 0, L"Save Map as Image"));
-    button_list.push_back(
-            ToolbarButton(IDB_PRINTER, ID_PRINT, true, 0, L"Print"));
-    button_list.push_back(
-            ToolbarButton(0, 0, true, ToolbarButton::SEPARATOR, L""));
-    button_list.push_back(
-            ToolbarButton(IDB_ZOOMIN, ID_ZOOMIN, true, 0, L"Zoom in"));
-    button_list.push_back(
-            ToolbarButton(IDB_ZOOMOUT, ID_ZOOMOUT, true, 0, L"Zoom out"));
-    button_list.push_back(
-            ToolbarButton(IDB_ZOOMEXACT, ID_ZOOMEXACT, true, 0, L"Zoom 1:1"));
+    ToolbarButton buttons[] = {
+            ToolbarButton(IDB_DATABASE, ID_MANAGE_MAPS, true, 0, L"Manage Maps"),
+            ToolbarButton(IDB_SAVEMAPBMP, ID_SAVEMAPBMP, true, 0, L"Save Map as Image"),
+            ToolbarButton(IDB_PRINTER, ID_PRINT, true, 0, L"Print"),
+            ToolbarButton(0, 0, true, ToolbarButton::SEPARATOR, L""),
+            ToolbarButton(IDB_ZOOMIN, ID_ZOOMIN, true, 0, L"Zoom in"),
+            ToolbarButton(IDB_ZOOMOUT, ID_ZOOMOUT, true, 0, L"Zoom out"),
+            ToolbarButton(IDB_ZOOMEXACT, ID_ZOOMEXACT, true, 0, L"Zoom 1:1"),
+    };
 
-    m_toolbar->SetButtons(button_list);
+    m_toolbar->SetButtons(std::list<ToolbarButton>(buttons, buttons + ARRAY_SIZE(buttons)));
+
+    m_sizer.SetHWND(m_hwnd);
+    m_sizer.SetStatusbar(m_hwndStatus);
+    m_sizer.SetToolbar(m_toolbar->GetHWND());
 
     RECT rect;
-    CalcMapSize(rect);
+    m_sizer.GetActiveItems(rect);
+    m_lv_activeitems->Create(m_hwnd, rect);
+    std::unique_ptr<ImageList> imglist(
+                     new ImageList(GetSystemMetrics(SM_CXSMICON),
+                                   GetSystemMetrics(SM_CYSMICON),
+                                   ILC_MASK | ILC_COLOR32, 10));
+
+    imglist->AddIcon(IconHandle(g_hinst, MAKEINTRESOURCE(IDI_MAP_STD)));
+    m_lv_activeitems->SetImageList(std::move(imglist));
+    LVCOLUMN lvcs[] = { { LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM,
+                          LVCFMT_LEFT,
+                          140,
+                          const_cast<LPWSTR>(LoadResPWCHAR(IDS_MLV_COL_FNAME)),
+    } };
+    m_lv_activeitems->InsertColumns(ARRAY_SIZE(lvcs), lvcs);
+
+    m_sizer.GetMapPanel(rect);
     m_hwndMap = CreateWindow(
             g_MapWndClass, NULL,
             WS_CHILD | WS_VISIBLE | CS_OWNDC | CS_DBLCLKS,
@@ -184,17 +198,18 @@ void RootWindow::PaintContent(PAINTSTRUCT *pps) {
     // Empty: we only draw the map panel, which is handled via WM_NOTIFY
 }
 
-void RootWindow::CalcMapSize(RECT &rect) {
-    const int info[] = { -1, -1,
-                         -1, IDC_STATUSBAR,
-                         -1, IDC_TOOLBAR,
-                         0, 0 };
-    GetEffectiveClientRect(m_hwnd, &rect, info);
-}
-
 LRESULT RootWindow::HandleMessage(
         UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    ControlInterface* controls[] = { m_toolbar.get(),
+    };
+    for (int i=0; i < ARRAY_SIZE(controls); ++i) {
+        EventResult res;
+        if (controls[i])
+            res = controls[i]->TryHandleMessage(uMsg, wParam, lParam);
+        if (res.was_handled)
+            return res.result;
+    }
     switch (uMsg) {
         case WM_CREATE:
             return OnCreate();
@@ -208,12 +223,11 @@ LRESULT RootWindow::HandleMessage(
             break;
 
         case WM_SIZE:
-            // Auto-resize statusbar and toolbar (WM_SIZE does that)
+            // Auto-resize statusbar (WM_SIZE does that)
             SendMessage(m_hwndStatus, WM_SIZE, 0, 0);
-            m_toolbar->Resize();
             if (m_hwndMap) {
                 RECT rect;
-                CalcMapSize(rect);
+                m_sizer.GetMapPanel(rect);
                 SetWindowPos(m_hwndMap, NULL, rect.left, rect.top,
                              rect.right - rect.left, rect.bottom - rect.top,
                              SWP_NOZORDER | SWP_NOACTIVATE);
@@ -270,7 +284,7 @@ LRESULT RootWindow::HandleMessage(
 RootWindow::RootWindow()
     : Window(), m_hwndMap(0), m_hwndStatus(0),
       m_maps(), m_heightfinder(m_maps), m_mapdisplay(),
-      m_toolbar()
+      m_toolbar(), m_sizer(0), m_lv_activeitems(new ListView())
 { }
 
 RootWindow *RootWindow::Create() {
@@ -340,4 +354,14 @@ void RootWindow::SetCursor(CursorType cursor) {
         default:
             assert(false); // not implemented
     }
+}
+
+void RootSizer::GetMapPanel(RECT &rect) {
+    GetClientRect(rect);
+    rect.left += 150;
+}
+
+void RootSizer::GetActiveItems(RECT &rect) {
+    GetClientRect(rect);
+    rect.right = rect.left + 150;
 }

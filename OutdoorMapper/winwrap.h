@@ -142,6 +142,27 @@ class PenHandle {
         HPEN m_handle;
 };
 
+
+class Sizer {
+    public:
+        explicit Sizer(HWND parent)
+            : m_hwndParent(parent), m_hwndToolbar(0), m_hwndStatusbar(0)
+            {}
+        void SetHWND(HWND hwnd) { m_hwndParent = hwnd; };
+        virtual void SetToolbar(HWND hwndToolbar) {
+            m_hwndToolbar = hwndToolbar;
+        };
+        virtual void SetStatusbar(HWND hwndStatusbar) {
+            m_hwndStatusbar = hwndStatusbar;
+        };
+    protected:
+        HWND m_hwndParent;
+        HWND m_hwndToolbar;
+        HWND m_hwndStatusbar;
+        void GetClientRect(RECT &rect);
+};
+
+
 class Window
 {
     public:

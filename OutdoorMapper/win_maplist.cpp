@@ -92,7 +92,7 @@ LRESULT MapListWindow::OnCreate() {
             ToolbarButton(IDB_ZOOMIN, ID_MAP_ADD, false, 0, L"Not implemented"),
     };
     m_toolbar->SetButtons(std::list<ToolbarButton>(buttons, buttons + ARRAY_SIZE(buttons)));
-    m_sizer.RegisterToolbar(m_toolbar->GetHWND());
+    m_sizer.SetToolbar(m_toolbar->GetHWND());
     RECT rect;
     m_sizer.GetListview(rect);
 
@@ -351,18 +351,4 @@ void MapListSizer::GetDelRasterbutton(RECT &rect) {
     rect.right = rect.left + 150;
     rect.top += 30;
     rect.bottom = rect.top + 30;
-}
-
-void MapListSizer::GetClientRect(RECT &rect) {
-    ::GetClientRect(m_hwndParent, &rect);
-    if (m_hwndToolbar) {
-        RECT rectTB;
-        GetWindowRect(m_hwndToolbar, &rectTB);
-        rect.top += rectTB.bottom - rectTB.top;
-    }
-    if (m_hwndStatusbar) {
-        RECT rectSB;
-        GetWindowRect(m_hwndStatusbar, &rectSB);
-        rect.bottom -= rectSB.bottom - rectSB.top;
-    }
 }

@@ -7,29 +7,14 @@
 #include "util.h"
 #include "winwrap.h"
 
-class MapListSizer {
-    public:
-        explicit MapListSizer(HWND parent)
-            : m_hwndParent(parent), m_hwndToolbar(0), m_hwndStatusbar(0)
-        {};
-        void SetHWND(HWND hwnd) { m_hwndParent = hwnd; };
 
+class MapListSizer : public Sizer {
+    public:
+        explicit MapListSizer(HWND parent) : Sizer(parent) {};
         void GetListview(RECT &rect);
         void GetTextbox(RECT &rect);
         void GetAddRasterbutton(RECT &rect);
         void GetDelRasterbutton(RECT &rect);
-
-        void RegisterToolbar(HWND hwndToolbar) {
-            m_hwndToolbar = hwndToolbar;
-        };
-        void RegisterStatusbar(HWND hwndStatusbar) {
-            m_hwndStatusbar = hwndStatusbar;
-        };
-    private:
-        void GetClientRect(RECT &rect);
-        HWND m_hwndParent;
-        HWND m_hwndToolbar;
-        HWND m_hwndStatusbar;
 };
 
 class MapListWindow : public Window

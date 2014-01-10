@@ -255,6 +255,25 @@ HWND Window::WinCreateWindow(DWORD dwExStyle, LPCTSTR pszName,
 }
 
 
+void Sizer::GetClientRect(RECT &rect) {
+    ::GetClientRect(m_hwndParent, &rect);
+    MENUBARINFO mbi = { sizeof(MENUBARINFO) };
+    if (GetMenuBarInfo(m_hwndParent, OBJID_MENU, 0, &mbi)) {
+        rect.top += mbi.rcBar.bottom - mbi.rcBar.top;
+    }
+    if (m_hwndToolbar) {
+        RECT rectTB;
+        GetWindowRect(m_hwndToolbar, &rectTB);
+        rect.top += rectTB.bottom - rectTB.top;
+    }
+    if (m_hwndStatusbar) {
+        RECT rectSB;
+        GetWindowRect(m_hwndStatusbar, &rectSB);
+        rect.bottom -= rectSB.bottom - rectSB.top;
+    }
+}
+
+
 POINT GetClientMousePos(HWND hwnd) {
     POINT point = {0, 0};
     if (!GetCursorPos(&point)) {
