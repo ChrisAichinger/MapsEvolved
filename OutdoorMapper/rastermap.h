@@ -10,7 +10,7 @@
 #include "coordinates.h"
 #include "projection.h"
 
-class ODM_INTERFACE RasterMap {
+class EXPORT ODM_INTERFACE RasterMap {
     public:
         enum RasterMapType {
             TYPE_MAP = 1,
@@ -47,7 +47,7 @@ class ODM_INTERFACE RasterMap {
         };
 };
 
-class RasterMapCollection {
+class EXPORT RasterMapCollection {
     public:
         RasterMapCollection();
         void AddMap(std::shared_ptr<RasterMap> map);
@@ -81,15 +81,15 @@ class RasterMapCollection {
         DISALLOW_COPY_AND_ASSIGN(RasterMapCollection);
 };
 
-void LoadMap(RasterMapCollection &maps, const std::wstring &fname);
+void EXPORT LoadMap(RasterMapCollection &maps, const std::wstring &fname);
 
-struct TerrainInfo {
+struct EXPORT TerrainInfo {
     double height_m;
     double slope_face_deg;
     double steepness_deg;
 };
 
-class HeightFinder {
+class EXPORT HeightFinder {
     public:
         explicit HeightFinder(const class RasterMapCollection &maps);
         bool CalcTerrain(const LatLon &pos, TerrainInfo *result);
@@ -102,11 +102,14 @@ class HeightFinder {
                                        RasterMap::RasterMapType type) const;
 };
 
-bool GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
-                    double dx, double dy, double *distance);
-bool MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
-                    double *mpp);
-bool MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos,
-                    double *mpp);
+bool EXPORT
+    GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
+                   double dx, double dy, double *distance);
+bool EXPORT
+    MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
+                   double *mpp);
+bool EXPORT
+    MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos,
+                   double *mpp);
 
 #endif

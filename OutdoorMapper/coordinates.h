@@ -2,15 +2,16 @@
 #define ODM__COORDINATES_H
 
 #include <ostream>
+#include "odm_config.h"
 
-class BezierCoord {
+class EXPORT BezierCoord {
     public:
         BezierCoord() : x(0), y(0) {};
         BezierCoord(double x_, double y_) : x(x_), y(y_) {};
         double x, y;
 };
 
-class DisplayCoord {
+class EXPORT DisplayCoord {
     public:
         DisplayCoord() : x(0), y(0) {};
         DisplayCoord(double x_, double y_) : x(x_), y(y_) {};
@@ -20,7 +21,7 @@ class DisplayCoord {
         DisplayCoord& operator-=(const class DisplayDelta &rhs);
 };
 
-class DisplayCoordCentered {
+class EXPORT DisplayCoordCentered {
     public:
         DisplayCoordCentered() : x(0), y(0) {};
         DisplayCoordCentered(double x_, double y_) : x(x_), y(y_) {};
@@ -33,7 +34,7 @@ class DisplayCoordCentered {
         double x, y;
 };
 
-class DisplayDelta {
+class EXPORT DisplayDelta {
     public:
         DisplayDelta() : x(0), y(0) {};
         DisplayDelta(double x_, double y_) : x(x_), y(y_) {};
@@ -47,7 +48,7 @@ class DisplayDelta {
 };
 
 
-class MapPixelCoord {
+class EXPORT MapPixelCoord {
     public:
         MapPixelCoord() : x(0), y(0) {};
         MapPixelCoord(double x_, double y_) : x(x_), y(y_) {};
@@ -69,7 +70,7 @@ class MapPixelCoord {
         double x, y;
 };
 
-class MapPixelDelta {
+class EXPORT MapPixelDelta {
     public:
         MapPixelDelta() : x(0), y(0) {};
         MapPixelDelta(double x_, double y_) : x(x_), y(y_) {};
@@ -83,7 +84,7 @@ class MapPixelDelta {
         double x, y;
 };
 
-class MapPixelCoordInt {
+class EXPORT MapPixelCoordInt {
     public:
         MapPixelCoordInt() : x(0), y(0) {};
         MapPixelCoordInt(int x_, int y_) : x(x_), y(y_) {};
@@ -105,7 +106,7 @@ class MapPixelCoordInt {
         int x, y;
 };
 
-class MapPixelDeltaInt {
+class EXPORT MapPixelDeltaInt {
     public:
         MapPixelDeltaInt() : x(0), y(0) {};
         MapPixelDeltaInt(int x_, int y_) : x(x_), y(y_) {};
@@ -119,7 +120,7 @@ class MapPixelDeltaInt {
         int x, y;
 };
 
-class BaseMapCoord : public MapPixelCoord {
+class EXPORT BaseMapCoord : public MapPixelCoord {
     public:
         BaseMapCoord() : MapPixelCoord() {};
         BaseMapCoord(double x_, double y_) : MapPixelCoord(x_, y_) {};
@@ -132,7 +133,7 @@ class BaseMapCoord : public MapPixelCoord {
         BaseMapCoord& operator-=(const class BaseMapDelta &rhs);
 };
 
-class BaseMapDelta : public MapPixelDelta {
+class EXPORT BaseMapDelta : public MapPixelDelta {
     public:
         BaseMapDelta() : MapPixelDelta() {};
         BaseMapDelta(double x_, double y_) : MapPixelDelta(x_, y_) {};
@@ -146,7 +147,7 @@ class BaseMapDelta : public MapPixelDelta {
         BaseMapDelta& operator/=(double divisor);
 };
 
-class LatLon {
+class EXPORT LatLon {
     public:
         LatLon() : lat(0), lon(0) {};
         LatLon(double lat_, double lon_) : lat(lat_), lon(lon_) {};
@@ -157,7 +158,7 @@ class LatLon {
         double lat, lon;
 };
 
-class LatLonDelta {
+class EXPORT LatLonDelta {
     public:
         LatLonDelta() : lat(0), lon(0) {};
         LatLonDelta(double lat_, double lon_) : lat(lat_), lon(lon_) {};
@@ -168,7 +169,7 @@ class LatLonDelta {
         double lat, lon;
 };
 
-class MapBezierGradient {
+class EXPORT MapBezierGradient {
     public:
         MapBezierGradient() : x(0), y(0) {};
         MapBezierGradient(double x_, double y_) : x(x_), y(y_) {};
