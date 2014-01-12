@@ -12,6 +12,7 @@
 *.vcproj.*.user
 
 # Ignore Debug, Release and Intellisense directories
+Debug-DLL/
 Debug/
 Release/
 /ipch/
