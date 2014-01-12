@@ -10,6 +10,21 @@
 #include "coordinates.h"
 #include "projection.h"
 
+class EXPORT MapRegion {
+    public:
+        MapRegion(std::shared_ptr<unsigned int> &data, int width, int height)
+            : m_data(data), m_width(width), m_height(height) {};
+        inline std::shared_ptr<unsigned int> &GetData() { return m_data; }
+        inline unsigned int * GetRawData() { return m_data.get(); }
+        inline unsigned int GetWidth() const { return m_width; }
+        inline unsigned int GetHeight() const { return m_height; }
+        inline unsigned int GetPixel(int x, int y) { return m_data.get()[x + y*m_height]; }
+    private:
+        std::shared_ptr<unsigned int> m_data;
+        unsigned int m_width;
+        unsigned int m_height;
+};
+
 class EXPORT ODM_INTERFACE RasterMap {
     public:
         enum RasterMapType {
@@ -28,7 +43,7 @@ class EXPORT ODM_INTERFACE RasterMap {
         virtual unsigned int GetWidth() const = 0;
         virtual unsigned int GetHeight() const = 0;
         virtual MapPixelDeltaInt GetSize() const = 0;
-        virtual std::shared_ptr<unsigned int>
+        virtual MapRegion
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const = 0;
 

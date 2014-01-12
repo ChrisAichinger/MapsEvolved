@@ -53,7 +53,7 @@ static TimeCounter time_counter_loaddisc;
 
 #define DEST(xx,yy) dest[(xx) + size.x * (yy)]
 #define SRC(xx,yy) src[(xx) + req_size.x * (yy)]
-std::shared_ptr<unsigned int> GradientMap::GetRegion(
+MapRegion GradientMap::GetRegion(
         const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
 {
     time_counter_loaddisc.Start();
@@ -64,7 +64,7 @@ std::shared_ptr<unsigned int> GradientMap::GetRegion(
     std::shared_ptr<unsigned int> data(new unsigned int[size.x * size.y],
                                        ArrayDeleter<unsigned int>());
 
-    unsigned int *src = orig_data.get();
+    unsigned int *src = orig_data.GetRawData();
     unsigned int *dest = data.get();
     time_counter_loaddisc.Stop();
     time_counter.Start();
@@ -83,7 +83,7 @@ std::shared_ptr<unsigned int> GradientMap::GetRegion(
         }
     }
     time_counter.Stop();
-    return data;
+    return MapRegion(data, size.x, size.y);
 }
 #undef DEST
 #undef SRC
@@ -138,14 +138,15 @@ static unsigned int steepness_colors[] = {
 
 #define DEST(xx,yy) dest[(xx) + size.x * (yy)]
 #define SRC(xx,yy) src[(xx) + req_size.x * (yy)]
-std::shared_ptr<unsigned int> SteepnessMap::GetRegion(
+MapRegion SteepnessMap::GetRegion(
         const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
 {
     double mpp;
     if (!MetersPerPixel(*this, pos + size/2, &mpp)) {
         // Return zero-initialized memory block (notice the parentheses)
-        return std::shared_ptr<unsigned int>(new unsigned int[size.x*size.y](),
-                                             ArrayDeleter<unsigned int>());
+        return MapRegion(std::shared_ptr<unsigned int>(new unsigned int[size.x*size.y](),
+                                             ArrayDeleter<unsigned int>()),
+                         size.x, size.y);
     }
     unsigned int bezier_pixels = Bezier::N_POINTS - 1;
     double inv_bezier_meters = 1 / (bezier_pixels * mpp);
@@ -156,7 +157,7 @@ std::shared_ptr<unsigned int> SteepnessMap::GetRegion(
     std::shared_ptr<unsigned int> data(new unsigned int[size.x * size.y],
                                        ArrayDeleter<unsigned int>());
 
-    unsigned int *src = orig_data.get();
+    unsigned int *src = orig_data.GetRawData();
     unsigned int *dest = data.get();
     for (int x=0; x < size.x; x++) {
         for (int y=0; y < size.y; y++) {
@@ -168,7 +169,7 @@ std::shared_ptr<unsigned int> SteepnessMap::GetRegion(
             DEST(x, y) = steepness_colors[color_index];
         }
     }
-    return data;
+    return MapRegion(data, size.x, size.y);
 }
 #undef DEST
 #undef SRC

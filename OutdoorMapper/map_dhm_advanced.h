@@ -10,7 +10,7 @@ class GradientMap : public RasterMap {
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
         virtual MapPixelDeltaInt GetSize() const;
-        virtual std::shared_ptr<unsigned int>
+        virtual MapRegion
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
 
@@ -35,7 +35,7 @@ class SteepnessMap : public RasterMap {
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
         virtual MapPixelDeltaInt GetSize() const;
-        virtual std::shared_ptr<unsigned int>
+        virtual MapRegion
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
 

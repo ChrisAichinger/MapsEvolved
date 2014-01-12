@@ -59,7 +59,7 @@ Tiff::Tiff(const std::wstring &fname)
     }
 };
 
-std::shared_ptr<unsigned int>
+MapRegion
 Tiff::GetRegion(const MapPixelCoordInt &pos,
                 const MapPixelDeltaInt &size) const
 {
@@ -69,8 +69,9 @@ Tiff::GetRegion(const MapPixelCoordInt &pos,
         pos.y > static_cast<int>(m_height))
     {
         // Return zero-initialized memory block (notice the parentheses)
-        return std::shared_ptr<unsigned int>(new unsigned int[size.x*size.y](),
-                                             ArrayDeleter<unsigned int>());
+        return MapRegion(std::shared_ptr<unsigned int>(new unsigned int[size.x*size.y](),
+                                             ArrayDeleter<unsigned int>()),
+                         size.x, size.y);
     }
 
     TIFFRGBAImage img;
@@ -94,7 +95,7 @@ Tiff::GetRegion(const MapPixelCoordInt &pos,
     if (!ok) {
         throw std::runtime_error("Loading TIFF data failed.");
     }
-    return raster;
+    return MapRegion(raster, size.x, size.y);
 }
 
 template <typename T>
@@ -313,7 +314,7 @@ MapPixelDeltaInt TiffMap::GetSize() const {
     return MapPixelDeltaInt(m_geotiff->GetWidth(), m_geotiff->GetHeight());
 }
 
-std::shared_ptr<unsigned int> TiffMap::GetRegion(
+MapRegion TiffMap::GetRegion(
                       const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const
     { return m_geotiff->GetRegion(pos, size); };

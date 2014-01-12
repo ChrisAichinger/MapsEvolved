@@ -101,12 +101,13 @@ class RasterMapError : public RasterMap {
         virtual unsigned int GetHeight() const { return 0; }
         virtual MapPixelDeltaInt GetSize() const
             { return MapPixelDeltaInt(0,0); }
-        virtual std::shared_ptr<unsigned int>
+        virtual MapRegion
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &sz) const
         {
-            return std::shared_ptr<unsigned int>(new unsigned int[sz.x*sz.y](),
-                                                 ArrayDeleter<unsigned int>());
+            return MapRegion(std::shared_ptr<unsigned int>(new unsigned int[sz.x*sz.y](),
+                                                           ArrayDeleter<unsigned int>()),
+                             sz.x, sz.y);
         }
         virtual bool PixelToPCS(double *x, double *y) const { return false; }
         virtual bool PCSToPixel(double *x, double *y) const { return false; }

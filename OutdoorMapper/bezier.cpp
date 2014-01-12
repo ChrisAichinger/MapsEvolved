@@ -232,7 +232,7 @@ bool Gradient3x3(const RasterMap &map,
     MapPixelDeltaInt bezier_size(Bezier::N_POINTS, Bezier::N_POINTS);
 
     auto orig_data = map.GetRegion(center - sampling_overhang, bezier_size);
-    return Gradient3x3(orig_data.get(), bezier_size,
+    return Gradient3x3(orig_data.GetRawData(), bezier_size,
                        MapPixelCoordInt(sampling_overhang), bezier_pos,
                        gradient);
 }
@@ -268,7 +268,7 @@ bool Value3x3(const RasterMap &map,
     MapPixelDeltaInt bezier_size(Bezier::N_POINTS, Bezier::N_POINTS);
 
     auto orig_data = map.GetRegion(center - sampling_overhang, bezier_size);
-    return Value3x3(orig_data.get(), bezier_size,
+    return Value3x3(orig_data.GetRawData(), bezier_size,
                     MapPixelCoordInt(sampling_overhang), bezier_pos, value);
 }
 

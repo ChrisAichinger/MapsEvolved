@@ -264,7 +264,7 @@ LRESULT RootWindow::HandleMessage(
                 MapPixelCoordInt center(m_mapdisplay->GetCenter());
                 MapPixelDeltaInt SaveSize(4096, 4096);
                 auto pixels = map.GetRegion(center - SaveSize / 2, SaveSize);
-                SaveBufferAsBMP(L"out.bmp", pixels.get(),
+                SaveBufferAsBMP(L"out.bmp", pixels.GetRawData(),
                                 SaveSize.x, SaveSize.y, 32);
             }
             if (id == ID_ZOOMIN) {

@@ -47,7 +47,7 @@ bool MapPrinter::Print(HDC hdc) {
                          2*dx, 2*dy, 1, 32, BI_RGB, 0, 0, 0, 0, 0 }, 0 };
     int res = StretchDIBits(hdc, 0, 0, horzres, vertres,
                                  0, 0, 2*dx, 2*dy,
-                                 pixels.get(), &bmi, 0, SRCCOPY);
+                                 pixels.GetRawData(), &bmi, 0, SRCCOPY);
     if (res == 0 || res == GDI_ERROR) {
         throw std::runtime_error("Failed to copy pixels to HDC");
     }
