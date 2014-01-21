@@ -168,7 +168,7 @@ bool GeoTiff::LoadCoordinates() {
         return false;
 
     m_proj = proj_str.get();
-    if (!m_proj[0])
+    if (!m_proj.length() || !m_proj[0])
         return false;
 
     using std::tie;
