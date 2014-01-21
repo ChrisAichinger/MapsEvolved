@@ -1,0 +1,224 @@
+%Module maplib_sip
+
+%ModuleHeaderCode
+#include <smartptr_proxy.h>
+%End
+
+%InitialisationCode
+smartptr_proxy_init("maplib_sip", sipAPI_maplib_sip);
+%End
+
+%PostInitialisationCode
+smartptr_proxy_post_init(sipModuleDict);
+%End
+
+%Include std_types.sip
+%Include coordinates.sip
+
+
+class Projection {
+    public:
+%TypeHeaderCode
+#include <string>
+#include "projection.h"
+#include "util.h"
+%End
+        explicit Projection(const std::string &proj_str);
+
+        bool PCSToLatLong(double &x, double &y) const;
+        bool LatLongToPCS(double &x, double &y) const;
+        const std::string &GetProjString() const;
+
+        bool CalcDistance(double lat1, double long1,
+                          double lat2, double long2,
+                          double *distance) const;
+
+        bool IsValid() const;
+};
+
+
+
+
+class MapRegion /NoDefaultCtors/
+{
+%TypeHeaderCode
+#include "rastermap.h"
+%End
+    public:
+        //MapRegion(UIntShPtr &data, int width, int height);
+        //inline std::shared_ptr<unsigned int> &GetData() { return m_data; }
+        //inline unsigned int * GetRawData() { return m_data.get(); }
+        unsigned int GetWidth() const;
+        unsigned int GetHeight() const;
+        unsigned int GetPixel(int x, int y);
+};
+
+class RasterMap /Abstract/ {
+%TypeHeaderCode
+#include "rastermap.h"
+%End
+    public:
+        enum RasterMapType {
+            TYPE_MAP = 1,
+            TYPE_DHM,
+            TYPE_GRADIENT,
+            TYPE_STEEPNESS,
+            TYPE_LEGEND,
+            TYPE_OVERVIEW,
+            TYPE_ERROR,
+            TYPE_IMAGE,
+        };
+        virtual ~RasterMap();
+
+        virtual RasterMapType GetType() const = 0;
+        virtual unsigned int GetWidth() const = 0;
+        virtual unsigned int GetHeight() const = 0;
+        virtual MapPixelDeltaInt GetSize() const = 0;
+        MapRegion
+            GetRegion(const MapPixelCoordInt &pos,
+                      const MapPixelDeltaInt &size) const;
+
+        virtual bool PixelToPCS(double *x, double *y) const = 0;
+        virtual bool PCSToPixel(double *x, double *y) const = 0;
+        virtual Projection GetProj() const = 0;
+        virtual bool
+        PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const = 0;
+        virtual bool
+        LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const = 0;
+
+        virtual const std::wstring &GetFname() const = 0;
+
+        virtual bool IsViewable() const;
+};
+
+class RasterMapShPtrConst /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
+%TypeHeaderCode
+#include <memory>
+%End
+    public:
+        const RasterMap *get();
+};
+
+class RasterMapShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
+%TypeHeaderCode
+#include <memory>
+%End
+    public:
+        RasterMap *get();
+};
+
+typedef unsigned int size_t;
+
+class PersistentStore /Abstract/ {
+    public:
+        virtual ~PersistentStore();
+        virtual bool OpenRead() = 0;
+        virtual bool OpenWrite() = 0;
+        virtual bool IsOpen() = 0;
+        virtual void Close() = 0;
+
+        virtual std::vector<std::wstring> *GetStringList(const std::wstring &keyvalue) = 0;
+        %MethodCode
+            std::unique_ptr< std::vector<std::wstring> > strings(new std::vector<std::wstring>);
+            bool res = sipCpp->GetStringList(*a0, strings.get());
+            if (!res) {
+                PyErr_SetString(PyExc_RuntimeError, "Failed to GetStringList()");
+                sipIsErr = 1;
+            } else {
+                sipRes = strings.release();
+            }
+        %End
+        virtual void SetStringList(const std::wstring &keyvalue,
+                                   const std::vector<std::wstring> &strings) = 0;
+        %MethodCode
+            bool res = sipCpp->SetStringList(*a0, *a1);
+            if (!res) {
+                PyErr_SetString(PyExc_RuntimeError, "Failed to SetStringList()");
+                sipIsErr = 1;
+            }
+        %End
+
+        virtual unsigned int GetUInt(const std::wstring &keyvalue) = 0;
+        %MethodCode
+            unsigned long int value;
+            bool res = sipCpp->GetUInt(*a0, &value);
+            if (!res) {
+                PyErr_SetString(PyExc_RuntimeError, "Failed to GetUInt()");
+                sipIsErr = 1;
+            } else {
+                sipRes = value;
+            }
+        %End
+        virtual void SetUInt(const std::wstring &keyvalue,
+                             unsigned int value) = 0;
+        %MethodCode
+            bool res = sipCpp->SetUInt(*a0, a1);
+            if (!res) {
+                PyErr_SetString(PyExc_RuntimeError, "Failed to SetUInt()");
+                sipIsErr = 1;
+            }
+        %End
+};
+
+class PersistentStoreUniqPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
+%TypeHeaderCode
+#include <memory>
+#include <stdio.h>
+%End
+    public:
+        const PersistentStore *get();
+};
+
+PersistentStoreUniqPtr CreatePersistentStore();
+
+class RasterMapCollection {
+%TypeHeaderCode
+#include "rastermap.h"
+%End
+    public:
+        RasterMapCollection();
+        void AddMap(RasterMapShPtr map);
+        void DeleteMap(unsigned int index);
+        size_t Size() const;
+        const RasterMap &Get(size_t i) const;
+        RasterMapShPtrConst GetSharedPtr(size_t i) const;
+        /*
+        const std::vector<const RasterMapShPtrConst>
+            GetAlternateRepresentations(size_t i) const;
+            */
+        bool IsToplevelMap(const RasterMapShPtrConst &map) const;
+
+        //bool StoreTo(PersistentStore *store) const;
+        //bool RetrieveFrom(PersistentStore *store);
+    private:
+        RasterMapCollection(const RasterMapCollection&);
+        void operator=(const RasterMapCollection&);
+};
+
+void LoadMap(RasterMapCollection &maps, const std::wstring &fname);
+
+struct TerrainInfo {
+%TypeHeaderCode
+#include "rastermap.h"
+%End
+    double height_m;
+    double slope_face_deg;
+    double steepness_deg;
+};
+
+class HeightFinder {
+%TypeHeaderCode
+#include "rastermap.h"
+%End
+    public:
+        explicit HeightFinder(const RasterMapCollection &maps);
+        bool CalcTerrain(const LatLon &pos, TerrainInfo *result);
+    private:
+};
+
+bool GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
+                    double dx, double dy, double *distance);
+bool MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
+                    double *mpp);
+bool MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos,
+                    double *mpp);

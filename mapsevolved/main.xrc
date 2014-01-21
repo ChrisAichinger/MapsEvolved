@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource class="break">
+  <object class="wxFrame" name="mainframe">
+    <object class="wxMenuBar" name="mainmenu">
+      <object class="wxMenu">
+        <object class="wxMenuItem" name="ManageMapsMenuItem">
+          <label>&amp;Manage Maps</label>
+          <help>Add or remove maps from the database.</help>
+        </object>
+        <object class="wxMenuItem" name="SaveBitmapMenuItem">
+          <label>&amp;Save as Bitmap</label>
+          <help>Save the currently shown map area to a bitmap file.</help>
+        </object>
+        <object class="wxMenuItem" name="PrintMenuItem">
+          <label>&amp;Print</label>
+          <help>Print the currently shown map area.</help>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="ExitMenuItem">
+          <label>E&amp;xit</label>
+          <help>Exit the program.</help>
+        </object>
+        <label>&amp;File</label>
+      </object>
+      <object class="wxMenu">
+        <object class="wxMenuItem" name="ZoomInMenuItem">
+          <label>Zoom &amp;In</label>
+          <help>Show a smaller area while staying on the same map.</help>
+        </object>
+        <object class="wxMenuItem" name="ZoomOutMenuItem">
+          <label>Zoom &amp;Out</label>
+          <help>Show a larger area while staying on the same map.</help>
+        </object>
+        <object class="wxMenuItem" name="ResetZoomMenuItem">
+          <label>&amp;Reset Zoom (100%)</label>
+          <help>Set the zoom level so one map pixel is shown as one display pixel.</help>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="ShowGridMenuItem">
+          <label>Show &amp;Grid</label>
+          <help>Toggle the display of grid lines.</help>
+          <checkable>1</checkable>
+        </object>
+        <object class="wxMenuItem" name="ShowScaleMenuItem">
+          <label>Show &amp;Scale</label>
+          <help>Toggle the display of a scale bar.</help>
+          <checkable>1</checkable>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="CoordFormatMenuItem">
+          <label>Coordinate &amp;Format</label>
+          <help>Set the coordinate format used for displaying location (DMS, fractional degrees, UTM)</help>
+        </object>
+        <label>&amp;View</label>
+      </object>
+      <object class="wxMenu">
+        <object class="wxMenuItem" name="AboutMenuItem">
+          <label>&amp;About</label>
+          <help>Show info about the program and its creation.</help>
+        </object>
+        <label>&amp;Help</label>
+      </object>
+    </object>
+    <object class="wxBoxSizer">
+      <object class="sizeritem">
+        <object class="wxBoxSizer">
+          <object class="sizeritem">
+            <object class="wxPanel" name="skylinepanel">
+              <XRCED>
+                <events>EVT_PAINT</events>
+              </XRCED>
+            </object>
+            <option>3</option>
+            <flag>wxALL|wxEXPAND</flag>
+            <minsize>200,100</minsize>
+          </object>
+          <object class="spacer">
+            <size>5</size>
+          </object>
+          <object class="sizeritem">
+            <object class="wxPanel" name="datapanel">
+              <object class="wxBoxSizer">
+                <orient>wxHORIZONTAL</orient>
+                <object class="sizeritem">
+                  <object class="wxFlexGridSizer">
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="coordlabel">
+                        <label>Coordinates</label>
+                      </object>
+                      <option>0</option>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl"/>
+                      <option>1</option>
+                      <flag>wxALL|wxEXPAND</flag>
+                      <border>2</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="misclabel">
+                        <label>Misc</label>
+                      </object>
+                      <option>0</option>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl"/>
+                      <option>1</option>
+                      <flag>wxALL|wxEXPAND</flag>
+                      <border>2</border>
+                    </object>
+                    <cols>2</cols>
+                    <rows>2</rows>
+                    <vgap>2</vgap>
+                    <hgap>5</hgap>
+                    <growablecols>1</growablecols>
+                  </object>
+                  <option>1</option>
+                  <flag>wxALL|wxEXPAND</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxButton" name="gobutton">
+                    <label>Go</label>
+                    <XRCED>
+                      <events>EVT_BUTTON</events>
+                    </XRCED>
+                  </object>
+                </object>
+              </object>
+            </object>
+            <option>0</option>
+            <flag>wxALL|wxEXPAND</flag>
+          </object>
+          <orient>wxVERTICAL</orient>
+        </object>
+        <option>1</option>
+        <flag>wxALL|wxEXPAND</flag>
+        <border>2</border>
+      </object>
+      <orient>wxHORIZONTAL</orient>
+    </object>
+    <title>Alpine Skyline</title>
+    <style>wxDEFAULT_FRAME_STYLE|wxCAPTION|wxSYSTEM_MENU</style>
+  </object>
+</resource>

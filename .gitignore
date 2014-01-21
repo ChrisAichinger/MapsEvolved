@@ -1,0 +1,11 @@
+__pycache__
+/__build
+/__sip_source
+/venv
+/ODM/*
+/pymaplib/*.dll
+/pymaplib/*.pyd
+/pymaplib/*/
+
+/Makefile
+
