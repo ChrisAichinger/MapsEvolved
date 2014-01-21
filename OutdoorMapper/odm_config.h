@@ -14,6 +14,8 @@
 
 #ifdef ODM_SHARED_LIB
 #  define EXPORT __declspec(dllexport)
+#elif ODM_EXECUTABLE
+#  define EXPORT
 #else
 #  define EXPORT __declspec(dllimport)
 #endif

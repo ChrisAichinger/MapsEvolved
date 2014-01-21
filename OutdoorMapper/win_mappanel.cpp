@@ -7,7 +7,6 @@
 
 #include "winwrap.h"
 
-extern HINSTANCE g_hinst;
 
 IMapWindow::~IMapWindow() {};
 

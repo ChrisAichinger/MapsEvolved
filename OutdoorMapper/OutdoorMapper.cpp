@@ -8,6 +8,18 @@
 #include "win_main.h"
 #include "win_mappanel.h"
 
+#include <stdio.h>
+
+#ifdef ODM_SHARED_LIB
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+    if (fdwReason == DLL_PROCESS_ATTACH) {
+        g_hinst = hinstDLL;
+    }
+    return TRUE;
+}
+#endif
+
+#ifdef ODM_EXECUTABLE
 int PASCAL
 WinMain(HINSTANCE hinst, HINSTANCE, LPSTR, int nShowCmd) {
     g_hinst = hinst;
@@ -57,3 +69,4 @@ WinMain(HINSTANCE hinst, HINSTANCE, LPSTR, int nShowCmd) {
     // End of lifetime: COM_Initialize
     return msg.wParam;
 }
+#endif // defined ODM_EXECUTABLE
