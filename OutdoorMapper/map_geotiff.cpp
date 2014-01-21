@@ -111,9 +111,9 @@ Tiff::GetField(ttag_t field) const {
 }
 
 
-static const char *CSVFileOverride( const char * pszInput ) {
+static const char *CSVFileOverride(const char * pszInput) {
     static char szPath[1024];
-    std::string csvdir = GetProgramDir_char() + "csv" + ODM_PathSep_char;
+    std::string csvdir = GetModuleDir_char() + "csv" + ODM_PathSep_char;
     sprintf_s(szPath, sizeof(szPath), "%s%s", csvdir.c_str(), pszInput);
     return(szPath);
 }

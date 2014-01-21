@@ -118,6 +118,11 @@ std::string GetProgramPath_char();
 std::wstring GetProgramDir_wchar();
 std::string GetProgramDir_char();
 
+std::wstring GetModulePath_wchar();
+std::string GetModulePath_char();
+std::wstring GetModuleDir_wchar();
+std::string GetModuleDir_char();
+
 extern const char *ODM_PathSep_char;
 extern const wchar_t *ODM_PathSep_wchar;
 

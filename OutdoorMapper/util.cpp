@@ -258,9 +258,9 @@ void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
 
 #include <Windows.h>
 
-#define ODM_GetProgramPath_imp(char_type, suffix)                         \
+#define ODM_GetProgramPath_imp(hmod, char_type, suffix)                   \
     char_type path[MAX_PATH + 1];                                         \
-    DWORD chars_written = GetModuleFileName##suffix(0, path,              \
+    DWORD chars_written = GetModuleFileName##suffix(hmod, path,           \
                                                     ARRAY_SIZE(path));    \
     if (chars_written == 0 || chars_written >= ARRAY_SIZE(path)) {        \
         throw std::runtime_error("Could not retrieve program path.");     \
@@ -274,23 +274,45 @@ void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
         throw std::runtime_error("Could not get absolute program path."); \
     }                                                                     \
 
+extern HINSTANCE g_hinst;
+
 std::wstring GetProgramPath_wchar() {
-    ODM_GetProgramPath_imp(wchar_t, W);
+    ODM_GetProgramPath_imp(0, wchar_t, W);
     return std::wstring(abspath);
 }
 
 std::string GetProgramPath_char() {
-    ODM_GetProgramPath_imp(char, A);
+    ODM_GetProgramPath_imp(0, char, A);
     return std::string(abspath);
 }
 
 std::wstring GetProgramDir_wchar() {
-    ODM_GetProgramPath_imp(wchar_t, W);
+    ODM_GetProgramPath_imp(0, wchar_t, W);
     return std::wstring(abspath, p_fname - abspath);
 }
 
 std::string GetProgramDir_char() {
-    ODM_GetProgramPath_imp(char, A);
+    ODM_GetProgramPath_imp(0, char, A);
+    return std::string(abspath, p_fname - abspath);
+}
+
+std::wstring GetModulePath_wchar() {
+    ODM_GetProgramPath_imp(g_hinst, wchar_t, W);
+    return std::wstring(abspath);
+}
+
+std::string GetModulePath_char() {
+    ODM_GetProgramPath_imp(g_hinst, char, A);
+    return std::string(abspath);
+}
+
+std::wstring GetModuleDir_wchar() {
+    ODM_GetProgramPath_imp(g_hinst, wchar_t, W);
+    return std::wstring(abspath, p_fname - abspath);
+}
+
+std::string GetModuleDir_char() {
+    ODM_GetProgramPath_imp(g_hinst, char, A);
     return std::string(abspath, p_fname - abspath);
 }
 
