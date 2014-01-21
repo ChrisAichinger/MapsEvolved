@@ -25,6 +25,8 @@ class EXPORT MapRegion {
         unsigned int m_height;
 };
 
+typedef std::shared_ptr<unsigned int> UIntShPtr;
+
 class EXPORT ODM_INTERFACE RasterMap {
     public:
         enum RasterMapType {
@@ -61,6 +63,9 @@ class EXPORT ODM_INTERFACE RasterMap {
             return GetType() != TYPE_DHM && GetType() != TYPE_ERROR;
         };
 };
+
+typedef std::shared_ptr<RasterMap> RasterMapShPtr;
+typedef std::shared_ptr<const RasterMap> RasterMapShPtrConst;
 
 class EXPORT RasterMapCollection {
     public:

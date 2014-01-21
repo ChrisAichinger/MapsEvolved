@@ -5,7 +5,7 @@
 
 #include "util.h"
 
-class Projection {
+class EXPORT Projection {
     public:
         explicit Projection(const std::string &proj_str);
 

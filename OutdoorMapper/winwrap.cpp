@@ -1172,6 +1172,7 @@ class WinRegistryStore : public PersistentStore {
         virtual bool OpenRead();
         virtual bool OpenWrite();
         virtual bool IsOpen() { return m_regkey && m_regkey->IsOpen(); }
+        virtual void Close();
 
         virtual bool GetStringList(const std::wstring &keyvalue,
                            std::vector<std::wstring> *strings);
@@ -1201,6 +1202,10 @@ bool WinRegistryStore::OpenWrite() {
     m_regkey.reset(new RegistryKey(HKEY_CURRENT_USER, ODM_REG_PATH,
                                    RegistryKey::REG_WRITE));
     return IsOpen();
+}
+
+void WinRegistryStore::Close() {
+    m_regkey.reset(nullptr);
 }
 
 bool WinRegistryStore::GetStringList(const std::wstring &keyvalue,

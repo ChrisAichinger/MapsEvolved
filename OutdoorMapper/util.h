@@ -6,6 +6,8 @@
 #include <vector>
 #include <numeric>
 
+#include "odm_config.h"
+
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&);               \
   void operator=(const TypeName&)
@@ -121,12 +123,13 @@ extern const wchar_t *ODM_PathSep_wchar;
 
 std::pair<std::wstring, std::wstring> GetAbsPath(const std::wstring &rel_path);
 
-class PersistentStore {
+class EXPORT PersistentStore {
     public:
         virtual ~PersistentStore();
         virtual bool OpenRead() = 0;
         virtual bool OpenWrite() = 0;
         virtual bool IsOpen() = 0;
+        virtual void Close() = 0;
 
         virtual bool GetStringList(const std::wstring &keyvalue,
                            std::vector<std::wstring> *strings) = 0;
@@ -138,8 +141,11 @@ class PersistentStore {
         virtual bool SetUInt(const std::wstring &keyvalue,
                              unsigned long int value) = 0;
 };
+typedef std::unique_ptr<PersistentStore> PersistentStoreUniqPtr;
 
-std::unique_ptr<PersistentStore> CreatePersistentStore();
+std::unique_ptr<PersistentStore> EXPORT CreatePersistentStore();
+
+
 
 double GetTimeMilliSecs();
 
