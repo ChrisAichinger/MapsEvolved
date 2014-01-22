@@ -167,7 +167,8 @@ def main():
 
     with MTimeSaver(build_dir, ['*.cpp', '*.c', '*.h']):
         # Run SIP to generate the C++ code.
-        os.system(" ".join([configuration.sip_bin,
+        retval = os.system(" ".join([
+                            configuration.sip_bin,
                             "-c", build_dir,        # Generated code directory
                             "-b", build_file,       # Build file name
                             "-T",                   # Suppress timestamps
@@ -176,6 +177,8 @@ def main():
                             "-o",                   # Auto-generate docstrings
                             "-I src_sip",           # Additional include dir
                             "src_sip\\maps.sip"]))  # Input file
+        if retval != 0:
+            sys.exit(retval)
 
     inject_build_directory_to_buildfile(build_file, build_dir)
 
@@ -185,6 +188,7 @@ def main():
     configuration.build_macros()['CXXFLAGS'] = '-nologo'
     configuration.build_macros()['CFLAGS_RELEASE'] = '/Zi /MDd'
     configuration.build_macros()['CXXFLAGS_RELEASE'] = '/Zi /MDd'
+    configuration.build_macros()['CXXFLAGS_WARN_ON'] = '-W3'
 
     makefile = LocalizedMakefile(configuration, build_file,
                                  build_dir=build_dir,
