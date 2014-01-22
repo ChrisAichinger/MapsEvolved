@@ -12,8 +12,10 @@ smartptr_proxy_init("maplib_sip", sipAPI_maplib_sip);
 smartptr_proxy_post_init(sipModuleDict);
 %End
 
+
 %Include std_types.sip
 %Include coordinates.sip
+%Include rastermap.sip
 
 
 class Projection {
@@ -36,78 +38,6 @@ class Projection {
         bool IsValid() const;
 };
 
-
-
-
-class MapRegion /NoDefaultCtors/
-{
-%TypeHeaderCode
-#include "rastermap.h"
-%End
-    public:
-        //MapRegion(UIntShPtr &data, int width, int height);
-        //inline std::shared_ptr<unsigned int> &GetData() { return m_data; }
-        //inline unsigned int * GetRawData() { return m_data.get(); }
-        unsigned int GetWidth() const;
-        unsigned int GetHeight() const;
-        unsigned int GetPixel(int x, int y);
-};
-
-class RasterMap /Abstract/ {
-%TypeHeaderCode
-#include "rastermap.h"
-%End
-    public:
-        enum RasterMapType {
-            TYPE_MAP = 1,
-            TYPE_DHM,
-            TYPE_GRADIENT,
-            TYPE_STEEPNESS,
-            TYPE_LEGEND,
-            TYPE_OVERVIEW,
-            TYPE_ERROR,
-            TYPE_IMAGE,
-        };
-        virtual ~RasterMap();
-
-        virtual RasterMapType GetType() const = 0;
-        virtual unsigned int GetWidth() const = 0;
-        virtual unsigned int GetHeight() const = 0;
-        virtual MapPixelDeltaInt GetSize() const = 0;
-        MapRegion
-            GetRegion(const MapPixelCoordInt &pos,
-                      const MapPixelDeltaInt &size) const;
-
-        virtual bool PixelToPCS(double *x, double *y) const = 0;
-        virtual bool PCSToPixel(double *x, double *y) const = 0;
-        virtual Projection GetProj() const = 0;
-        virtual bool
-        PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const = 0;
-        virtual bool
-        LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const = 0;
-
-        virtual const std::wstring &GetFname() const = 0;
-
-        virtual bool IsViewable() const;
-};
-
-class RasterMapShPtrConst /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
-%TypeHeaderCode
-#include <memory>
-%End
-    public:
-        const RasterMap *get();
-};
-
-class RasterMapShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
-%TypeHeaderCode
-#include <memory>
-%End
-    public:
-        RasterMap *get();
-};
-
-typedef unsigned int size_t;
 
 class PersistentStore /Abstract/ {
     public:
@@ -149,6 +79,7 @@ class PersistentStore /Abstract/ {
                 sipRes = value;
             }
         %End
+
         virtual void SetUInt(const std::wstring &keyvalue,
                              unsigned int value) = 0;
         %MethodCode
@@ -160,65 +91,103 @@ class PersistentStore /Abstract/ {
         %End
 };
 
-class PersistentStoreUniqPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
+
+class Display /Abstract/ {
+%TypeHeaderCode
+#include "disp_ogl.h"
+%End
+    public:
+        virtual unsigned int GetDisplayWidth() const = 0;
+        virtual unsigned int GetDisplayHeight() const = 0;
+        virtual DisplayDelta GetDisplaySize() const = 0;
+
+        //virtual void Render(class std::list<class DisplayOrder> &orders) = 0;
+        virtual void Resize(unsigned int width, unsigned int height) = 0;
+        virtual void ForceRepaint() = 0;
+};
+
+class DispOpenGL : public Display /NoDefaultCtors/ {
+%TypeHeaderCode
+#include "disp_ogl.h"
+%End
+    public:
+        //explicit DispOpenGL(const std::shared_ptr<OGLContext> &ogl_context);
+
+        virtual unsigned int GetDisplayWidth() const;
+        virtual unsigned int GetDisplayHeight() const;
+        virtual DisplayDelta GetDisplaySize() const;
+
+        //virtual void Render(class std::list<class DisplayOrder> &orders);
+        virtual void Resize(unsigned int width, unsigned int height);
+        virtual void ForceRepaint();
+};
+
+DisplayCoordCentered CenteredCoordFromDisplay(const DisplayCoord& dc,
+                                              const Display& disp);
+DisplayCoord DisplayCoordFromCentered(const DisplayCoordCentered& dc,
+                                      const Display& disp);
+
+
+class DispOpenGLShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
 %TypeHeaderCode
 #include <memory>
-#include <stdio.h>
+typedef std::shared_ptr<class DispOpenGL> DispOpenGLShPtr;
 %End
     public:
-        const PersistentStore *get();
+        DispOpenGL *get();
 };
 
-PersistentStoreUniqPtr CreatePersistentStore();
 
-class RasterMapCollection {
+%ModuleCode
+#include <winwrap.h>
+std::shared_ptr<class DispOpenGL> CreateOGLDisplay(long int handle) {
+    std::shared_ptr<DevContext> dev_ctx(new DevContext((HWND)handle));
+    std::shared_ptr<OGLContext> ogl_ctx(new OGLContext(dev_ctx));
+    return std::shared_ptr<DispOpenGL>(new DispOpenGL(ogl_ctx));
+}
+%End
+DispOpenGLShPtr CreateOGLDisplay(size_t handle);
+
+
+class MapDisplayManager /NoDefaultCtors/ {
 %TypeHeaderCode
-#include "rastermap.h"
+#include "mapdisplay.h"
 %End
     public:
-        RasterMapCollection();
-        void AddMap(RasterMapShPtr map);
-        void DeleteMap(unsigned int index);
-        size_t Size() const;
-        const RasterMap &Get(size_t i) const;
-        RasterMapShPtrConst GetSharedPtr(size_t i) const;
-        /*
-        const std::vector<const RasterMapShPtrConst>
-            GetAlternateRepresentations(size_t i) const;
-            */
-        bool IsToplevelMap(const RasterMapShPtrConst &map) const;
+        MapDisplayManager(DispOpenGLShPtr &display,
+                          const RasterMap &initial_map);
 
-        //bool StoreTo(PersistentStore *store) const;
-        //bool RetrieveFrom(PersistentStore *store);
-    private:
-        RasterMapCollection(const RasterMapCollection&);
-        void operator=(const RasterMapCollection&);
+        const RasterMap &GetBaseMap() const;
+        double GetZoom() const;
+        double GetCenterX() const;
+        double GetCenterY() const;
+        const BaseMapCoord &GetCenter() const;
+
+        void ChangeMap(const RasterMap *new_map, bool try_preserve_pos=true);
+        void AddOverlayMap(const RasterMap *new_map);
+
+        void Resize(unsigned int width, unsigned int height);
+        void StepZoom(double steps);
+        // The map location under the mouse is held constant
+        void StepZoom(double steps, const DisplayCoord &mouse_pos);
+        void SetZoomOneToOne();
+        void DragMap(const DisplayDelta &delta);
+        void CenterToDisplayCoord(const DisplayCoord &center);
+        void Paint();
+
+        BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp) const;
+        BaseMapCoord
+            BaseCoordFromDisplay(const DisplayCoordCentered &disp) const;
+
+        BaseMapDelta BaseDeltaFromDisplay(const DisplayDelta &disp) const;
+
+        DisplayCoordCentered
+        DisplayCoordCenteredFromBase(const BaseMapCoord &mpc) const;
+
+        DisplayCoordCentered
+        DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
+                                         const RasterMap &map) const;
+        DisplayCoordCentered
+        DisplayCoordCenteredFromMapPixel(const MapPixelCoordInt &mpc,
+                                         const RasterMap &map) const;
 };
-
-void LoadMap(RasterMapCollection &maps, const std::wstring &fname);
-
-struct TerrainInfo {
-%TypeHeaderCode
-#include "rastermap.h"
-%End
-    double height_m;
-    double slope_face_deg;
-    double steepness_deg;
-};
-
-class HeightFinder {
-%TypeHeaderCode
-#include "rastermap.h"
-%End
-    public:
-        explicit HeightFinder(const RasterMapCollection &maps);
-        bool CalcTerrain(const LatLon &pos, TerrainInfo *result);
-    private:
-};
-
-bool GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
-                    double dx, double dy, double *distance);
-bool MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
-                    double *mpp);
-bool MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos,
-                    double *mpp);

@@ -53,7 +53,12 @@
         </object>
         <label>&amp;View</label>
       </object>
-      <object class="wxMenu">
+      <object class="wxMenu" name="WXInspectorMenuItem">
+        <object class="wxMenuItem" name="WxInspectorMenuItem">
+          <label>WX &amp;Inspector Tool</label>
+          <help>Open the Wx Inspector Tool, which is used for debugging the program.</help>
+        </object>
+        <object class="separator"/>
         <object class="wxMenuItem" name="AboutMenuItem">
           <label>&amp;About</label>
           <help>Show info about the program and its creation.</help>
@@ -66,6 +71,8 @@
         <object class="wxBoxSizer">
           <object class="sizeritem">
             <object class="wxPanel" name="skylinepanel">
+              <size>300,200</size>
+              <style>wxFULL_REPAINT_ON_RESIZE</style>
               <XRCED>
                 <events>EVT_PAINT</events>
               </XRCED>
