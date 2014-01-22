@@ -6,7 +6,7 @@
 #include "util.h"
 #include "coordinates.h"
 
-class MapDisplayManager {
+class EXPORT MapDisplayManager {
     public:
         MapDisplayManager(std::shared_ptr<class DispOpenGL> &display,
                           const class RasterMap &initial_map);

@@ -11,7 +11,7 @@ class DevContext;
 class OGLContext;
 class TextureCache;
 
-class ODM_INTERFACE Display {
+class EXPORT Display {
     public:
         virtual unsigned int GetDisplayWidth() const = 0;
         virtual unsigned int GetDisplayHeight() const = 0;
@@ -22,13 +22,14 @@ class ODM_INTERFACE Display {
         virtual void ForceRepaint() = 0;
 };
 
-DisplayCoordCentered CenteredCoordFromDisplay(const DisplayCoord& dc,
-                                              const Display& disp);
-DisplayCoord DisplayCoordFromCentered(const DisplayCoordCentered& dc,
-                                      const Display& disp);
+EXPORT DisplayCoordCentered CenteredCoordFromDisplay(
+    const DisplayCoord& dc, const Display& disp);
+
+EXPORT DisplayCoord DisplayCoordFromCentered(
+    const DisplayCoordCentered& dc, const Display& disp);
 
 
-class DispOpenGL : public Display {
+class EXPORT DispOpenGL : public Display {
     public:
         explicit DispOpenGL(const std::shared_ptr<OGLContext> &ogl_context);
 

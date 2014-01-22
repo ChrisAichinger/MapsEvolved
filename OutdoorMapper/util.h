@@ -92,7 +92,7 @@ static const double MM_to_INCH = 0.0393700787;
 double normalize_direction(double degrees);
 
 // 0.3 -> N; 114.2 -> ESE; 174.0 -> S; 348 -> NNW; 349 -> N
-std::wstring CompassPointFromDirection(double degrees);
+std::wstring EXPORT CompassPointFromDirection(double degrees);
 
 std::wstring string_format(const std::wstring fmt, ...);
 

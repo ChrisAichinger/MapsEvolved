@@ -56,7 +56,7 @@ class GlobalMem {
         HGLOBAL m_hg;
 };
 
-class DevContext {
+class EXPORT DevContext {
     public:
         explicit DevContext(HWND hwnd);
         ~DevContext();
@@ -70,7 +70,7 @@ class DevContext {
         HDC m_hdc;
 };
 
-class OGLContext {
+class EXPORT OGLContext {
     public:
         explicit OGLContext(const std::shared_ptr<DevContext> &device);
         ~OGLContext();
