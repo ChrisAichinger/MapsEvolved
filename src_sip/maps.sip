@@ -191,3 +191,5 @@ class MapDisplayManager /NoDefaultCtors/ {
         DisplayCoordCenteredFromMapPixel(const MapPixelCoordInt &mpc,
                                          const RasterMap &map) const;
 };
+
+std::wstring CompassPointFromDirection(double degrees);

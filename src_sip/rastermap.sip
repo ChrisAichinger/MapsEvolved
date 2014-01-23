@@ -44,9 +44,9 @@ class RasterMap /Abstract/ {
         virtual bool PCSToPixel(double *x, double *y) const = 0;
         virtual Projection GetProj() const = 0;
         virtual bool
-        PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const = 0;
+        PixelToLatLon(const MapPixelCoord &pos, LatLon *result /Out/) const = 0;
         virtual bool
-        LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const = 0;
+        LatLonToPixel(const LatLon &pos, MapPixelCoord *result /Out/) const = 0;
 
         virtual const std::wstring &GetFname() const = 0;
 
@@ -121,13 +121,44 @@ class HeightFinder {
 %End
     public:
         explicit HeightFinder(const RasterMapCollection &maps);
-        bool CalcTerrain(const LatLon &pos, TerrainInfo *result);
+        bool CalcTerrain(const LatLon &pos, TerrainInfo *result /Out/);
     private:
 };
 
+
 bool GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
-                    double dx, double dy, double *distance);
+                    double dx, double dy, double *distance /Out/);
 bool MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
-                    double *mpp);
+                    double *mpp /Out/);
 bool MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos,
-                    double *mpp);
+                    double *mpp /Out/);
+
+/*
+%ModuleHeaderCode
+#define CALL_FUNC_NOT_NULL(sipIsErr, type, func, ...)                    \
+    do {                                                                 \
+        type _CALL_FUNC_NOT_NULL_VAR;                                    \
+        if (!func(__VA_ARGS__, &_CALL_FUNC_NOT_NULL_VAR)) {              \
+            PyErr_SetString(PyExc_RuntimeError, "Failed " #func "()");   \
+            sipIsErr = 1;                                                \
+        }                                                                \
+        sipRes = _CALL_FUNC_NOT_NULL_VAR;                                \
+    } while(0)
+%End
+
+
+double GetMapDistance(const RasterMap &map, const MapPixelCoord &pos, double dx, double dy);
+%MethodCode
+    CALL_FUNC_NOT_NULL(sipIsErr, double, GetMapDistance, *a0, *a1, a2, a3);
+%End
+
+double MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos);
+%MethodCode
+    CALL_FUNC_NOT_NULL(sipIsErr, double, MetersPerPixel, *a0, *a1);
+%End
+double MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos);
+%MethodCode
+    CALL_FUNC_NOT_NULL(sipIsErr, double, MetersPerPixel, *a0, *a1);
+%End
+*/
+

@@ -9,7 +9,7 @@ import wx
 import wx.html
 from mapsevolved import frmMain
 
-PROGRAM = "Alpine Skyline"
+PROGRAM = "Maps Evolved"
 
 class Frame(wx.Frame):
     def __init__(self, title):
