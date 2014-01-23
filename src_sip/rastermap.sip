@@ -132,33 +132,3 @@ bool MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
                     double *mpp /Out/);
 bool MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos,
                     double *mpp /Out/);
-
-/*
-%ModuleHeaderCode
-#define CALL_FUNC_NOT_NULL(sipIsErr, type, func, ...)                    \
-    do {                                                                 \
-        type _CALL_FUNC_NOT_NULL_VAR;                                    \
-        if (!func(__VA_ARGS__, &_CALL_FUNC_NOT_NULL_VAR)) {              \
-            PyErr_SetString(PyExc_RuntimeError, "Failed " #func "()");   \
-            sipIsErr = 1;                                                \
-        }                                                                \
-        sipRes = _CALL_FUNC_NOT_NULL_VAR;                                \
-    } while(0)
-%End
-
-
-double GetMapDistance(const RasterMap &map, const MapPixelCoord &pos, double dx, double dy);
-%MethodCode
-    CALL_FUNC_NOT_NULL(sipIsErr, double, GetMapDistance, *a0, *a1, a2, a3);
-%End
-
-double MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos);
-%MethodCode
-    CALL_FUNC_NOT_NULL(sipIsErr, double, MetersPerPixel, *a0, *a1);
-%End
-double MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos);
-%MethodCode
-    CALL_FUNC_NOT_NULL(sipIsErr, double, MetersPerPixel, *a0, *a1);
-%End
-*/
-

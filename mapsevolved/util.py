@@ -39,7 +39,7 @@ def EVENT(event, id=wx.ID_ANY, id2=wx.ID_ANY, bind_on_parent=False):
         return f
     return func
 
-def MapWxEvents(eventhandler):
+def bind_decorator_events(eventhandler):
     for funcname in dir(eventhandler):
         func = getattr(eventhandler, funcname)
         if hasattr(func, 'wxevent'):

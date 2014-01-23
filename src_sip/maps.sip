@@ -137,16 +137,15 @@ typedef std::shared_ptr<class DispOpenGL> DispOpenGLShPtr;
         DispOpenGL *get();
 };
 
-
 %ModuleCode
 #include <winwrap.h>
-std::shared_ptr<class DispOpenGL> CreateOGLDisplay(long int handle) {
-    std::shared_ptr<DevContext> dev_ctx(new DevContext((HWND)handle));
-    std::shared_ptr<OGLContext> ogl_ctx(new OGLContext(dev_ctx));
-    return std::shared_ptr<DispOpenGL>(new DispOpenGL(ogl_ctx));
-}
 %End
 DispOpenGLShPtr CreateOGLDisplay(size_t handle);
+%MethodCode
+    std::shared_ptr<DevContext> dev_ctx(new DevContext((HWND)a0));
+    std::shared_ptr<OGLContext> ogl_ctx(new OGLContext(dev_ctx));
+    sipRes = new std::shared_ptr<DispOpenGL>(new DispOpenGL(ogl_ctx));
+%End
 
 
 class MapDisplayManager /NoDefaultCtors/ {

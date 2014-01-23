@@ -1,27 +1,18 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 #-------------------------------------------------------------------------------
-#   Alpine Skyline
+#   Maps Evolved
+#   Copyright 2013-2014, Christian Aichinger <Greek0@gmx.net>
 #-------------------------------------------------------------------------------
 
 import sys
 import wx
-import wx.html
+
 from mapsevolved import frmMain
-
-PROGRAM = "Maps Evolved"
-
-class Frame(wx.Frame):
-    def __init__(self, title):
-        wx.Frame.__init__(self, None, title=title, pos=(150,150), size=(350,200))
-        self.statusbar = self.CreateStatusBar()
-
-        panel.Layout()
 
 
 def main():
-    app = wx.App(redirect=False)   # Error messages go to popup window
-    top = frmMain.xrcmainframe(PROGRAM)
+    app = wx.App(redirect=False)   # Do not redirect errors to popup window.
+    top = frmMain.MainFrame()
     top.Show()
     app.MainLoop()
 
