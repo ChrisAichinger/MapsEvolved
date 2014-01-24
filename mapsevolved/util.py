@@ -57,3 +57,22 @@ def bind_decorator_events(eventhandler):
                     eventhandler.Bind(event, func, id=id, id2=id2)
                 else:
                     source.Bind(event, func, id=id, id2=id2)
+
+
+def YesNo(parent, question, caption='Maps Evolved'):
+    dlg = wx.MessageDialog(parent, question, caption,
+                           wx.YES_NO | wx.ICON_QUESTION)
+    result = dlg.ShowModal() == wx.ID_YES
+    dlg.Destroy()
+    return result
+
+def Info(parent, message, caption='Maps Evolved'):
+    dlg = wx.MessageDialog(parent, message, caption,
+                           wx.OK | wx.ICON_INFORMATION)
+    dlg.ShowModal()
+    dlg.Destroy()
+
+def Warn(parent, message, caption='Maps Evolved'):
+    dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.ICON_WARNING)
+    dlg.ShowModal()
+    dlg.Destroy()

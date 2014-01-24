@@ -43,33 +43,29 @@ class RasterMap /Abstract/ {
         virtual bool PixelToPCS(double *x, double *y) const = 0;
         virtual bool PCSToPixel(double *x, double *y) const = 0;
         virtual Projection GetProj() const = 0;
-        virtual bool
-        PixelToLatLon(const MapPixelCoord &pos, LatLon *result /Out/) const = 0;
-        virtual bool
-        LatLonToPixel(const LatLon &pos, MapPixelCoord *result /Out/) const = 0;
+        virtual bool PixelToLatLon(
+                const MapPixelCoord &pos, LatLon *result /Out/) const = 0;
+        virtual bool LatLonToPixel(
+                const LatLon &pos, MapPixelCoord *result /Out/) const = 0;
 
         virtual const std::wstring &GetFname() const = 0;
 
         virtual bool IsViewable() const;
 };
 
-class RasterMapShPtrConst /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
-%TypeHeaderCode
-#include <memory>
-%End
-    public:
-        const RasterMap *get();
-};
-
 class RasterMapShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
 %TypeHeaderCode
 #include <memory>
+#include "rastermap.h"
+typedef std::shared_ptr<RasterMap> RasterMapShPtr;
 %End
     public:
         RasterMap *get();
 };
 
-class PersistentStoreUniqPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
+class PersistentStoreUniqPtr
+/NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/
+{
 %TypeHeaderCode
 #include <memory>
 #include <stdio.h>
@@ -89,14 +85,13 @@ class RasterMapCollection {
         void AddMap(RasterMapShPtr map);
         void DeleteMap(unsigned int index);
         size_t Size() const;
-        const RasterMap &Get(size_t i) const;
-        RasterMapShPtrConst GetSharedPtr(size_t i) const;
-        const std::vector<const RasterMapShPtrConst>
+        RasterMapShPtr Get(size_t i) const;
+        const std::vector<const RasterMapShPtr>
             GetAlternateRepresentations(size_t i) const;
-        bool IsToplevelMap(const RasterMapShPtrConst &map) const;
+        bool IsToplevelMap(const RasterMapShPtr &map) const;
 
-        bool StoreTo(PersistentStore *store /In/) const;
-        bool RetrieveFrom(PersistentStore *store /In/);
+        bool StoreTo(const PersistentStoreUniqPtr &store /In/) const;
+        bool RetrieveFrom(const PersistentStoreUniqPtr &store /In/);
     private:
         RasterMapCollection(const RasterMapCollection&);
         void operator=(const RasterMapCollection&);
@@ -120,13 +115,11 @@ class HeightFinder {
     public:
         explicit HeightFinder(const RasterMapCollection &maps);
         bool CalcTerrain(const LatLon &pos, TerrainInfo *result /Out/);
-    private:
 };
 
-
-bool GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
+bool GetMapDistance(const RasterMapShPtr &map, const MapPixelCoord &pos,
                     double dx, double dy, double *distance /Out/);
-bool MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
+bool MetersPerPixel(const RasterMapShPtr &map, const MapPixelCoord &pos,
                     double *mpp /Out/);
-bool MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos,
+bool MetersPerPixel(const RasterMapShPtr &map, const MapPixelCoordInt &pos,
                     double *mpp /Out/);

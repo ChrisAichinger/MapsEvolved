@@ -16,12 +16,12 @@ class MainFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self)
         # 3-argument LoadFrame() calls self.Create(), so skip 2-phase creation.
-        if not util.get_resources("main").LoadFrame(self, None, "mainframe"):
+        if not util.get_resources("main").LoadFrame(self, None, "MainFrame"):
             raise RuntimeError("Could not load main frame from XRC file.")
 
         util.bind_decorator_events(self)
 
-        self.panel = xrc.XRCCTRL(self, 'skylinepanel')
+        self.panel = xrc.XRCCTRL(self, 'MapPanel')
         self.statusbar = xrc.XRCCTRL(self, 'MainStatusBar')
 
         self.maplist = pymaplib.RasterMapCollection()
@@ -40,23 +40,23 @@ class MainFrame(wx.Frame):
 
         self.manage_maps_window = None
 
-    @util.EVENT(wx.EVT_PAINT, id=xrc.XRCID('skylinepanel'))
-    def on_repaint_mappanel(self, evt):
-        dc = wx.PaintDC(self.panel)
-        self.mapdisplay.Paint()
-
-    @util.EVENT(wx.EVT_SIZE, id=xrc.XRCID('skylinepanel'))
-    def on_size_mappanel(self, evt):
-        self.mapdisplay.Resize(evt.Size.x, evt.Size.y)
-
-    @util.EVENT(wx.EVT_CLOSE, id=xrc.XRCID('mainframe'))
+    @util.EVENT(wx.EVT_CLOSE, id=xrc.XRCID('MainFrame'))
     def on_close_window(self, evt):
         evt.Skip()
         # Close all other windows to force wx.App to exit
         if self.manage_maps_window:
             self.manage_maps_window.Close()
 
-    @util.EVENT(wx.EVT_BUTTON, id=xrc.XRCID('gobutton'))
+    @util.EVENT(wx.EVT_PAINT, id=xrc.XRCID('MapPanel'))
+    def on_repaint_mappanel(self, evt):
+        dc = wx.PaintDC(self.panel)
+        self.mapdisplay.Paint()
+
+    @util.EVENT(wx.EVT_SIZE, id=xrc.XRCID('MapPanel'))
+    def on_size_mappanel(self, evt):
+        self.mapdisplay.Resize(evt.Size.x, evt.Size.y)
+
+    @util.EVENT(wx.EVT_BUTTON, id=xrc.XRCID('GoButton'))
     def on_go_button(self, evt):
         print("on_go_button()")
 
@@ -97,7 +97,7 @@ class MainFrame(wx.Frame):
                                 wx.ClientDC(self.panel))
         wx.adv.AboutBox(info)
 
-    @util.EVENT(wx.EVT_MOUSEWHEEL, id=xrc.XRCID('skylinepanel'))
+    @util.EVENT(wx.EVT_MOUSEWHEEL, id=xrc.XRCID('MapPanel'))
     def on_mousewheel(self, evt):
         if evt.GetWheelAxis() != wx.MOUSE_WHEEL_VERTICAL:
             evt.Skip()
@@ -107,12 +107,12 @@ class MainFrame(wx.Frame):
                                  pymaplib.DisplayCoord(pos.x, pos.y))
         self.update_statusbar()
 
-    @util.EVENT(wx.EVT_LEFT_DCLICK, id=xrc.XRCID('skylinepanel'))
+    @util.EVENT(wx.EVT_LEFT_DCLICK, id=xrc.XRCID('MapPanel'))
     def on_left_doubleclick(self, evt):
         pos = pymaplib.DisplayCoord(evt.x, evt.y)
         self.mapdisplay.CenterToDisplayCoord(pos)
 
-    @util.EVENT(wx.EVT_CHAR, id=xrc.XRCID('skylinepanel'))
+    @util.EVENT(wx.EVT_CHAR, id=xrc.XRCID('MapPanel'))
     def on_char(self, evt):
         if self.dragEnabled and evt.GetKeyCode() == wx.WXK_ESCAPE:
             self.panel.ReleaseMouse()
@@ -120,20 +120,20 @@ class MainFrame(wx.Frame):
         else:
             evt.Skip()
 
-    @util.EVENT(wx.EVT_LEFT_DOWN, id=xrc.XRCID('skylinepanel'))
+    @util.EVENT(wx.EVT_LEFT_DOWN, id=xrc.XRCID('MapPanel'))
     def on_left_down(self, evt):
         evt.Skip()
         self.dragLastPos = evt.GetPosition()
         self.dragSuppress = False
 
-    @util.EVENT(wx.EVT_LEFT_UP, id=xrc.XRCID('skylinepanel'))
+    @util.EVENT(wx.EVT_LEFT_UP, id=xrc.XRCID('MapPanel'))
     def on_left_up(self, evt):
         evt.Skip()
         if self.dragEnabled:
             self.panel.ReleaseMouse()
             self.on_capture_changed(evt)
 
-    @util.EVENT(wx.EVT_MOTION, id=xrc.XRCID('skylinepanel'))
+    @util.EVENT(wx.EVT_MOTION, id=xrc.XRCID('MapPanel'))
     def on_mouse_motion(self, evt):
         # Ignore mouse movement if we're not dragging.
         if evt.Dragging() and evt.LeftIsDown():
@@ -156,22 +156,37 @@ class MainFrame(wx.Frame):
         else:
             self.update_statusbar()
 
+    # Handle mouse capture during dragging operations.
     # In theory:
     # CAPTURE_LOST is called ONLY for to external reasons (e.g. Alt-Tab).
     # CAPTURE_CHANGED is called by ReleaseMouse() and for external reasons.
-    #
     # In practice:
     # We must handle this to exit self.dragEnabled mode without missing
     # corner cases. Due to platform differences, it is not entirely clear
     # when LOST/CHANGED are received. So we make on_capture_changed
     # idempotent, and use it to handle both events.
-    # Furthermore, we call it from every other appropriate place).
-    @util.EVENT(wx.EVT_MOUSE_CAPTURE_LOST, id=xrc.XRCID('skylinepanel'))
-    @util.EVENT(wx.EVT_MOUSE_CAPTURE_CHANGED, id=xrc.XRCID('skylinepanel'))
+    # Furthermore, we call it directly from every other appropriate place.
+    @util.EVENT(wx.EVT_MOUSE_CAPTURE_LOST, id=xrc.XRCID('MapPanel'))
+    @util.EVENT(wx.EVT_MOUSE_CAPTURE_CHANGED, id=xrc.XRCID('MapPanel'))
     def on_capture_changed(self, evt):
         self.dragEnabled = False
         self.dragSuppress = True
         self.Cursor = wx.Cursor()
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ZoomInTBButton'))
+    def on_zoom_in(self, evt):
+        self.mapdisplay.StepZoom(+1)
+        self.update_statusbar()
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ZoomOutTBButton'))
+    def on_zoom_out(self, evt):
+        self.mapdisplay.StepZoom(-1)
+        self.update_statusbar()
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ZoomResetTBButton'))
+    def on_zoom_reset(self, evt):
+        self.mapdisplay.SetZoomOneToOne()
+        self.update_statusbar()
 
     def update_statusbar(self):
         pos = self.panel.ScreenToClient(wx.GetMousePosition())

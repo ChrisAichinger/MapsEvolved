@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resource class="wxFrame">
-  <object class="wxFrame" name="mainframe">
-    <object class="wxMenuBar" name="mainmenu">
+  <object class="wxFrame" name="MainFrame">
+    <object class="wxMenuBar">
       <object class="wxMenu">
         <object class="wxMenuItem" name="ManageMapsMenuItem">
           <label>&amp;Manage Maps</label>
@@ -70,14 +70,36 @@
       <bitmapsize>16</bitmapsize>
       <style>wxTB_FLAT|wxTB_DOCKABLE</style>
       <object class="tool" name="ManageMapsTBButton">
-        <bitmap stock_id="wxART_MISSING_IMAGE"/>
+        <bitmap>images\famfamfam_silk_icons\database.png</bitmap>
+        <tooltip>Manage Maps</tooltip>
+      </object>
+      <object class="tool" name="SaveBitmapTBButton">
+        <bitmap>images\famfamfam_silk_icons\disk.png</bitmap>
+        <tooltip>Save Bitmap</tooltip>
+      </object>
+      <object class="tool" name="PrintTBButton">
+        <bitmap>images\famfamfam_silk_icons\printer.png</bitmap>
+        <tooltip>Print</tooltip>
+      </object>
+      <object class="separator"/>
+      <object class="tool" name="ZoomInTBButton">
+        <bitmap>images\famfamfam_silk_icons\zoom_in.png</bitmap>
+        <tooltip>Zoom In</tooltip>
+      </object>
+      <object class="tool" name="ZoomOutTBButton">
+        <bitmap>images\famfamfam_silk_icons\zoom_out.png</bitmap>
+        <tooltip>Zoom Out</tooltip>
+      </object>
+      <object class="tool" name="ZoomResetTBButton">
+        <bitmap>images\famfamfam_silk_icons\zoom_exact.png</bitmap>
+        <tooltip>Reset Zoom</tooltip>
       </object>
     </object>
     <object class="wxBoxSizer">
       <object class="sizeritem">
         <object class="wxBoxSizer">
           <object class="sizeritem">
-            <object class="wxPanel" name="skylinepanel">
+            <object class="wxPanel" name="MapPanel">
               <size>300,200</size>
               <style>wxFULL_REPAINT_ON_RESIZE</style>
               <XRCED>
@@ -92,13 +114,13 @@
             <size>5</size>
           </object>
           <object class="sizeritem">
-            <object class="wxPanel" name="datapanel">
+            <object class="wxPanel">
               <object class="wxBoxSizer">
                 <orient>wxHORIZONTAL</orient>
                 <object class="sizeritem">
                   <object class="wxFlexGridSizer">
                     <object class="sizeritem">
-                      <object class="wxStaticText" name="coordlabel">
+                      <object class="wxStaticText">
                         <label>Coordinates</label>
                       </object>
                       <option>0</option>
@@ -111,7 +133,7 @@
                       <border>2</border>
                     </object>
                     <object class="sizeritem">
-                      <object class="wxStaticText" name="misclabel">
+                      <object class="wxStaticText">
                         <label>Misc</label>
                       </object>
                       <option>0</option>
@@ -133,7 +155,7 @@
                   <flag>wxALL|wxEXPAND</flag>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxButton" name="gobutton">
+                  <object class="wxButton" name="GoButton">
                     <label>Go</label>
                     <XRCED>
                       <events>EVT_BUTTON</events>
@@ -163,6 +185,20 @@
     <style>wxDEFAULT_FRAME_STYLE|wxCAPTION|wxSYSTEM_MENU</style>
   </object>
   <object class="wxFrame" name="MapManagerFrame">
+    <object class="wxToolBar">
+      <bitmapsize>16</bitmapsize>
+      <style>wxTB_FLAT|wxTB_DOCKABLE</style>
+      <object class="tool" name="MapAddTBButton">
+        <bitmap>images\famfamfam_silk_icons\map_add.png</bitmap>
+        <tooltip>Add Map</tooltip>
+      </object>
+      <object class="tool" name="MapRemoveTBButton">
+        <bitmap>images\famfamfam_silk_icons\map_delete.png</bitmap>
+        <tooltip>Remove Map</tooltip>
+      </object>
+      <object class="separator"/>
+      <object class="tool"/>
+    </object>
     <object class="wxBoxSizer">
       <orient>wxHORIZONTAL</orient>
       <object class="sizeritem">

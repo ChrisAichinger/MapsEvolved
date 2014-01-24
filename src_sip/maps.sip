@@ -150,20 +150,22 @@ DispOpenGLShPtr CreateOGLDisplay(size_t handle);
 
 class MapDisplayManager /NoDefaultCtors/ {
 %TypeHeaderCode
+#include "rastermap.h"
 #include "mapdisplay.h"
 %End
     public:
-        MapDisplayManager(DispOpenGLShPtr &display,
-                          const RasterMap &initial_map);
+        MapDisplayManager(const DispOpenGLShPtr &display,
+                          const RasterMapShPtr &initial_map);
 
-        const RasterMap &GetBaseMap() const;
+        RasterMapShPtr GetBaseMap() const;
         double GetZoom() const;
         double GetCenterX() const;
         double GetCenterY() const;
         const BaseMapCoord &GetCenter() const;
 
-        void ChangeMap(const RasterMap *new_map, bool try_preserve_pos=true);
-        void AddOverlayMap(const RasterMap *new_map);
+        void ChangeMap(const RasterMapShPtr &new_map,
+                       bool try_preserve_pos=true);
+        void AddOverlayMap(const RasterMapShPtr new_map);
 
         void Resize(unsigned int width, unsigned int height);
         void StepZoom(double steps);
@@ -185,10 +187,10 @@ class MapDisplayManager /NoDefaultCtors/ {
 
         DisplayCoordCentered
         DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
-                                         const RasterMap &map) const;
+                                         const RasterMapShPtr &map) const;
         DisplayCoordCentered
         DisplayCoordCenteredFromMapPixel(const MapPixelCoordInt &mpc,
-                                         const RasterMap &map) const;
+                                         const RasterMapShPtr &map) const;
 };
 
 std::wstring CompassPointFromDirection(double degrees);
