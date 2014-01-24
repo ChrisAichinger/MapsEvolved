@@ -184,6 +184,12 @@ static PyObject* SmartptrProxy_getattro(PyObject *o, PyObject *name) {
     }
     Py_INCREF(name);
 
+    if (PyUnicode_CompareWithASCIIString(name, "get") == 0) {
+        PyObject* result = PyObject_GenericGetAttr(o, name);
+        Py_DECREF(name);
+        return result;
+    }
+
     if (!populate_target(o)) {
         Py_DECREF(name);
         return NULL;
@@ -202,6 +208,13 @@ static int SmartptrProxy_setattro(PyObject *o, PyObject *name, PyObject *val) {
         return -1;
     }
     Py_INCREF(name);
+
+    if (PyUnicode_CompareWithASCIIString(name, "get") == 0) {
+        PyErr_Format(PyExc_AttributeError,
+                     "can't set attribute 'get' of SmartptrProxy object");
+        Py_DECREF(name);
+        return -1;
+    }
 
     if (!populate_target(o)) {
         Py_DECREF(name);
