@@ -122,9 +122,7 @@ static PyObject *SmartptrProxy_new(PyTypeObject *otype, PyObject *args,
         return NULL;
     }
     PyObject* o = SmartptrProxyPyType->tp_base->tp_new(otype, args, kwds);
-    PySys_WriteStdout("new: obj %08x\n", (void*)o);
     return o;
-    return SmartptrProxyPyType->tp_base->tp_new(otype, args, kwds);
 }
 
 static bool populate_target(PyObject *o) {
@@ -217,7 +215,6 @@ static int SmartptrProxy_setattro(PyObject *o, PyObject *name, PyObject *val) {
 }
 
 static void SmartptrProxy_dealloc(PyObject *self) {
-    PySys_WriteStdout("deallocated self: %08x\n", (void*)self);
     PyObject_GC_UnTrack(self);        // must untrack first
     Py_CLEAR(reinterpret_cast<SmartptrProxyObject*>(self)->target);
     return SmartptrProxyPyType->tp_base->tp_dealloc(self);

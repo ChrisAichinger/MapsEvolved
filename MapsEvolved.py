@@ -13,6 +13,7 @@ from mapsevolved import frmMain
 def main():
     app = wx.App(redirect=False)   # Do not redirect errors to popup window.
     top = frmMain.MainFrame()
+    app.SetTopWindow(top)
     top.Show()
     app.MainLoop()
 

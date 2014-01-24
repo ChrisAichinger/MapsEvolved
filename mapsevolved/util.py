@@ -3,6 +3,8 @@ import os
 import wx
 import wx.xrc as xrc
 
+from mapsevolved import xh_gizmos
+
 def get_xrc_path_default(xrc_name):
     """"""
     if not xrc_name.endswith('.xrc'):
@@ -15,7 +17,9 @@ def get_resources(xrc_name, get_xrc_path=get_xrc_path_default):
     if not hasattr(get_resources, 'res'):
         get_resources.res = dict()
     if xrc_name not in get_resources.res:
-        get_resources.res[xrc_name] = xrc.XmlResource(get_xrc_path(xrc_name))
+        res = xrc.XmlResource(get_xrc_path(xrc_name))
+        res.AddHandler(xh_gizmos.TreeListCtrlXmlHandler())
+        get_resources.res[xrc_name] = res
     return get_resources.res[xrc_name]
 
 

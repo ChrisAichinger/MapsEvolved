@@ -91,14 +91,12 @@ class RasterMapCollection {
         size_t Size() const;
         const RasterMap &Get(size_t i) const;
         RasterMapShPtrConst GetSharedPtr(size_t i) const;
-        /*
         const std::vector<const RasterMapShPtrConst>
             GetAlternateRepresentations(size_t i) const;
-            */
         bool IsToplevelMap(const RasterMapShPtrConst &map) const;
 
-        //bool StoreTo(PersistentStore *store) const;
-        //bool RetrieveFrom(PersistentStore *store);
+        bool StoreTo(PersistentStore *store /In/) const;
+        bool RetrieveFrom(PersistentStore *store /In/);
     private:
         RasterMapCollection(const RasterMapCollection&);
         void operator=(const RasterMapCollection&);
