@@ -16,8 +16,7 @@ import imp
 sip_dir = '_sip_source'
 sip_url = 'http://downloads.sourceforge.net/project/pyqt/sip/sip-4.15.4/sip-4.15.4.zip?r=&ts=1390046988&use_mirror=freefr'
 setuptools_url = 'https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py'
-wxpython_url = 'http://wxpython.org/Phoenix/snapshot-builds/wxPython_Phoenix-3.0.1.dev75635-py3.3-win32.egg'
-
+wxpython_url = 'http://wxpython.org/Phoenix/snapshot-builds/wxPython_Phoenix-3.0.1.dev75695-py3.3-win32.egg'
 SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 init_shell_batch = 'init_shell.bat'
 
