@@ -7,18 +7,18 @@
 
 class TileCode {
     public:
-        TileCode(const class RasterMap &map,
+        TileCode(const std::shared_ptr<class RasterMap> &map,
                  const class MapPixelCoordInt &pos,
                  const class MapPixelDeltaInt &tilesize)
             : m_map(map), m_pos(pos), m_tilesize(tilesize)
             {};
-        const class RasterMap &GetMap() const { return m_map; };
+        std::shared_ptr<class RasterMap> GetMap() const { return m_map; };
         const MapPixelCoordInt &GetPosition() const { return m_pos; };
         const MapPixelDeltaInt &GetTileSize() const { return m_tilesize; };
 
         std::shared_ptr<unsigned int> GetTile() const;
     private:
-        const RasterMap &m_map;
+        std::shared_ptr<class RasterMap> m_map;
         MapPixelCoordInt m_pos;
         MapPixelDeltaInt m_tilesize;
 };
@@ -29,11 +29,11 @@ inline bool operator==(const TileCode& lhs, const TileCode& rhs) {
            lhs.GetTileSize() == rhs.GetTileSize();
 }
 inline bool operator< (const TileCode& lhs, const TileCode& rhs) {
-    const class RasterMap &lmap = lhs.GetMap();
-    const class RasterMap &rmap = rhs.GetMap();
+    const class RasterMap *lmap = lhs.GetMap().get();
+    const class RasterMap *rmap = rhs.GetMap().get();
     // Compare maps by memory address
     // We should only ever have one instance of class RasterMap per map anyway.
-    if (&lmap != &rmap) return &lmap < &rmap;
+    if (lmap != rmap) return lmap < rmap;
 
     const MapPixelCoordInt &lpos = lhs.GetPosition();
     const MapPixelCoordInt &rpos = rhs.GetPosition();

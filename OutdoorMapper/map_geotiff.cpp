@@ -69,9 +69,10 @@ Tiff::GetRegion(const MapPixelCoordInt &pos,
         pos.y > static_cast<int>(m_height))
     {
         // Return zero-initialized memory block (notice the parentheses)
-        return MapRegion(std::shared_ptr<unsigned int>(new unsigned int[size.x*size.y](),
-                                             ArrayDeleter<unsigned int>()),
-                         size.x, size.y);
+        return MapRegion(std::shared_ptr<unsigned int>(
+                        new unsigned int[size.x*size.y](),
+                        ArrayDeleter<unsigned int>()),
+                 size.x, size.y);
     }
 
     TIFFRGBAImage img;

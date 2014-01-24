@@ -2,8 +2,9 @@
 #include "win_main.h"
 #include "mapdisplay.h"
 
-UIModeNormal::UIModeNormal(RootWindow *rootwindow,
-                           std::shared_ptr<MapDisplayManager> &mapdisplay)
+UIModeNormal::UIModeNormal(
+        RootWindow *rootwindow,
+        const std::shared_ptr<MapDisplayManager> &mapdisplay)
     : m_rootwindow(rootwindow), m_mapdisplay(mapdisplay), m_map_drag(false)
 {}
 

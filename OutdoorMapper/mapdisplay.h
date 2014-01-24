@@ -8,17 +8,18 @@
 
 class EXPORT MapDisplayManager {
     public:
-        MapDisplayManager(std::shared_ptr<class DispOpenGL> &display,
-                          const class RasterMap &initial_map);
+        MapDisplayManager(const std::shared_ptr<class DispOpenGL> &display,
+                          const std::shared_ptr<class RasterMap> &initial_map);
 
-        const class RasterMap &GetBaseMap() const;
+        std::shared_ptr<class RasterMap> GetBaseMap() const;
         double GetZoom() const;
         double GetCenterX() const;
         double GetCenterY() const;
         const BaseMapCoord &GetCenter() const;
 
-        void ChangeMap(const RasterMap *new_map, bool try_preserve_pos=true);
-        void AddOverlayMap(const RasterMap *new_map);
+        void ChangeMap(const std::shared_ptr<class RasterMap> &new_map,
+                       bool try_preserve_pos=true);
+        void AddOverlayMap(const std::shared_ptr<class RasterMap> &new_map);
 
         void Resize(unsigned int width, unsigned int height);
         void StepZoom(double steps);
@@ -40,14 +41,14 @@ class EXPORT MapDisplayManager {
 
         DisplayCoordCentered
         DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
-                                         const RasterMap &map) const;
+                         const std::shared_ptr<class RasterMap> &map) const;
         DisplayCoordCentered
         DisplayCoordCenteredFromMapPixel(const MapPixelCoordInt &mpc,
-                                         const RasterMap &map) const;
+                         const std::shared_ptr<class RasterMap> &map) const;
 
     private:
         void PaintOneLayer(std::list<class DisplayOrder> *orders,
-                           const class RasterMap &map,
+                           const std::shared_ptr<class RasterMap> &map,
                            const MapPixelCoordInt &tile_topleft,
                            const MapPixelCoordInt &tile_botright,
                            const MapPixelDeltaInt &tile_size,
@@ -56,20 +57,22 @@ class EXPORT MapDisplayManager {
         bool AdvanceAlongBorder(MapPixelCoordInt *base_point,
                                 const MapPixelCoordInt &base_tl,
                                 const MapPixelCoordInt &base_br);
-        bool CalcOverlayTiles(const class RasterMap *overlay_map,
-                              const MapPixelCoordInt &base_tl,
-                              const MapPixelCoordInt &base_br,
-                              MapPixelCoordInt *overlay_tl,
-                              MapPixelCoordInt *overlay_br);
+        bool CalcOverlayTiles(
+                const std::shared_ptr<class RasterMap> &overlay_map,
+                const MapPixelCoordInt &base_tl,
+                const MapPixelCoordInt &base_br,
+                MapPixelCoordInt *overlay_tl,
+                MapPixelCoordInt *overlay_br);
 
-        bool TryChangeMapPreservePos(const RasterMap *new_map);
+        bool TryChangeMapPreservePos(
+                const std::shared_ptr<class RasterMap> &new_map);
 
         static const int TILE_SIZE = 512;
         static const double ZOOM_STEP;
 
-        std::shared_ptr<class DispOpenGL> m_display;
-        const class RasterMap *m_base_map;
-        std::list<const class RasterMap *> m_overlays;
+        const std::shared_ptr<class DispOpenGL> m_display;
+        std::shared_ptr<class RasterMap> m_base_map;
+        std::list<std::shared_ptr<class RasterMap> > m_overlays;
 
         BaseMapCoord m_center;
         double m_zoom;

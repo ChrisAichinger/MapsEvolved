@@ -17,9 +17,9 @@ const double MapDisplayManager::ZOOM_STEP =
                     1.189207115002721066717499970560475915;
 
 MapDisplayManager::MapDisplayManager(
-        std::shared_ptr<class DispOpenGL> &display,
-        const class RasterMap &initial_map)
-    : m_display(display), m_base_map(&initial_map),
+        const std::shared_ptr<class DispOpenGL> &display,
+        const std::shared_ptr<class RasterMap> &initial_map)
+    : m_display(display), m_base_map(initial_map),
       m_center(BaseMapCoord(BaseMapDelta(m_base_map->GetSize() * 0.5))),
       m_zoom(1.0), m_overlays()
 { }
@@ -28,7 +28,9 @@ void MapDisplayManager::Resize(unsigned int width, unsigned int height) {
     m_display->Resize(width, height);
 }
 
-bool MapDisplayManager::TryChangeMapPreservePos(const RasterMap *new_map) {
+bool MapDisplayManager::TryChangeMapPreservePos(
+        const std::shared_ptr<class RasterMap> &new_map)
+{
     // Calc position of display center on earth
     LatLon point;
     if (!m_base_map->PixelToLatLon(m_center, &point))
@@ -46,12 +48,12 @@ bool MapDisplayManager::TryChangeMapPreservePos(const RasterMap *new_map) {
     // Success in preserving the map position
     double new_zoom = m_zoom;
     double factor;
-    if (!MetersPerPixel(*new_map, new_center, &factor)) {
+    if (!MetersPerPixel(new_map, new_center, &factor)) {
         return false;
     }
     new_zoom *= factor;
 
-    if (!MetersPerPixel(*m_base_map, m_center, &factor)) {
+    if (!MetersPerPixel(m_base_map, m_center, &factor)) {
         return false;
     }
     new_zoom /= factor;
@@ -61,8 +63,10 @@ bool MapDisplayManager::TryChangeMapPreservePos(const RasterMap *new_map) {
 
     return true;
 }
-void MapDisplayManager::ChangeMap(const RasterMap *new_map,
-                                  bool try_preserve_pos)
+
+void MapDisplayManager::ChangeMap(
+        const std::shared_ptr<class RasterMap> &new_map,
+        bool try_preserve_pos)
 {
     if (new_map == m_base_map)
         return;
@@ -78,7 +82,9 @@ void MapDisplayManager::ChangeMap(const RasterMap *new_map,
     m_display->ForceRepaint();
 }
 
-void MapDisplayManager::AddOverlayMap(const RasterMap *new_map) {
+void MapDisplayManager::AddOverlayMap(
+        const std::shared_ptr<class RasterMap> &new_map)
+{
     // Add new overlay or move existing overlay to last (topmost) position
     m_overlays.remove(new_map);
     m_overlays.push_back(new_map);
@@ -94,11 +100,12 @@ void MapDisplayManager::Paint() {
 
     MapPixelDeltaInt tile_size(TILE_SIZE, TILE_SIZE);
     std::list<DisplayOrder> orders;
-    PaintOneLayer(&orders, *m_base_map,
+    PaintOneLayer(&orders, m_base_map,
                   tile_topleft, tile_botright, tile_size);
     for (auto ci = m_overlays.cbegin(); ci != m_overlays.cend(); ++ci) {
         MapPixelCoordInt overlay_pixel_tl, overlay_pixel_br;
-        if (!CalcOverlayTiles(*ci,
+        auto overlay = *ci;
+        if (!CalcOverlayTiles(overlay,
                               MapPixelCoordInt(m_center - half_disp_size),
                               MapPixelCoordInt(m_center + half_disp_size),
                               &overlay_pixel_tl, &overlay_pixel_br))
@@ -108,7 +115,7 @@ void MapDisplayManager::Paint() {
         }
         MapPixelCoordInt overlay_tiles_tl(overlay_pixel_tl, TILE_SIZE);
         MapPixelCoordInt overlay_tiles_br(overlay_pixel_br, TILE_SIZE);
-        PaintOneLayer(&orders, **ci, overlay_tiles_tl, overlay_tiles_br,
+        PaintOneLayer(&orders, overlay, overlay_tiles_tl, overlay_tiles_br,
                       tile_size, 0.5);
     }
     m_display->Render(orders);
@@ -136,11 +143,10 @@ bool MapDisplayManager::AdvanceAlongBorder(MapPixelCoordInt *base_point,
     return true;
 }
 
-bool MapDisplayManager::CalcOverlayTiles(const RasterMap *overlay_map,
-                                         const MapPixelCoordInt &base_tl,
-                                         const MapPixelCoordInt &base_br,
-                                         MapPixelCoordInt *overlay_tl,
-                                         MapPixelCoordInt *overlay_br)
+bool MapDisplayManager::CalcOverlayTiles(
+        const std::shared_ptr<class RasterMap> &overlay_map,
+        const MapPixelCoordInt &base_tl, const MapPixelCoordInt &base_br,
+        MapPixelCoordInt *overlay_tl, MapPixelCoordInt *overlay_br)
 {
     LatLon point;
     MapPixelCoord overlay_point;
@@ -167,12 +173,13 @@ bool MapDisplayManager::CalcOverlayTiles(const RasterMap *overlay_map,
     return true;
 }
 
-void MapDisplayManager::PaintOneLayer(std::list<class DisplayOrder> *orders,
-                                      const class RasterMap &map,
-                                      const MapPixelCoordInt &tile_topleft,
-                                      const MapPixelCoordInt &tile_botright,
-                                      const MapPixelDeltaInt &tile_size,
-                                      double transparency)
+void MapDisplayManager::PaintOneLayer(
+        std::list<class DisplayOrder> *orders,
+        const std::shared_ptr<class RasterMap> &map,
+        const MapPixelCoordInt &tile_topleft,
+        const MapPixelCoordInt &tile_botright,
+        const MapPixelDeltaInt &tile_size,
+        double transparency)
 {
     MapPixelDeltaInt tile_size_h(tile_size.x, 0);
     MapPixelDeltaInt tile_size_v(0, tile_size.y);
@@ -197,8 +204,8 @@ void MapDisplayManager::PaintOneLayer(std::list<class DisplayOrder> *orders,
     }
 }
 
-const class RasterMap &MapDisplayManager::GetBaseMap() const {
-    return *m_base_map;
+std::shared_ptr<class RasterMap> MapDisplayManager::GetBaseMap() const {
+    return m_base_map;
 }
 
 double MapDisplayManager::GetZoom() const {
@@ -274,13 +281,13 @@ MapDisplayManager::DisplayCoordCenteredFromBase(const BaseMapCoord &mpc) const
 
 DisplayCoordCentered
 MapDisplayManager::DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
-                                 const RasterMap &map) const
+                             const std::shared_ptr<class RasterMap> &map) const
 {
-    if (&map == m_base_map)
+    if (map == m_base_map)
         return DisplayCoordCenteredFromBase(BaseMapCoord(mpc));
 
     LatLon world_pos;
-    if (!map.PixelToLatLon(mpc, &world_pos)) {
+    if (!map->PixelToLatLon(mpc, &world_pos)) {
         assert(false);
     }
 
@@ -294,7 +301,7 @@ MapDisplayManager::DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
 DisplayCoordCentered
 MapDisplayManager::DisplayCoordCenteredFromMapPixel(
                         const MapPixelCoordInt &mpc,
-                        const RasterMap &map) const
+                        const std::shared_ptr<class RasterMap> &map) const
 {
     return DisplayCoordCenteredFromMapPixel(MapPixelCoord(mpc), map);
 }

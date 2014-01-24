@@ -31,8 +31,9 @@ class UIMode {
 
 class UIModeNormal : public UIMode {
     public:
-        UIModeNormal(class RootWindow *rootwindow,
-                     std::shared_ptr<class MapDisplayManager> &mapdisplay);
+        UIModeNormal(
+                class RootWindow *rootwindow,
+                const std::shared_ptr<class MapDisplayManager> &mapdisplay);
 
         virtual std::wstring GetName() const { return L"Normal"; };
         virtual void OnLClick(const MouseEvent &event);

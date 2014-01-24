@@ -12,20 +12,21 @@
 
 class EXPORT MapRegion {
     public:
-        MapRegion(std::shared_ptr<unsigned int> &data, int width, int height)
+        MapRegion(const std::shared_ptr<unsigned int> &data,
+                  int width, int height)
             : m_data(data), m_width(width), m_height(height) {};
         inline std::shared_ptr<unsigned int> &GetData() { return m_data; }
         inline unsigned int * GetRawData() { return m_data.get(); }
         inline unsigned int GetWidth() const { return m_width; }
         inline unsigned int GetHeight() const { return m_height; }
-        inline unsigned int GetPixel(int x, int y) { return m_data.get()[x + y*m_height]; }
+        inline unsigned int GetPixel(int x, int y) {
+            return m_data.get()[x + y*m_height];
+        }
     private:
         std::shared_ptr<unsigned int> m_data;
         unsigned int m_width;
         unsigned int m_height;
 };
-
-typedef std::shared_ptr<unsigned int> UIntShPtr;
 
 class EXPORT ODM_INTERFACE RasterMap {
     public:
@@ -64,33 +65,27 @@ class EXPORT ODM_INTERFACE RasterMap {
         };
 };
 
-typedef std::shared_ptr<RasterMap> RasterMapShPtr;
-typedef std::shared_ptr<const RasterMap> RasterMapShPtrConst;
-
 class EXPORT RasterMapCollection {
     public:
         RasterMapCollection();
-        void AddMap(std::shared_ptr<RasterMap> map);
+        void AddMap(const std::shared_ptr<RasterMap> &map);
         void DeleteMap(unsigned int index);
         size_t Size() const {
             return m_maps.size();
         }
-        const RasterMap &Get(size_t i) const {
-            return *m_maps[i].map;
-        }
-        std::shared_ptr<const RasterMap> GetSharedPtr(size_t i) const {
+        std::shared_ptr<RasterMap> Get(size_t i) const {
             return m_maps[i].map;
         }
-        const std::vector<const std::shared_ptr<const RasterMap> >
+        const std::vector<const std::shared_ptr<RasterMap> >
         GetAlternateRepresentations(size_t i) const {
-            const std::vector<const std::shared_ptr<const RasterMap> > res(m_maps[i].reps.cbegin(),
-                                                                           m_maps[i].reps.cend());
+            const std::vector<const std::shared_ptr<RasterMap> > res(
+                    m_maps[i].reps.cbegin(), m_maps[i].reps.cend());
             return res;
         }
-        bool IsToplevelMap(const std::shared_ptr<const RasterMap> &map) const;
+        bool IsToplevelMap(const std::shared_ptr<RasterMap> &map) const;
 
-        bool StoreTo(PersistentStore *store) const;
-        bool RetrieveFrom(PersistentStore *store);
+        bool StoreTo(const std::unique_ptr<PersistentStore> &store) const;
+        bool RetrieveFrom(const std::unique_ptr<PersistentStore> &store);
     private:
         struct MapAndReps {
             std::shared_ptr<RasterMap> map;
@@ -115,21 +110,24 @@ class EXPORT HeightFinder {
         bool CalcTerrain(const LatLon &pos, TerrainInfo *result);
     private:
         const class RasterMapCollection &m_maps;
-        const class RasterMap *m_active_dhm;
+        std::shared_ptr<class RasterMap> m_active_dhm;
 
         bool LatLongWithinActiveDHM(const LatLon &pos) const;
-        const class RasterMap *FindBestMap(const LatLon &pos,
-                                       RasterMap::RasterMapType type) const;
+        std::shared_ptr<class RasterMap> FindBestMap(
+                const LatLon &pos, RasterMap::RasterMapType type) const;
 };
 
 bool EXPORT
-    GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
-                   double dx, double dy, double *distance);
+GetMapDistance(const std::shared_ptr<class RasterMap> &map,
+               const MapPixelCoord &pos,
+               double dx, double dy, double *distance);
 bool EXPORT
-    MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
-                   double *mpp);
+MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
+               const MapPixelCoord &pos,
+               double *mpp);
 bool EXPORT
-    MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos,
-                   double *mpp);
+MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
+               const MapPixelCoordInt &pos,
+               double *mpp);
 
 #endif

@@ -146,14 +146,14 @@ LRESULT MapListWindow::OnCreate() {
                                -> EventResult
     {
         if (pnmia->iItem < 0) return EventResult(true, 0);
-        m_mapdisplay.ChangeMap(m_maps_from_item_id[pnmia->iItem].get());
+        m_mapdisplay.ChangeMap(m_maps_from_item_id[pnmia->iItem]);
         return EventResult(true, 0);
     };
     events.RightClick = [this](const ListView& lv, LPNMITEMACTIVATE pnmia)
                                -> EventResult
     {
         if (pnmia->iItem < 0) return EventResult(true, 0);
-        m_mapdisplay.AddOverlayMap(m_maps_from_item_id[pnmia->iItem].get());
+        m_mapdisplay.AddOverlayMap(m_maps_from_item_id[pnmia->iItem]);
         return EventResult(true, 0);
     };
     events.KeyDown = [this](const ListView& lv, LPNMLVKEYDOWN pnmkd)
@@ -170,7 +170,7 @@ LRESULT MapListWindow::OnCreate() {
     {
         int index = m_listview->GetSelectedRow();
         if (index < 0) return EventResult(true, 0);
-        m_mapdisplay.ChangeMap(m_maps_from_item_id[index].get());
+        m_mapdisplay.ChangeMap(m_maps_from_item_id[index]);
         return EventResult(true, 0);
     };
     m_listview->RegisterEventHandlers(events);
@@ -234,7 +234,7 @@ void MapListWindow::HandleAddMap() {
     LoadMap(m_maps, ofn.lpstrFile);
 
     std::unique_ptr<PersistentStore> ps = CreatePersistentStore();
-    if (!m_maps.StoreTo(ps.get())) {
+    if (!m_maps.StoreTo(ps)) {
         MessageBox(m_hwnd,
                    L"Couldn't save map preferences.\n"
                    L"Map viewing will continue to work but the "
@@ -255,7 +255,7 @@ void MapListWindow::HandleDelMap(bool ErrorIfNoSelection) {
         }
         return;
     }
-    std::shared_ptr<const RasterMap> map = m_maps_from_item_id[index];
+    std::shared_ptr<RasterMap> map = m_maps_from_item_id[index];
     if (!m_maps.IsToplevelMap(map)) {
         MessageBox(m_hwnd, L"You can only delete map files, not their sub-views.",
                    L"Error", MB_OK | MB_ICONWARNING);
@@ -264,7 +264,7 @@ void MapListWindow::HandleDelMap(bool ErrorIfNoSelection) {
     m_maps.DeleteMap(index);
 
     std::unique_ptr<PersistentStore> ps = CreatePersistentStore();
-    if (!m_maps.StoreTo(ps.get())) {
+    if (!m_maps.StoreTo(ps)) {
         MessageBox(m_hwnd,
                    L"Couldn't save map preferences.\n"
                    L"Map viewing will continue to work but the "
@@ -276,7 +276,9 @@ void MapListWindow::HandleDelMap(bool ErrorIfNoSelection) {
     InsertMaps();
 }
 
-void MapListWindow::InsertRow(const std::shared_ptr<const RasterMap> &map, unsigned int level) {
+void MapListWindow::InsertRow(const std::shared_ptr<RasterMap> &map,
+                              unsigned int level)
+{
     ListViewRow lvrow;
     std::wstring directory, fname;
     std::tie(directory, fname) = GetAbsPath(map->GetFname());
@@ -307,7 +309,7 @@ void MapListWindow::InsertRow(const std::shared_ptr<const RasterMap> &map, unsig
 void MapListWindow::InsertMaps() {
     std::vector<std::shared_ptr<RasterMap> > representations;
     for (unsigned int index = 0; index < m_maps.Size(); index++) {
-        InsertRow(m_maps.GetSharedPtr(index), 0);
+        InsertRow(m_maps.Get(index), 0);
         auto representations = m_maps.GetAlternateRepresentations(index);
         for (auto it = representations.cbegin(); it != representations.cend(); ++it) {
             InsertRow(*it, 1);

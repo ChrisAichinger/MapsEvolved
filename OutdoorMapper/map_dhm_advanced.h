@@ -5,7 +5,7 @@
 
 class GradientMap : public RasterMap {
     public:
-        explicit GradientMap(std::shared_ptr<const RasterMap> orig_map);
+        explicit GradientMap(const std::shared_ptr<RasterMap> &orig_map);
         virtual RasterMap::RasterMapType GetType() const;
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
@@ -25,12 +25,12 @@ class GradientMap : public RasterMap {
 
         virtual const std::wstring &GetFname() const;
     private:
-        std::shared_ptr<const RasterMap> m_orig_map;
+        const std::shared_ptr<RasterMap> m_orig_map;
 };
 
 class SteepnessMap : public RasterMap {
     public:
-        explicit SteepnessMap(std::shared_ptr<const RasterMap> orig_map);
+        explicit SteepnessMap(const std::shared_ptr<RasterMap> &orig_map);
         virtual RasterMap::RasterMapType GetType() const;
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
@@ -50,6 +50,6 @@ class SteepnessMap : public RasterMap {
 
         virtual const std::wstring &GetFname() const;
     private:
-        std::shared_ptr<const RasterMap> m_orig_map;
+        const std::shared_ptr<RasterMap> m_orig_map;
 };
 #endif

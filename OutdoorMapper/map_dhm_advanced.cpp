@@ -8,7 +8,7 @@
 #include "util.h"
 #include "bezier.h"
 
-GradientMap::GradientMap(std::shared_ptr<const RasterMap> orig_map)
+GradientMap::GradientMap(const std::shared_ptr<RasterMap> &orig_map)
     : m_orig_map(orig_map)
 {
     assert(orig_map->GetType() == RasterMap::TYPE_DHM);
@@ -89,7 +89,7 @@ MapRegion GradientMap::GetRegion(
 #undef SRC
 
 
-SteepnessMap::SteepnessMap(std::shared_ptr<const RasterMap> orig_map)
+SteepnessMap::SteepnessMap(const std::shared_ptr<RasterMap> &orig_map)
     : m_orig_map(orig_map)
 {
     assert(orig_map->GetType() == RasterMap::TYPE_DHM);
@@ -142,7 +142,7 @@ MapRegion SteepnessMap::GetRegion(
         const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
 {
     double mpp;
-    if (!MetersPerPixel(*this, pos + size/2, &mpp)) {
+    if (!MetersPerPixel(m_orig_map, pos + size/2, &mpp)) {
         // Return zero-initialized memory block (notice the parentheses)
         return MapRegion(std::shared_ptr<unsigned int>(new unsigned int[size.x*size.y](),
                                              ArrayDeleter<unsigned int>()),

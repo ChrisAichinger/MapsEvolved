@@ -7,7 +7,7 @@
 
 
 
-MapPrinter::MapPrinter(std::shared_ptr<class MapDisplayManager> &display,
+MapPrinter::MapPrinter(const std::shared_ptr<class MapDisplayManager> &display,
                        double scale_factor)
     : m_display(display), m_scale(scale_factor)
 {}
@@ -24,7 +24,7 @@ bool MapPrinter::Print(HDC hdc) {
     double map_width_m = print_width_mm * m_scale / 1000.0;
     double map_height_m = print_width_mm * m_scale / 1000.0;
 
-    const RasterMap &map = m_display->GetBaseMap();
+    auto map = m_display->GetBaseMap();
     const MapPixelCoord &map_center = m_display->GetCenter();
     int dx, dy;
     for (dx=1; true; dx++) {
@@ -41,7 +41,7 @@ bool MapPrinter::Print(HDC hdc) {
     }
     dx = dy = 20000;
     MapPixelCoordInt center(map_center);
-    auto pixels = map.GetRegion(center, MapPixelDeltaInt(2*dx, 2*dy));
+    auto pixels = map->GetRegion(center, MapPixelDeltaInt(2*dx, 2*dy));
 
     BITMAPINFO bmi = { { sizeof(BITMAPINFOHEADER),
                          2*dx, 2*dy, 1, 32, BI_RGB, 0, 0, 0, 0, 0 }, 0 };

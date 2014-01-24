@@ -23,7 +23,7 @@
 
 RasterMap::~RasterMap() {};
 
-void GetAlternateRepresentation(std::shared_ptr<const RasterMap> map,
+void GetAlternateRepresentation(const std::shared_ptr<RasterMap> &map,
                 std::vector<std::shared_ptr<RasterMap> > &representations)
 {
     representations.clear();
@@ -40,7 +40,7 @@ RasterMapCollection::RasterMapCollection()
     : m_maps()
 { }
 
-void RasterMapCollection::AddMap(std::shared_ptr<class RasterMap> map) {
+void RasterMapCollection::AddMap(const std::shared_ptr<class RasterMap> &map) {
     struct RasterMapCollection::MapAndReps insert;
     insert.map = map;
     if (map->GetType() == RasterMap::TYPE_DHM) {
@@ -56,7 +56,9 @@ void RasterMapCollection::DeleteMap(unsigned int index) {
     m_maps.erase(m_maps.begin() + index);
 }
 
-bool RasterMapCollection::StoreTo(PersistentStore *store) const {
+bool RasterMapCollection::StoreTo(
+        const std::unique_ptr<PersistentStore> &store) const
+{
     if (!store->IsOpen())
         store->OpenWrite();
 
@@ -68,7 +70,9 @@ bool RasterMapCollection::StoreTo(PersistentStore *store) const {
     return store->SetStringList(L"maps", filenames);
 }
 
-bool RasterMapCollection::RetrieveFrom(PersistentStore *store) {
+bool RasterMapCollection::RetrieveFrom(
+        const std::unique_ptr<PersistentStore> &store)
+{
     if (!store->IsOpen())
         store->OpenRead();
 
@@ -83,7 +87,9 @@ bool RasterMapCollection::RetrieveFrom(PersistentStore *store) {
     return true;
 }
 
-bool RasterMapCollection::IsToplevelMap(const std::shared_ptr<const RasterMap> &map) const {
+bool RasterMapCollection::IsToplevelMap(
+        const std::shared_ptr<RasterMap> &map) const
+{
     for (auto it = m_maps.cbegin(); it != m_maps.cend(); ++it) {
         if (it->map == map)
             return true;
@@ -105,9 +111,10 @@ class RasterMapError : public RasterMap {
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &sz) const
         {
-            return MapRegion(std::shared_ptr<unsigned int>(new unsigned int[sz.x*sz.y](),
-                                                           ArrayDeleter<unsigned int>()),
-                             sz.x, sz.y);
+            return MapRegion(std::shared_ptr<unsigned int>(
+                            new unsigned int[sz.x*sz.y](),
+                            ArrayDeleter<unsigned int>()),
+                     sz.x, sz.y);
         }
         virtual bool PixelToPCS(double *x, double *y) const { return false; }
         virtual bool PCSToPixel(double *x, double *y) const { return false; }
@@ -178,7 +185,7 @@ bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
         return false;
     }
     double mpp;
-    if (!MetersPerPixel(*m_active_dhm, bezier_pos.GetBezierCenter(), &mpp)) {
+    if (!MetersPerPixel(m_active_dhm, bezier_pos.GetBezierCenter(), &mpp)) {
         return false;
     }
     unsigned int bezier_pixels = Bezier::N_POINTS - 1;
@@ -218,32 +225,34 @@ bool HeightFinder::LatLongWithinActiveDHM(const LatLon &pos) const {
                             MapPixelDelta(m_active_dhm->GetSize()));
 }
 
-const class RasterMap *
+std::shared_ptr<class RasterMap>
 HeightFinder::FindBestMap(const LatLon &pos,
                           RasterMap::RasterMapType type) const
 {
     for (unsigned int i=0; i < m_maps.Size(); i++) {
-        const RasterMap &map = m_maps.Get(i);
-        if (map.GetType() == type)
-            return &map;
+        auto map = m_maps.Get(i);
+        if (map->GetType() == type)
+            return map;
     }
     return NULL;
 }
 
-bool GetMapDistance(const RasterMap &map, const MapPixelCoord &pos,
+bool GetMapDistance(const std::shared_ptr<class RasterMap> &map,
+                    const MapPixelCoord &pos,
                     double dx, double dy, double *distance)
 {
     MapPixelCoord A(pos.x - dx, pos.y - dy);
     MapPixelCoord B(pos.x + dx, pos.y + dy);
     LatLon lA, lB;
-    if (!map.PixelToLatLon(A, &lA) || !map.PixelToLatLon(B, &lB)) {
+    if (!map->PixelToLatLon(A, &lA) || !map->PixelToLatLon(B, &lB)) {
         return false;
     }
-    Projection proj = map.GetProj();
+    Projection proj = map->GetProj();
     return proj.CalcDistance(lA.lat, lA.lon, lB.lat, lB.lon, distance);
 }
 
-bool MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
+bool MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
+                    const MapPixelCoord &pos,
                     double *mpp)
 {
     double mppx, mppy;
@@ -259,7 +268,8 @@ bool MetersPerPixel(const RasterMap &map, const MapPixelCoord &pos,
     return true;
 }
 
-bool MetersPerPixel(const RasterMap &map, const MapPixelCoordInt &pos,
+bool MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
+                    const MapPixelCoordInt &pos,
                     double *mpp)
 {
     return MetersPerPixel(map, MapPixelCoord(pos), mpp);

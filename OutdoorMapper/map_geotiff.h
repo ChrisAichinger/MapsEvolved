@@ -26,7 +26,7 @@ class TiffMap : public RasterMap {
 
         virtual const std::wstring &GetFname() const;
     private:
-        std::shared_ptr<class GeoTiff> m_geotiff;
+        const std::shared_ptr<class GeoTiff> m_geotiff;
         Projection m_proj;
 };
 

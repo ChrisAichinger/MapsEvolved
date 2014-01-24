@@ -44,8 +44,8 @@ class EXPORT DispOpenGL : public Display {
     private:
         DISALLOW_COPY_AND_ASSIGN(DispOpenGL);
 
-        std::shared_ptr<OGLContext> m_opengl;
-        std::shared_ptr<class TextureCache> m_texcache;
+        const std::shared_ptr<OGLContext> m_opengl;
+        const std::shared_ptr<class TextureCache> m_texcache;
 };
 
 class Texture {

@@ -99,7 +99,7 @@ LRESULT RootWindow::OnCreate()
     }
 
     std::unique_ptr<PersistentStore> store = CreatePersistentStore();
-    if (!m_maps.RetrieveFrom(store.get())) {
+    if (!m_maps.RetrieveFrom(store)) {
         MessageBox(m_hwnd,
                    L"Couldn't load map preferences.\n"
                    L"Using a default set of maps instead.",
@@ -109,7 +109,7 @@ LRESULT RootWindow::OnCreate()
         LoadMap(m_maps, L"dummyfile_doesn't_exist?.tif");
 
         // Store newly loaded maps right back to the registry
-        if (!m_maps.StoreTo(store.get())) {
+        if (!m_maps.StoreTo(store)) {
             MessageBox(m_hwnd,
                        L"Couldn't save map preferences.\n"
                        L"Map viewing will continue to work but the "
@@ -260,10 +260,10 @@ LRESULT RootWindow::HandleMessage(
                 Print(m_hwnd, po);
             }
             if (id == ID_SAVEMAPBMP) {
-                const RasterMap &map = m_mapdisplay->GetBaseMap();
+                auto map = m_mapdisplay->GetBaseMap();
                 MapPixelCoordInt center(m_mapdisplay->GetCenter());
                 MapPixelDeltaInt SaveSize(4096, 4096);
-                auto pixels = map.GetRegion(center - SaveSize / 2, SaveSize);
+                auto pixels = map->GetRegion(center - SaveSize / 2, SaveSize);
                 SaveBufferAsBMP(L"out.bmp", pixels.GetRawData(),
                                 SaveSize.x, SaveSize.y, 32);
             }
@@ -313,7 +313,7 @@ void RootWindow::UpdateStatusbar() {
     }
 
     LatLon ll;
-    if (!m_mapdisplay->GetBaseMap().PixelToLatLon(base_point, &ll)) {
+    if (!m_mapdisplay->GetBaseMap()->PixelToLatLon(base_point, &ll)) {
         SetSBText(0, L"lat/lon unknown");
         SetSBText(1, L"Height unknown");
         SetSBText(2, L"Terrain orientation unknown");

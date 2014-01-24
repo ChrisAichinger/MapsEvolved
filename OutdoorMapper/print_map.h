@@ -5,7 +5,7 @@
 
 class MapPrinter : public IPrintClient {
     public:
-        MapPrinter(std::shared_ptr<class MapDisplayManager> &display,
+        MapPrinter(const std::shared_ptr<class MapDisplayManager> &display,
                    double scale_factor);
         bool Print(HDC hdc);
 

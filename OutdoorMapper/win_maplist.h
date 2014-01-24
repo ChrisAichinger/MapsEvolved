@@ -32,8 +32,9 @@ class MapListWindow : public Window
         LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
         LRESULT OnCreate();
 
-        std::map<int, std::shared_ptr<const class RasterMap> > m_maps_from_item_id;
-        void InsertRow(const std::shared_ptr<const class RasterMap> &map, unsigned int level);
+        std::map<int, std::shared_ptr<class RasterMap> > m_maps_from_item_id;
+        void InsertRow(const std::shared_ptr<class RasterMap> &map,
+                       unsigned int level);
         void InsertMaps();
         void HandleAddMap();
         void HandleDelMap(bool ErrorIfNoSelection);

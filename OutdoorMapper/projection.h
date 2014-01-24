@@ -20,7 +20,7 @@ class EXPORT Projection {
         bool IsValid() const { return m_is_valid; }
 
     private:
-        std::shared_ptr<class ProjWrap> m_proj;
+        const std::shared_ptr<class ProjWrap> m_proj;
         std::string m_proj_str;
         bool m_is_valid;
 };
