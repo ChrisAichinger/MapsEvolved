@@ -10,19 +10,25 @@ def _(s): return s
 
 
 class MapManagerFrame(wx.Frame):
-    def __init__(self, maplist, mapdisplay):
+    def __init__(self, parent, maplist, mapdisplay):
         wx.Frame.__init__(self)
         # 3-argument LoadFrame() calls self.Create(), so skip 2-phase creation.
         res = util.get_resources("main")
-        if not res.LoadFrame(self, None, "MapManagerFrame"):
+        if not res.LoadFrame(self, parent, "MapManagerFrame"):
+            raise RuntimeError("Could not load map manager frame from XRC.")
+
+        self.menu = res.LoadMenu("MapManagerPopupMenu")
+        if not self.menu:
             raise RuntimeError("Could not load map manager frame from XRC.")
 
         util.bind_decorator_events(self)
 
+        self.parent = parent
         self.maplist = maplist
         self.mapdisplay = mapdisplay
         self.maptreectrl = xrc.XRCCTRL(self, 'MapTreeList')
         self.projstring_tb = xrc.XRCCTRL(self, 'ProjStringTextBox')
+        self.popup_list_item = None
 
         self.insert_maps()
 
@@ -75,12 +81,72 @@ class MapManagerFrame(wx.Frame):
                 id=xrc.XRCID('MapTreeList'))
     def on_item_activated(self, evt):
         # User double-clicked the item or pressed enter on it
-        rastermap = self.maptreectrl.GetItemData(evt.Item)
-        self.mapdisplay.ChangeMap(rastermap)
+        self.display_map(evt.Item)
+
+    @util.EVENT(wx.adv.EVT_TREELIST_ITEM_CONTEXT_MENU,
+                id=xrc.XRCID('MapTreeList'))
+    def on_item_contextmenu(self, evt):
+        self.popup_list_item = evt.Item
+        self.PopupMenu(self.menu)
+
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('DisplayMenuItem'))
+    def on_display_menu(self, evt):
+        self.display_map(self.popup_list_item)
+
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('DisplayOverlayMenuItem'))
+    def on_overlay_menu(self, evt):
+        self.overlay_map(self.popup_list_item)
+
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('RemoveMenuItem'))
+    def on_remove_map_menu(self, evt):
+        self.delete_map(self.popup_list_item)
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('MapAddTBButton'))
+    def on_add_map(self, evt):
+        self.add_map()
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('MapRemoveTBButton'))
     def on_remove_map(self, evt):
-        item = self.maptreectrl.GetSelection()
+        self.delete_map(self.maptreectrl.GetSelection())
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('DisplayTBButton'))
+    def on_display_tool(self, evt):
+        self.display_map(self.maptreectrl.GetSelection())
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('DisplayOverlayTBButton'))
+    def on_overlay_tool(self, evt):
+        self.overlay_map(self.maptreectrl.GetSelection())
+
+    def display_map(self, item):
+        rastermap = self.maptreectrl.GetItemData(item)
+        self.mapdisplay.ChangeMap(rastermap)
+
+    def overlay_map(self, item):
+        rastermap = self.maptreectrl.GetItemData(item)
+        self.mapdisplay.AddOverlayMap(rastermap)
+
+    def add_map(self):
+        openFileDialog = wx.FileDialog(
+                self, "Open Rastermap file", "", "",
+                "Supported files|*.tif;*.tiff|" +
+                "Geotiff Files (*.tif, *.tiff)|*.tif;*.tiff|" +
+                "All files (*.*)|*.*",
+                wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        if openFileDialog.ShowModal() == wx.ID_CANCEL:
+            return
+
+        pymaplib.LoadMap(self.maplist, openFileDialog.GetPath())
+        ps = pymaplib.CreatePersistentStore()
+        if not self.maplist.StoreTo(ps):
+            util.Warn(self,
+                      _("Couldn't save map preferences\n\n" +
+                        "Maps Evolved will continue to work, but the " +
+                        "map database changes will be lost on exit."))
+
+        self.maptreectrl.DeleteAllItems()
+        self.insert_maps()
+
+    def delete_map(self, item):
         if not item:
             util.Warn(self,
                       _("No map selected for removal\n\n" +
@@ -95,9 +161,7 @@ class MapManagerFrame(wx.Frame):
                         "instead."))
             return
         for i in range(self.maplist.Size()):
-            localptr = self.maplist.Get(i)
-            if localptr.get() == rastermap.get():
-                print("found")
+            if self.maplist.Get(i) == rastermap:
                 break
         else:
             raise RuntimeError("map to delete not found?")

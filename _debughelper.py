@@ -9,5 +9,6 @@ rmc = pymaplib.RasterMapCollection()
 for mapfile in maplist:
     pymaplib.LoadMap(rmc, mapfile)
 
-m1 = rmc.GetSharedPtr(0)
+m1 = rmc.Get(0)
+m2 = rmc.Get(0)
 p1 = m1.GetProj()

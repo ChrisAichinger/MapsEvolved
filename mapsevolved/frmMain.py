@@ -70,12 +70,27 @@ class MainFrame(wx.Frame):
             self.manage_maps_window.Show()
         else:
             self.manage_maps_window = frmMapManager.MapManagerFrame(
-                    self.maplist, self.mapdisplay)
+                    self, self.maplist, self.mapdisplay)
             self.manage_maps_window.Show()
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ExitMenuItem'))
     def on_exit(self, evt):
         self.Close()
+
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ZoomInMenuItem'))
+    def on_zoom_in_menu(self, evt):
+        self.mapdisplay.StepZoom(+1)
+        self.update_statusbar()
+
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ZoomOutMenuItem'))
+    def on_zoom_out_menu(self, evt):
+        self.mapdisplay.StepZoom(-1)
+        self.update_statusbar()
+
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ZoomResetMenuItem'))
+    def on_zoom_reset_menu(self, evt):
+        self.mapdisplay.SetZoomOneToOne()
+        self.update_statusbar()
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('WxInspectorMenuItem'))
     def on_wx_inspector(self, evt):
