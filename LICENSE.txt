@@ -29,3 +29,17 @@ The file pymaplib/xh_gizmos.py is taken from XRCed and is available under a
     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
     ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
     POSSIBILITY OF SUCH DAMAGE.
+
+
+The FamFamFam SILK icon set is located under images\famfamfam_silk_icons.
+It was created by Mark James (<mjames@gmail.com>) and can be found online at:
+    http://www.famfamfam.com/lab/icons/silk/
+
+It is available under two licenses:
+    * Creative Commons Attribution 2.5 License
+    * Creative Commons Attribution 3.0 License
+
+Custom additions to this library (e.g. map_dhm.png) are also available under
+both of those licenses. Furthermore, they can be used under the license
+governing Maps Evolved as a whole (see above, as soon as that is decided).
+
