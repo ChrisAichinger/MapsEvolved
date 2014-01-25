@@ -14,6 +14,7 @@ static int SmartptrProxy_setattro(PyObject *o, PyObject *name, PyObject *val);
 static void SmartptrProxy_dealloc(PyObject *self);
 static int SmartptrProxy_traverse(PyObject *self, visitproc visit, void *arg);
 static int SmartptrProxy_clear(PyObject *self);
+static PyObject *SmartptrProxy_richcompare(PyObject *a, PyObject *b, int op);
 
 
 typedef struct {
@@ -63,7 +64,7 @@ static sipWrapperType SmartptrProxyType = { { {
         SmartptrProxy_doc,           /* tp_doc */
         SmartptrProxy_traverse,      /* tp_traverse */
         SmartptrProxy_clear,         /* tp_clear */
-        0,                           /* tp_richcompare */
+        SmartptrProxy_richcompare,   /* tp_richcompare */
         0,                           /* tp_weaklistoffset */
         0,                           /* tp_iter */
         0,                           /* tp_iternext */
@@ -241,4 +242,34 @@ static int SmartptrProxy_traverse(PyObject *self, visitproc visit, void *arg) {
 static int SmartptrProxy_clear(PyObject *self) {
     Py_CLEAR(reinterpret_cast<SmartptrProxyObject*>(self)->target);
     return SmartptrProxyPyType->tp_base->tp_clear(self);
+}
+
+static PyObject *SmartptrProxy_richcompare(PyObject *a, PyObject *b, int op) {
+    /* We need a custom compare function, as the default object_richcompare
+       (in typeobject.c) simply does pointer comparison.
+       Thus, when comparing two SmartptrProxy objects, the SmartptrProxyObject
+       pointers are compared, instead of the ->target pointers. */
+    PyObject *SP_PyObject = reinterpret_cast<PyObject *>(SmartptrProxyPyType);
+    int a_isinstance = PyObject_IsInstance(a, SP_PyObject);
+    if (a_isinstance == -1) {
+        return NULL;  // Error set by PyObject_IsInstance
+    }
+    int b_isinstance = PyObject_IsInstance(b, SP_PyObject);
+    if (b_isinstance == -1) {
+        return NULL;  // Error set by PyObject_IsInstance
+    }
+    if (!a_isinstance || !b_isinstance) {
+        // If either a or b are not SmartptrProxy objects, let the base class
+        // compare function handle it.
+        return SmartptrProxyPyType->tp_base->tp_richcompare(a, b, op);
+    }
+    if (!populate_target(a)) {
+        return NULL;
+    }
+    if (!populate_target(b)) {
+        return NULL;
+    }
+    auto a_sp = reinterpret_cast<SmartptrProxyObject*>(a);
+    auto b_sp = reinterpret_cast<SmartptrProxyObject*>(b);
+    return PyObject_RichCompare(a_sp->target, b_sp->target, op);
 }
