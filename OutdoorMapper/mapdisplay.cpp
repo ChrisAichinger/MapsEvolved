@@ -4,6 +4,7 @@
 #include <list>
 #include <cassert>
 #include <limits>
+#include <algorithm>
 
 #include "rastermap.h"
 #include "disp_ogl.h"
@@ -86,10 +87,22 @@ void MapDisplayManager::AddOverlayMap(
         const std::shared_ptr<class RasterMap> &new_map)
 {
     // Add new overlay or move existing overlay to last (topmost) position
-    m_overlays.remove(new_map);
-    m_overlays.push_back(new_map);
+    auto it = m_overlays.begin();
+    for (; it != m_overlays.end(); ++it) {
+        if (it->GetMap() == new_map)
+            break;
+    }
+    if (it != m_overlays.end()) {
+        m_overlays.erase(it);
+    }
+    m_overlays.push_back(OverlaySpec(new_map, 50));
     m_display->ForceRepaint();
 }
+
+void MapDisplayManager::SetOverlayList(OverlayList overlaylist) {
+     m_overlays.swap(overlaylist);
+     m_display->ForceRepaint();
+};
 
 void MapDisplayManager::Paint() {
     DisplayDelta half_disp_size_d(m_display->GetDisplaySize() / m_zoom / 2.0);
@@ -105,7 +118,7 @@ void MapDisplayManager::Paint() {
     for (auto ci = m_overlays.cbegin(); ci != m_overlays.cend(); ++ci) {
         MapPixelCoordInt overlay_pixel_tl, overlay_pixel_br;
         auto overlay = *ci;
-        if (!CalcOverlayTiles(overlay,
+        if (!CalcOverlayTiles(overlay.GetMap(),
                               MapPixelCoordInt(m_center - half_disp_size),
                               MapPixelCoordInt(m_center + half_disp_size),
                               &overlay_pixel_tl, &overlay_pixel_br))
@@ -115,8 +128,8 @@ void MapDisplayManager::Paint() {
         }
         MapPixelCoordInt overlay_tiles_tl(overlay_pixel_tl, TILE_SIZE);
         MapPixelCoordInt overlay_tiles_br(overlay_pixel_br, TILE_SIZE);
-        PaintOneLayer(&orders, overlay, overlay_tiles_tl, overlay_tiles_br,
-                      tile_size, 0.5);
+        PaintOneLayer(&orders, overlay.GetMap(), overlay_tiles_tl, overlay_tiles_br,
+                      tile_size, overlay.GetTransparency());
     }
     m_display->Render(orders);
 }

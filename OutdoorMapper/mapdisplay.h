@@ -6,6 +6,28 @@
 #include "util.h"
 #include "coordinates.h"
 
+class EXPORT OverlaySpec {
+    public:
+        OverlaySpec() : m_map(nullptr), m_transparency(0) {};
+        OverlaySpec(const std::shared_ptr<class RasterMap> &map,
+                    float transparency = 50.0f)
+            : m_map(map), m_transparency(transparency)
+        {};
+        std::shared_ptr<class RasterMap> GetMap() const { return m_map; }
+        float GetTransparency() const { return m_transparency; }
+        void SetMap(const std::shared_ptr<class RasterMap> &map) {
+            m_map = map;
+        }
+        void SetTransparency(float transparency) {
+            m_transparency = transparency;
+        }
+    private:
+        std::shared_ptr<class RasterMap> m_map;
+        float m_transparency;
+};
+
+typedef std::vector<OverlaySpec> OverlayList;
+
 class EXPORT MapDisplayManager {
     public:
         MapDisplayManager(const std::shared_ptr<class DispOpenGL> &display,
@@ -19,8 +41,10 @@ class EXPORT MapDisplayManager {
 
         void ChangeMap(const std::shared_ptr<class RasterMap> &new_map,
                        bool try_preserve_pos=true);
-        void AddOverlayMap(const std::shared_ptr<class RasterMap> &new_map);
 
+        void AddOverlayMap(const std::shared_ptr<class RasterMap> &new_map);
+        const OverlayList &GetOverlayList() const { return m_overlays; };
+        void SetOverlayList(OverlayList overlaylist);
         void Resize(unsigned int width, unsigned int height);
         void StepZoom(double steps);
         // The map location under the mouse is held constant
@@ -72,7 +96,7 @@ class EXPORT MapDisplayManager {
 
         const std::shared_ptr<class DispOpenGL> m_display;
         std::shared_ptr<class RasterMap> m_base_map;
-        std::list<std::shared_ptr<class RasterMap> > m_overlays;
+        OverlayList m_overlays;
 
         BaseMapCoord m_center;
         double m_zoom;
