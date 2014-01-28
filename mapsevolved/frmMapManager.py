@@ -69,6 +69,9 @@ class MapManagerFrame(wx.Frame):
     @util.EVENT(wx.adv.EVT_TREELIST_SELECTION_CHANGED,
                 id=xrc.XRCID('MapTreeList'))
     def on_selection_changed(self, evt):
+        if not self.maptreectrl.GetSelection().IsOk():
+            self.projstring_tb.Value = ""
+            return
         rastermap = self.maptreectrl.GetItemData(evt.Item)
         if rastermap.GetType() == rastermap.TYPE_ERROR:
             self.projstring_tb.Value = "Failed to open the map."
@@ -107,14 +110,29 @@ class MapManagerFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('MapRemoveTBButton'))
     def on_remove_map(self, evt):
+        if not self.maptreectrl.GetSelection().IsOk():
+            util.Warn(self,
+                      _("No map selected!\n\n" +
+                        "Please select the map you want to remove."))
+            return
         self.delete_map(self.maptreectrl.GetSelection())
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('DisplayTBButton'))
     def on_display_tool(self, evt):
+        if not self.maptreectrl.GetSelection().IsOk():
+            util.Warn(self,
+                      _("No map selected!\n\n" +
+                        "Please select the map you want to display."))
+            return
         self.display_map(self.maptreectrl.GetSelection())
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('DisplayOverlayTBButton'))
     def on_overlay_tool(self, evt):
+        if not self.maptreectrl.GetSelection().IsOk():
+            util.Warn(self,
+                      _("No map selected!\n\n" +
+                        "Please select the map you want to overlay."))
+            return
         self.overlay_map(self.maptreectrl.GetSelection())
 
     def display_map(self, item):
