@@ -59,6 +59,8 @@ class MainFrame(wx.Frame):
         ctrl = CustomRearrangeList(self, id=xrc.XRCID('LayerListBox'))
         res.AttachUnknownControl('LayerListBox', ctrl, self)
 
+        self.set_initial_size()
+
         util.bind_decorator_events(self)
 
         self.panel = xrc.XRCCTRL(self, 'MapPanel')
@@ -417,3 +419,11 @@ class MainFrame(wx.Frame):
         size = self.layerlistbox.Count - 1
         layers = [self.layerlistbox.GetClientData(i) for i in range(size)]
         self.mapdisplay.SetOverlayList(reversed(layers))
+
+    def set_initial_size(self):
+        disp = wx.Display(wx.Display.GetFromWindow(self))
+        area = disp.GetClientArea()
+        bestsize = self.GetBestSize()
+        width = (area.Width + bestsize.Width) // 2
+        height = (area.Height + bestsize.Height) // 2
+        self.SetSize((width, height))

@@ -156,7 +156,6 @@
         <object class="wxBoxSizer">
           <object class="sizeritem">
             <object class="wxPanel" name="MapPanel">
-              <size>300,200</size>
               <style>wxFULL_REPAINT_ON_RESIZE</style>
               <XRCED>
                 <events>EVT_PAINT</events>
@@ -164,7 +163,7 @@
             </object>
             <option>3</option>
             <flag>wxALL|wxEXPAND</flag>
-            <minsize>300,200</minsize>
+            <minsize>500,200</minsize>
           </object>
           <object class="spacer">
             <size>5</size>
@@ -276,9 +275,9 @@
               <widths>-1, 150, 250</widths>
               <style>wxTR_SINGLE</style>
             </object>
-            <option>1</option>
+            <option>3</option>
             <flag>wxALL|wxEXPAND</flag>
-            <minsize>400,200</minsize>
+            <minsize>600,300</minsize>
           </object>
           <orient>wxVERTICAL</orient>
           <object class="sizeritem">
