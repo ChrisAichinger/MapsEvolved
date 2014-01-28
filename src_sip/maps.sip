@@ -148,6 +148,28 @@ DispOpenGLShPtr CreateOGLDisplay(size_t handle);
 %End
 
 
+class OverlaySpec {
+%TypeHeaderCode
+#include "rastermap.h"
+#include "mapdisplay.h"
+%End
+    public:
+        OverlaySpec();
+        OverlaySpec(const RasterMapShPtr &map, bool enabled = true,
+                    float opacity = 50.0f);
+        RasterMapShPtr GetMap() const;
+        bool GetEnabled() const;
+        float GetTransparency() const;
+        void SetMap(const RasterMapShPtr &map);
+        void SetEnabled(bool enabled);
+        void SetTransparency(float transparency);
+        %Property(name="Map", get=GetMap, set=SetMap)
+        %Property(name="Enabled", get=GetEnabled, set=SetEnabled)
+        %Property(name="Transparency", get=GetTransparency, set=SetTransparency)
+};
+
+typedef std::vector<OverlaySpec> OverlayList;
+
 class MapDisplayManager /NoDefaultCtors/ {
 %TypeHeaderCode
 #include "rastermap.h"
@@ -166,6 +188,8 @@ class MapDisplayManager /NoDefaultCtors/ {
         void ChangeMap(const RasterMapShPtr &new_map,
                        bool try_preserve_pos=true);
         void AddOverlayMap(const RasterMapShPtr new_map);
+        const OverlayList &GetOverlayList() const;
+        void SetOverlayList(OverlayList overlaylist);
 
         void Resize(unsigned int width, unsigned int height);
         void StepZoom(double steps);

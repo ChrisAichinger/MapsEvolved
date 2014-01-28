@@ -12,17 +12,63 @@ from mapsevolved import frmMapManager, util
 def _(s): return s
 
 
+class CustomRearrangeList(wx.CheckListBox):
+    def __init__(self, *args, **kwargs):
+        wx.CheckListBox.__init__(self, *args, **kwargs)
+
+    def swap(self, index1, index2):
+        sel = self.Selection
+        checked = self.CheckedItems
+        clientdata = [self.GetClientData(i) for i in range(self.Count)]
+        items = self.Items
+        items[index1], items[index2] = items[index2], items[index1]
+        self.Items = items
+        if sel == index1:
+            self.Selection = index2
+        elif sel == index2:
+            self.Selection = index1
+        self.Check(index1, index2 in checked)
+        self.Check(index2, index1 in checked)
+        for index in checked:
+            if index == index1 or index == index2:
+                continue
+            self.Check(index)
+        for i, data in enumerate(clientdata):
+            if i == index1:
+                self.SetClientData(index2, data)
+            elif i == index2:
+                self.SetClientData(index1, data)
+            else:
+                self.SetClientData(i, data)
+
+    def MoveCurrentUp(self):
+        self.swap(self.Selection, self.Selection - 1)
+
+    def MoveCurrentDown(self):
+        self.swap(self.Selection, self.Selection + 1)
+
+
 class MainFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self)
         # 3-argument LoadFrame() calls self.Create(), so skip 2-phase creation.
-        if not util.get_resources("main").LoadFrame(self, None, "MainFrame"):
+        res = util.get_resources("main")
+        if not res.LoadFrame(self, None, "MainFrame"):
             raise RuntimeError("Could not load main frame from XRC file.")
+
+        ctrl = CustomRearrangeList(self, id=xrc.XRCID('LayerListBox'))
+        res.AttachUnknownControl('LayerListBox', ctrl, self)
 
         util.bind_decorator_events(self)
 
         self.panel = xrc.XRCCTRL(self, 'MapPanel')
         self.statusbar = xrc.XRCCTRL(self, 'MainStatusBar')
+        self.layerlistbox = xrc.XRCCTRL(self, 'LayerListBox')
+        self.layer_move_up_btn = xrc.XRCCTRL(self, 'LayerMoveUpBtn')
+        self.layer_move_down_btn = xrc.XRCCTRL(self, 'LayerMoveDownBtn')
+        self.layer_opacity_slider = xrc.XRCCTRL(self, 'OpacitySlider')
+        self.layermgr_panel = xrc.XRCCTRL(self, 'LayerMgrPanel')
+        self.toolbar = xrc.XRCCTRL(self, 'MainToolbar')
 
         self.maplist = pymaplib.RasterMapCollection()
         with pymaplib.DefaultPersistentStore.Read() as ps:
@@ -34,11 +80,14 @@ class MainFrame(wx.Frame):
                                                      self.maplist.Get(0))
         self.heightfinder = pymaplib.HeightFinder(self.maplist)
 
-        self.dragEnabled = False
-        self.dragSuppress = False
-        self.dragStartPos = None
-
+        self.drag_enabled = False
+        self.drag_suppress = False
+        self.drag_last_pos = None
         self.manage_maps_window = None
+        self.have_shown_layermgr_once = False
+
+        self.update_layerlist_from_map()
+        self.expand_to_fit_sizer()
 
     @util.EVENT(wx.EVT_CLOSE, id=xrc.XRCID('MainFrame'))
     def on_close_window(self, evt):
@@ -129,7 +178,7 @@ class MainFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_CHAR, id=xrc.XRCID('MapPanel'))
     def on_char(self, evt):
-        if self.dragEnabled and evt.GetKeyCode() == wx.WXK_ESCAPE:
+        if self.drag_enabled and evt.GetKeyCode() == wx.WXK_ESCAPE:
             self.panel.ReleaseMouse()
             self.on_capture_changed(evt)
         else:
@@ -138,13 +187,13 @@ class MainFrame(wx.Frame):
     @util.EVENT(wx.EVT_LEFT_DOWN, id=xrc.XRCID('MapPanel'))
     def on_left_down(self, evt):
         evt.Skip()
-        self.dragLastPos = evt.GetPosition()
-        self.dragSuppress = False
+        self.drag_last_pos = evt.GetPosition()
+        self.drag_suppress = False
 
     @util.EVENT(wx.EVT_LEFT_UP, id=xrc.XRCID('MapPanel'))
     def on_left_up(self, evt):
         evt.Skip()
-        if self.dragEnabled:
+        if self.drag_enabled:
             self.panel.ReleaseMouse()
             self.on_capture_changed(evt)
 
@@ -152,18 +201,18 @@ class MainFrame(wx.Frame):
     def on_mouse_motion(self, evt):
         # Ignore mouse movement if we're not dragging.
         if evt.Dragging() and evt.LeftIsDown():
-            if not self.dragSuppress and not self.dragEnabled:
+            if not self.drag_suppress and not self.drag_enabled:
                 # Begin the drag operation
-                self.dragEnabled = True
+                self.drag_enabled = True
                 self.panel.CaptureMouse()
                 self.Cursor = wx.Cursor(wx.CURSOR_HAND)
 
-            if not self.dragEnabled:
+            if not self.drag_enabled:
                 return
 
             pos = evt.GetPosition()
-            delta = pos - self.dragLastPos
-            self.dragLastPos = pos
+            delta = pos - self.drag_last_pos
+            self.drag_last_pos = pos
             self.mapdisplay.DragMap(
                     pymaplib.DisplayDelta(delta.x,delta.y))
             self.panel.Refresh(eraseBackground=False)
@@ -176,7 +225,7 @@ class MainFrame(wx.Frame):
     # CAPTURE_LOST is called ONLY for to external reasons (e.g. Alt-Tab).
     # CAPTURE_CHANGED is called by ReleaseMouse() and for external reasons.
     # In practice:
-    # We must handle this to exit self.dragEnabled mode without missing
+    # We must handle this to exit self.drag_enabled mode without missing
     # corner cases. Due to platform differences, it is not entirely clear
     # when LOST/CHANGED are received. So we make on_capture_changed
     # idempotent, and use it to handle both events.
@@ -184,8 +233,8 @@ class MainFrame(wx.Frame):
     @util.EVENT(wx.EVT_MOUSE_CAPTURE_LOST, id=xrc.XRCID('MapPanel'))
     @util.EVENT(wx.EVT_MOUSE_CAPTURE_CHANGED, id=xrc.XRCID('MapPanel'))
     def on_capture_changed(self, evt):
-        self.dragEnabled = False
-        self.dragSuppress = True
+        self.drag_enabled = False
+        self.drag_suppress = True
         self.Cursor = wx.Cursor()
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ZoomInTBButton'))
@@ -202,6 +251,52 @@ class MainFrame(wx.Frame):
     def on_zoom_reset(self, evt):
         self.mapdisplay.SetZoomOneToOne()
         self.update_statusbar()
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ToggleLayerMgrTBButton'))
+    def on_toggle_layermgr_btn(self, evt):
+        self.show_layermgr(evt.GetInt())
+
+    @util.EVENT(wx.EVT_SCROLL, id=xrc.XRCID('OpacitySlider'))
+    def on_opacity_slider(self, evt):
+        sel_index = self.layerlistbox.Selection
+        data = self.layerlistbox.GetClientData(sel_index)
+        data.Transparency = 1 - evt.Position / 100
+        self.update_map_from_layerlist()
+
+    @util.EVENT(wx.EVT_BUTTON, id=xrc.XRCID('LayerMoveDownBtn'))
+    def on_layer_move_down(self, evt):
+        self.layerlistbox.MoveCurrentDown()
+        self.update_layermgr_ui()
+        self.update_map_from_layerlist()
+
+    @util.EVENT(wx.EVT_BUTTON, id=xrc.XRCID('LayerMoveUpBtn'))
+    def on_layer_move_up(self, evt):
+        self.layerlistbox.MoveCurrentUp()
+        self.update_layermgr_ui()
+        self.update_map_from_layerlist()
+
+    @util.EVENT(wx.EVT_LISTBOX, id=xrc.XRCID('LayerListBox'))
+    def on_layerlistbox_select(self, evt):
+        self.update_layermgr_ui()
+
+    @util.EVENT(wx.EVT_CHECKLISTBOX, id=xrc.XRCID('LayerListBox'))
+    def on_layer_check(self, evt):
+        index = evt.GetInt()
+        if index == self.layerlistbox.Count - 1:
+            if not self.layerlistbox.IsChecked(index):
+                self.layerlistbox.Check(index)
+            self.layerlistbox.SetSelection(index)
+            # Manually call our select handler, since SetSelection() doesn't
+            # invoke it.
+            self.on_layerlistbox_select(None)
+            return
+        data = self.layerlistbox.GetClientData(index)
+        data.Enabled = self.layerlistbox.IsChecked(index)
+        self.update_map_from_layerlist()
+        # Set selection after updating the map, so we call update_layermgr_ui
+        # with the new data already.
+        self.layerlistbox.SetSelection(index)
+        self.on_layerlistbox_select(None)
 
     def update_statusbar(self):
         pos = self.panel.ScreenToClient(wx.GetMousePosition())
@@ -241,3 +336,84 @@ class MainFrame(wx.Frame):
         self.statusbar.SetStatusText(
                _("Steepness: %.1f°") % ti.steepness_deg, i=3)
 
+    def set_basemap(self, rastermap):
+        self.mapdisplay.ChangeMap(rastermap)
+        self.update_layerlist_from_map()
+
+    def add_overlay(self, rastermap):
+        self.mapdisplay.AddOverlayMap(rastermap)
+        if not self.have_shown_layermgr_once:
+            # Show the layer manager the first time the user adds an overlay.
+            # Demonstrate the functionality without bothering the user again if
+            # she hides it.
+            self.have_shown_layermgr_once = True
+            self.toolbar.ToggleTool(xrc.XRCID('ToggleLayerMgrTBButton'), True)
+            self.show_layermgr(True)
+        self.update_layerlist_from_map()
+
+    def show_layermgr(self, do_show=True):
+        sizer = self.GetSizer()
+        sizer.Show(self.layermgr_panel, do_show)
+        sizer.Layout()
+        self.expand_to_fit_sizer()
+
+    def expand_to_fit_sizer(self):
+        minsize = self.GetSizer().GetMinSize()
+        clientsize = self.GetClientSize()
+        clientsize.x = max(minsize.x, clientsize.x)
+        clientsize.y = max(minsize.y, clientsize.y)
+        self.SetClientSize(clientsize)
+
+    def name_from_map(self, rastermap, is_basemap):
+        basename = os.path.basename(rastermap.GetFname())
+        rootname, ext = os.path.splitext(basename)
+        if is_basemap:
+            rootname = '**' + rootname + '**'
+        return rootname
+
+    def update_layermgr_ui(self):
+        sel_idx = self.layerlistbox.Selection
+        self.layer_move_up_btn.Enable(
+                self.layerlistbox.Selection != -1 and
+                self.layerlistbox.Selection != 0 and
+                self.layerlistbox.Selection < self.layerlistbox.Count - 1)
+        self.layer_move_down_btn.Enable(
+                self.layerlistbox.Selection != -1 and
+                self.layerlistbox.Selection < self.layerlistbox.Count - 2)
+        self.layer_opacity_slider.Enable(
+                self.layerlistbox.Selection != -1 and
+                self.layerlistbox.Selection < self.layerlistbox.Count - 1)
+        if sel_idx >= self.layerlistbox.Count - 1:
+            # base map
+            self.layer_opacity_slider.Value = 100
+        elif sel_idx < 0:
+            self.layer_opacity_slider.Value = 100
+        else:
+            transp = self.layerlistbox.GetClientData(sel_idx).Transparency
+            self.layer_opacity_slider.Value = 100 - transp * 100
+
+    def update_layerlist_from_map(self):
+        self.layerlistbox.Clear()
+        # We want the top map to be on top (index 0), but ODM draws the layers
+        # from 0 to len() - 1. Thus, we reverse the layer list here.
+        overlays = reversed(self.mapdisplay.GetOverlayList())
+        for overlayspec in overlays:
+            rastermap = overlayspec.GetMap()
+            name = self.name_from_map(rastermap, is_basemap=False)
+            idx = self.layerlistbox.Append(name)
+            self.layerlistbox.Check(idx, overlayspec.Enabled)
+            self.layerlistbox.SetClientData(idx, overlayspec)
+
+        rastermap = self.mapdisplay.GetBaseMap()
+        name = self.name_from_map(rastermap, is_basemap=True)
+        idx = self.layerlistbox.Append(name)
+        self.layerlistbox.Check(idx)
+        self.layerlistbox.SetClientData(idx, None)
+
+        self.update_layermgr_ui()
+
+    def update_map_from_layerlist(self):
+        # We disregard the basemap entirely (Count - 1)
+        size = self.layerlistbox.Count - 1
+        layers = [self.layerlistbox.GetClientData(i) for i in range(size)]
+        self.mapdisplay.SetOverlayList(reversed(layers))

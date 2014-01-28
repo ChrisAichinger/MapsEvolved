@@ -119,11 +119,13 @@ class MapManagerFrame(wx.Frame):
 
     def display_map(self, item):
         rastermap = self.maptreectrl.GetItemData(item)
-        self.mapdisplay.ChangeMap(rastermap)
+        self.parent.set_basemap(rastermap)
 
     def overlay_map(self, item):
         rastermap = self.maptreectrl.GetItemData(item)
-        self.mapdisplay.AddOverlayMap(rastermap)
+        # Let the parent window add the map, so it can update it's overlay list
+        # as well.
+        self.parent.add_overlay(rastermap)
 
     def add_map(self):
         openFileDialog = wx.FileDialog(

@@ -66,9 +66,7 @@
         <label>&amp;Help</label>
       </object>
     </object>
-    <object class="wxToolBar">
-      <bitmapsize>16</bitmapsize>
-      <style>wxTB_FLAT|wxTB_DOCKABLE</style>
+    <object class="wxToolBar" name="MainToolbar">
       <object class="tool" name="ManageMapsTBButton">
         <bitmap>images\famfamfam_silk_icons\database.png</bitmap>
         <tooltip>Manage Maps</tooltip>
@@ -94,8 +92,66 @@
         <bitmap>images\famfamfam_silk_icons\zoom_exact.png</bitmap>
         <tooltip>Reset Zoom</tooltip>
       </object>
+      <object class="tool" name="ToggleLayerMgrTBButton">
+        <bitmap>images\famfamfam_silk_icons\layers.png</bitmap>
+        <toggle>1</toggle>
+        <tooltip>Show/Hide Layer Manager</tooltip>
+      </object>
+      <bitmapsize>16</bitmapsize>
+      <style>wxTB_FLAT|wxTB_DOCKABLE</style>
     </object>
     <object class="wxBoxSizer">
+      <object class="sizeritem">
+        <object class="wxPanel" name="LayerMgrPanel">
+          <object class="wxBoxSizer">
+            <object class="sizeritem">
+              <object class="wxStaticText" name="OpacityStatic">
+                <label>Opacity</label>
+              </object>
+              <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+            </object>
+            <object class="sizeritem">
+              <object class="wxSlider" name="OpacitySlider">
+                <value>100</value>
+                <min>0</min>
+                <max>100</max>
+                <tickfreq>25</tickfreq>
+                <style>wxSL_HORIZONTAL|wxSL_AUTOTICKS</style>
+              </object>
+              <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+            </object>
+            <object class="sizeritem">
+              <object class="wxBoxSizer">
+                <object class="sizeritem">
+                  <object class="wxBitmapButton" name="LayerMoveDownBtn">
+                    <bitmap>images\famfamfam_silk_icons\arrow_down.png</bitmap>
+                  </object>
+                  <flag>wxALIGN_CENTRE</flag>
+                </object>
+                <object class="spacer">
+                  <size>5</size>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBitmapButton" name="LayerMoveUpBtn">
+                    <bitmap>images\famfamfam_silk_icons\arrow_up.png</bitmap>
+                  </object>
+                  <flag>wxALIGN_CENTRE</flag>
+                </object>
+                <orient>wxHORIZONTAL</orient>
+              </object>
+              <flag>wxALIGN_CENTRE</flag>
+            </object>
+            <object class="sizeritem">
+              <object class="unknown" name="LayerListBox"/>
+              <option>1</option>
+              <flag>wxALL|wxEXPAND|wxADJUST_MINSIZE</flag>
+            </object>
+            <orient>wxVERTICAL</orient>
+          </object>
+          <hidden>1</hidden>
+        </object>
+        <flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
+      </object>
       <object class="sizeritem">
         <object class="wxBoxSizer">
           <object class="sizeritem">
@@ -171,7 +227,7 @@
         </object>
         <option>1</option>
         <flag>wxALL|wxEXPAND</flag>
-        <border>2</border>
+        <border>1</border>
       </object>
       <orient>wxHORIZONTAL</orient>
     </object>
