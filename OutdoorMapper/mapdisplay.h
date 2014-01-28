@@ -10,19 +10,23 @@ class EXPORT OverlaySpec {
     public:
         OverlaySpec() : m_map(nullptr), m_transparency(0) {};
         OverlaySpec(const std::shared_ptr<class RasterMap> &map,
-                    float transparency = 50.0f)
-            : m_map(map), m_transparency(transparency)
+                    bool enabled = true,
+                    float transparency = 0.5f)
+            : m_map(map), m_enabled(enabled), m_transparency(transparency)
         {};
         std::shared_ptr<class RasterMap> GetMap() const { return m_map; }
+        bool GetEnabled() const { return m_enabled; }
         float GetTransparency() const { return m_transparency; }
         void SetMap(const std::shared_ptr<class RasterMap> &map) {
             m_map = map;
         }
+        void SetEnabled(bool enabled) { m_enabled = enabled; }
         void SetTransparency(float transparency) {
             m_transparency = transparency;
         }
     private:
         std::shared_ptr<class RasterMap> m_map;
+        bool m_enabled;
         float m_transparency;
 };
 

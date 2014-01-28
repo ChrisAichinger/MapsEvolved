@@ -95,7 +95,7 @@ void MapDisplayManager::AddOverlayMap(
     if (it != m_overlays.end()) {
         m_overlays.erase(it);
     }
-    m_overlays.push_back(OverlaySpec(new_map, 50));
+    m_overlays.push_back(OverlaySpec(new_map));
     m_display->ForceRepaint();
 }
 
@@ -116,9 +116,11 @@ void MapDisplayManager::Paint() {
     PaintOneLayer(&orders, m_base_map,
                   tile_topleft, tile_botright, tile_size);
     for (auto ci = m_overlays.cbegin(); ci != m_overlays.cend(); ++ci) {
+        if (!ci->GetEnabled()) {
+            continue;
+        }
         MapPixelCoordInt overlay_pixel_tl, overlay_pixel_br;
-        auto overlay = *ci;
-        if (!CalcOverlayTiles(overlay.GetMap(),
+        if (!CalcOverlayTiles(ci->GetMap(),
                               MapPixelCoordInt(m_center - half_disp_size),
                               MapPixelCoordInt(m_center + half_disp_size),
                               &overlay_pixel_tl, &overlay_pixel_br))
@@ -128,8 +130,9 @@ void MapDisplayManager::Paint() {
         }
         MapPixelCoordInt overlay_tiles_tl(overlay_pixel_tl, TILE_SIZE);
         MapPixelCoordInt overlay_tiles_br(overlay_pixel_br, TILE_SIZE);
-        PaintOneLayer(&orders, overlay.GetMap(), overlay_tiles_tl, overlay_tiles_br,
-                      tile_size, overlay.GetTransparency());
+        PaintOneLayer(&orders, ci->GetMap(),
+                      overlay_tiles_tl, overlay_tiles_br,
+                      tile_size, ci->GetTransparency());
     }
     m_display->Render(orders);
 }
