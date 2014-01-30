@@ -6,7 +6,7 @@
 class GradientMap : public RasterMap {
     public:
         explicit GradientMap(const std::shared_ptr<RasterMap> &orig_map);
-        virtual RasterMap::RasterMapType GetType() const;
+        virtual GeoDrawable::DrawableType GetType() const;
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
         virtual MapPixelDeltaInt GetSize() const;
@@ -31,7 +31,7 @@ class GradientMap : public RasterMap {
 class SteepnessMap : public RasterMap {
     public:
         explicit SteepnessMap(const std::shared_ptr<RasterMap> &orig_map);
-        virtual RasterMap::RasterMapType GetType() const;
+        virtual GeoDrawable::DrawableType GetType() const;
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
         virtual MapPixelDeltaInt GetSize() const;

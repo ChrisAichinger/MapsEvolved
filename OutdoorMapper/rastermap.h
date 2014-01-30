@@ -28,30 +28,30 @@ class EXPORT MapRegion {
         unsigned int m_height;
 };
 
-class EXPORT ODM_INTERFACE RasterMap {
+
+class EXPORT GeoDrawable {
     public:
-        enum RasterMapType {
+        enum DrawableType {
             TYPE_MAP = 1,
             TYPE_DHM,
-            TYPE_GRADIENT,
-            TYPE_STEEPNESS,
+            TYPE_GRADIENT_MAP,
+            TYPE_STEEPNESS_MAP,
             TYPE_LEGEND,
             TYPE_OVERVIEW,
-            TYPE_ERROR,
             TYPE_IMAGE,
+            TYPE_GPSTRACK,
+            TYPE_ERROR,
         };
-        virtual ~RasterMap();
-
-        virtual RasterMapType GetType() const = 0;
+        virtual DrawableType GetType() const = 0;
         virtual unsigned int GetWidth() const = 0;
         virtual unsigned int GetHeight() const = 0;
         virtual MapPixelDeltaInt GetSize() const = 0;
         virtual MapRegion
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const = 0;
-
         virtual bool PixelToPCS(double *x, double *y) const = 0;
         virtual bool PCSToPixel(double *x, double *y) const = 0;
+
         virtual Projection GetProj() const = 0;
         virtual bool
         PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const = 0;
@@ -64,6 +64,13 @@ class EXPORT ODM_INTERFACE RasterMap {
             return GetType() != TYPE_DHM && GetType() != TYPE_ERROR;
         };
 };
+
+
+class EXPORT RasterMap : public GeoDrawable {
+    public:
+        virtual ~RasterMap();
+};
+
 
 class EXPORT RasterMapCollection {
     public:
@@ -114,8 +121,21 @@ class EXPORT HeightFinder {
 
         bool LatLongWithinActiveDHM(const LatLon &pos) const;
         std::shared_ptr<class RasterMap> FindBestMap(
-                const LatLon &pos, RasterMap::RasterMapType type) const;
+                const LatLon &pos, GeoDrawable::DrawableType type) const;
 };
+
+bool EXPORT
+GetMapDistance(const std::shared_ptr<class GeoDrawable> &map,
+               const MapPixelCoord &pos,
+               double dx, double dy, double *distance);
+bool EXPORT
+MetersPerPixel(const std::shared_ptr<class GeoDrawable> &map,
+               const MapPixelCoord &pos,
+               double *mpp);
+bool EXPORT
+MetersPerPixel(const std::shared_ptr<class GeoDrawable> &map,
+               const MapPixelCoordInt &pos,
+               double *mpp);
 
 bool EXPORT
 GetMapDistance(const std::shared_ptr<class RasterMap> &map,
@@ -129,5 +149,4 @@ bool EXPORT
 MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
                const MapPixelCoordInt &pos,
                double *mpp);
-
 #endif

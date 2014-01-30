@@ -142,6 +142,7 @@
     <ClCompile Include="bezier.cpp" />
     <ClCompile Include="coordinates.cpp" />
     <ClCompile Include="disp_ogl.cpp" />
+    <ClCompile Include="gpstracks.cpp" />
     <ClCompile Include="mapdisplay.cpp" />
     <ClCompile Include="map_dhm_advanced.cpp" />
     <ClCompile Include="map_geotiff.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="disp_ogl.h" />
     <ClInclude Include="external\glext.h" />
     <ClInclude Include="geotiff_impl.h" />
+    <ClInclude Include="gpstracks.h" />
     <ClInclude Include="mapdisplay.h" />
     <ClInclude Include="map_dhm_advanced.h" />
     <ClInclude Include="map_geotiff.h" />

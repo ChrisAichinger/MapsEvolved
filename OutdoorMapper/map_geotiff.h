@@ -7,7 +7,7 @@
 class TiffMap : public RasterMap {
     public:
         explicit TiffMap(const wchar_t *fname);
-        virtual RasterMap::RasterMapType GetType() const;
+        virtual GeoDrawable::DrawableType GetType() const;
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
         virtual MapPixelDeltaInt GetSize() const;

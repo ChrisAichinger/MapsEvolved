@@ -102,7 +102,9 @@ class RasterMapError : public RasterMap {
         explicit RasterMapError(const wchar_t *fname, const std::wstring &desc)
             : m_fname(fname), m_desc(desc)
             {}
-        virtual RasterMap::RasterMapType GetType() const { return TYPE_ERROR; }
+        virtual GeoDrawable::DrawableType GetType() const {
+            return TYPE_ERROR;
+        }
         virtual unsigned int GetWidth() const { return 0; }
         virtual unsigned int GetHeight() const { return 0; }
         virtual MapPixelDeltaInt GetSize() const
@@ -227,7 +229,7 @@ bool HeightFinder::LatLongWithinActiveDHM(const LatLon &pos) const {
 
 std::shared_ptr<class RasterMap>
 HeightFinder::FindBestMap(const LatLon &pos,
-                          RasterMap::RasterMapType type) const
+                          GeoDrawable::DrawableType type) const
 {
     for (unsigned int i=0; i < m_maps.Size(); i++) {
         auto map = m_maps.Get(i);
@@ -237,7 +239,7 @@ HeightFinder::FindBestMap(const LatLon &pos,
     return NULL;
 }
 
-bool GetMapDistance(const std::shared_ptr<class RasterMap> &map,
+bool GetMapDistance(const std::shared_ptr<class GeoDrawable> &map,
                     const MapPixelCoord &pos,
                     double dx, double dy, double *distance)
 {
@@ -251,7 +253,7 @@ bool GetMapDistance(const std::shared_ptr<class RasterMap> &map,
     return proj.CalcDistance(lA.lat, lA.lon, lB.lat, lB.lon, distance);
 }
 
-bool MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
+bool MetersPerPixel(const std::shared_ptr<class GeoDrawable> &map,
                     const MapPixelCoord &pos,
                     double *mpp)
 {
@@ -268,9 +270,34 @@ bool MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
     return true;
 }
 
-bool MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
+bool MetersPerPixel(const std::shared_ptr<class GeoDrawable> &map,
                     const MapPixelCoordInt &pos,
                     double *mpp)
 {
     return MetersPerPixel(map, MapPixelCoord(pos), mpp);
+}
+
+bool
+GetMapDistance(const std::shared_ptr<class RasterMap> &map,
+               const MapPixelCoord &pos,
+               double dx, double dy, double *distance)
+{
+    return GetMapDistance(std::static_pointer_cast<GeoDrawable>(map),
+                          pos, dx, dy, distance);
+}
+bool
+MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
+               const MapPixelCoord &pos,
+               double *mpp)
+{
+    return MetersPerPixel(std::static_pointer_cast<GeoDrawable>(map),
+                          pos, mpp);
+}
+bool
+MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
+               const MapPixelCoordInt &pos,
+               double *mpp)
+{
+    return MetersPerPixel(std::static_pointer_cast<GeoDrawable>(map),
+                          pos, mpp);
 }

@@ -14,8 +14,8 @@ GradientMap::GradientMap(const std::shared_ptr<RasterMap> &orig_map)
     assert(orig_map->GetType() == RasterMap::TYPE_DHM);
 }
 
-RasterMap::RasterMapType GradientMap::GetType() const {
-    return RasterMap::TYPE_GRADIENT;
+GeoDrawable::DrawableType GradientMap::GetType() const {
+    return RasterMap::TYPE_GRADIENT_MAP;
 }
 unsigned int GradientMap::GetWidth() const {
     return m_orig_map->GetWidth();
@@ -95,8 +95,8 @@ SteepnessMap::SteepnessMap(const std::shared_ptr<RasterMap> &orig_map)
     assert(orig_map->GetType() == RasterMap::TYPE_DHM);
 }
 
-RasterMap::RasterMapType SteepnessMap::GetType() const {
-    return RasterMap::TYPE_STEEPNESS;
+GeoDrawable::DrawableType SteepnessMap::GetType() const {
+    return RasterMap::TYPE_STEEPNESS_MAP;
 }
 unsigned int SteepnessMap::GetWidth() const {
     return m_orig_map->GetWidth();

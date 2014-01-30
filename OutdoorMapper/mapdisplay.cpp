@@ -19,7 +19,7 @@ const double MapDisplayManager::ZOOM_STEP =
 
 MapDisplayManager::MapDisplayManager(
         const std::shared_ptr<class DispOpenGL> &display,
-        const std::shared_ptr<class RasterMap> &initial_map)
+        const std::shared_ptr<class GeoDrawable> &initial_map)
     : m_display(display), m_base_map(initial_map),
       m_center(BaseMapCoord(BaseMapDelta(m_base_map->GetSize() * 0.5))),
       m_zoom(1.0), m_overlays()
@@ -30,7 +30,7 @@ void MapDisplayManager::Resize(unsigned int width, unsigned int height) {
 }
 
 bool MapDisplayManager::TryChangeMapPreservePos(
-        const std::shared_ptr<class RasterMap> &new_map)
+        const std::shared_ptr<class GeoDrawable> &new_map)
 {
     // Calc position of display center on earth
     LatLon point;
@@ -66,7 +66,7 @@ bool MapDisplayManager::TryChangeMapPreservePos(
 }
 
 void MapDisplayManager::ChangeMap(
-        const std::shared_ptr<class RasterMap> &new_map,
+        const std::shared_ptr<class GeoDrawable> &new_map,
         bool try_preserve_pos)
 {
     if (new_map == m_base_map)
@@ -84,7 +84,7 @@ void MapDisplayManager::ChangeMap(
 }
 
 void MapDisplayManager::AddOverlayMap(
-        const std::shared_ptr<class RasterMap> &new_map)
+        const std::shared_ptr<class GeoDrawable> &new_map)
 {
     // Add new overlay or move existing overlay to last (topmost) position
     auto it = m_overlays.begin();
@@ -160,7 +160,7 @@ bool MapDisplayManager::AdvanceAlongBorder(MapPixelCoordInt *base_point,
 }
 
 bool MapDisplayManager::CalcOverlayTiles(
-        const std::shared_ptr<class RasterMap> &overlay_map,
+        const std::shared_ptr<class GeoDrawable> &overlay_map,
         const MapPixelCoordInt &base_tl, const MapPixelCoordInt &base_br,
         MapPixelCoordInt *overlay_tl, MapPixelCoordInt *overlay_br)
 {
@@ -191,7 +191,7 @@ bool MapDisplayManager::CalcOverlayTiles(
 
 void MapDisplayManager::PaintOneLayer(
         std::list<class DisplayOrder> *orders,
-        const std::shared_ptr<class RasterMap> &map,
+        const std::shared_ptr<class GeoDrawable> &map,
         const MapPixelCoordInt &tile_topleft,
         const MapPixelCoordInt &tile_botright,
         const MapPixelDeltaInt &tile_size,
@@ -220,7 +220,7 @@ void MapDisplayManager::PaintOneLayer(
     }
 }
 
-std::shared_ptr<class RasterMap> MapDisplayManager::GetBaseMap() const {
+std::shared_ptr<class GeoDrawable> MapDisplayManager::GetBaseMap() const {
     return m_base_map;
 }
 
@@ -296,8 +296,9 @@ MapDisplayManager::DisplayCoordCenteredFromBase(const BaseMapCoord &mpc) const
 }
 
 DisplayCoordCentered
-MapDisplayManager::DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
-                             const std::shared_ptr<class RasterMap> &map) const
+MapDisplayManager::DisplayCoordCenteredFromMapPixel(
+        const MapPixelCoord &mpc,
+        const std::shared_ptr<class GeoDrawable> &map) const
 {
     if (map == m_base_map)
         return DisplayCoordCenteredFromBase(BaseMapCoord(mpc));
@@ -317,7 +318,7 @@ MapDisplayManager::DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
 DisplayCoordCentered
 MapDisplayManager::DisplayCoordCenteredFromMapPixel(
                         const MapPixelCoordInt &mpc,
-                        const std::shared_ptr<class RasterMap> &map) const
+                        const std::shared_ptr<class GeoDrawable> &map) const
 {
     return DisplayCoordCenteredFromMapPixel(MapPixelCoord(mpc), map);
 }

@@ -91,7 +91,7 @@ class GeoTiff : public Tiff {
         bool PixelToPCS(double *x, double *y) const;
         bool PCSToPixel(double *x, double *y) const;
         const std::string &GetProj4String() const { return m_proj; };
-        RasterMap::RasterMapType GetType() const { return m_type; };
+        GeoDrawable::DrawableType GetType() const { return m_type; };
 
         template <typename T>
         std::tuple<unsigned int, std::shared_ptr<T>>
@@ -119,7 +119,7 @@ class GeoTiff : public Tiff {
         unsigned short int m_ntiepoints, m_npixscale, m_ntransform;
 
         std::string m_proj;
-        RasterMap::RasterMapType m_type;
+        GeoDrawable::DrawableType m_type;
 };
 
 #endif
