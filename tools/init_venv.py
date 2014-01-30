@@ -13,10 +13,12 @@ import subprocess
 import imp
 
 
-sip_dir = '_sip_source'
+sip_dir = '__sip_source'
 sip_url = 'http://downloads.sourceforge.net/project/pyqt/sip/sip-4.15.4/sip-4.15.4.zip?r=&ts=1390046988&use_mirror=freefr'
 setuptools_url = 'https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py'
 wxpython_url = 'http://wxpython.org/Phoenix/snapshot-builds/wxPython_Phoenix-3.0.1.dev75695-py3.3-win32.egg'
+gpxpy_url = 'https://github.com/tkrajina/gpxpy/archive/master.zip'
+gpxpy_dir = '__gpxpy_source'
 SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 init_shell_batch = 'init_shell.bat'
 
@@ -142,6 +144,19 @@ def install_wxpython(wxpython_url):
     subprocess.check_call(['easy_install.exe', wxpython_url])
 
 
+def install_gpxpy(gpxpy_dir, gpxpy_url):
+    urlopener = urllib.request.urlopen(gpxpy_url)
+    f = io.BytesIO(urlopener.read())
+    with zipfile.ZipFile(f, 'r') as zf:
+        zf.extractall(path=gpxpy_dir)
+
+    real_dir = os.path.join(gpxpy_dir, 'gpxpy*')
+    real_dir = glob.glob(real_dir)[0]
+    with temporary_chdir(real_dir):
+        subprocess.check_call(['python.exe', 'setup.py', 'install'])
+    #shutil.rmtree(gpxpy_dir)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Create and populate a venv.')
     parser.add_argument('--venv', dest='venv_dir', action='store',
@@ -178,6 +193,9 @@ def main():
 
         print("\nInstalling wxPython")
         install_wxpython(wxpython_url)
+
+        print("\nInstalling gpxpy")
+        install_gpxpy(gpxpy_dir, gpxpy_url)
 
         print("\nFinished setting up venv. Enjoy :)")
 
