@@ -155,12 +155,12 @@ class OverlaySpec {
 %End
     public:
         OverlaySpec();
-        OverlaySpec(const RasterMapShPtr &map, bool enabled = true,
-                    float opacity = 50.0f);
-        RasterMapShPtr GetMap() const;
+        OverlaySpec(const GeoDrawableShPtr &map, bool enabled = true,
+                    float opacity = 0.5f);
+        GeoDrawableShPtr GetMap() const;
         bool GetEnabled() const;
         float GetTransparency() const;
-        void SetMap(const RasterMapShPtr &map);
+        void SetMap(const GeoDrawableShPtr &map);
         void SetEnabled(bool enabled);
         void SetTransparency(float transparency);
         %Property(name="Map", get=GetMap, set=SetMap)
@@ -177,17 +177,24 @@ class MapDisplayManager /NoDefaultCtors/ {
 %End
     public:
         MapDisplayManager(const DispOpenGLShPtr &display,
+                          const GeoDrawableShPtr &initial_map);
+        MapDisplayManager(const DispOpenGLShPtr &display,
                           const RasterMapShPtr &initial_map);
 
-        RasterMapShPtr GetBaseMap() const;
+
+        GeoDrawableShPtr GetBaseMap() const;
         double GetZoom() const;
         double GetCenterX() const;
         double GetCenterY() const;
         const BaseMapCoord &GetCenter() const;
 
+        void ChangeMap(const GeoDrawableShPtr &new_map,
+                       bool try_preserve_pos=true);
         void ChangeMap(const RasterMapShPtr &new_map,
                        bool try_preserve_pos=true);
+        void AddOverlayMap(const GeoDrawableShPtr new_map);
         void AddOverlayMap(const RasterMapShPtr new_map);
+        void AddOverlayMap(const GPSSegmentShPtr new_map);
         const OverlayList &GetOverlayList() const;
         void SetOverlayList(OverlayList overlaylist);
 
@@ -211,10 +218,10 @@ class MapDisplayManager /NoDefaultCtors/ {
 
         DisplayCoordCentered
         DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
-                                         const RasterMapShPtr &map) const;
+                                         const GeoDrawableShPtr &map) const;
         DisplayCoordCentered
         DisplayCoordCenteredFromMapPixel(const MapPixelCoordInt &mpc,
-                                         const RasterMapShPtr &map) const;
+                                         const GeoDrawableShPtr &map) const;
 };
 
 std::wstring CompassPointFromDirection(double degrees);

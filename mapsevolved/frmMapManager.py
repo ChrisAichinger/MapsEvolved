@@ -39,14 +39,15 @@ class MapManagerFrame(wx.Frame):
         basename = os.path.basename(fname)
         dirname = os.path.dirname(os.path.abspath(fname))
         maptype_names = {
-            pymaplib.RasterMap.TYPE_MAP: _("Map"),
-            pymaplib.RasterMap.TYPE_DHM: _("DHM"),
-            pymaplib.RasterMap.TYPE_GRADIENT: _("Gradient height map"),
-            pymaplib.RasterMap.TYPE_STEEPNESS: _("Steepness height map"),
-            pymaplib.RasterMap.TYPE_LEGEND: _("Legend"),
-            pymaplib.RasterMap.TYPE_OVERVIEW: _("Overview"),
-            pymaplib.RasterMap.TYPE_IMAGE: _("Plain image"),
-            pymaplib.RasterMap.TYPE_ERROR: _("Error loading map"),
+            pymaplib.GeoDrawable.TYPE_MAP: _("Map"),
+            pymaplib.GeoDrawable.TYPE_DHM: _("DHM"),
+            pymaplib.GeoDrawable.TYPE_GRADIENT_MAP: _("Gradient height map"),
+            pymaplib.GeoDrawable.TYPE_STEEPNESS_MAP: _("Steepness height map"),
+            pymaplib.GeoDrawable.TYPE_LEGEND: _("Legend"),
+            pymaplib.GeoDrawable.TYPE_OVERVIEW: _("Overview"),
+            pymaplib.GeoDrawable.TYPE_IMAGE: _("Plain image"),
+            pymaplib.GeoDrawable.TYPE_GPSTRACK: _("GPS track"),
+            pymaplib.GeoDrawable.TYPE_ERROR: _("Error loading map"),
         }
         maptype = maptype_names[rastermap.GetType()]
 

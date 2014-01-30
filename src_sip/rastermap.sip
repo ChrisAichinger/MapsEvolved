@@ -15,24 +15,25 @@ class MapRegion /NoDefaultCtors/
 };
 
 
-class RasterMap /Abstract/ {
+class GeoDrawable /Abstract/ {
 %TypeHeaderCode
 #include "rastermap.h"
 %End
     public:
-        enum RasterMapType {
+        enum DrawableType {
             TYPE_MAP = 1,
             TYPE_DHM,
-            TYPE_GRADIENT,
-            TYPE_STEEPNESS,
+            TYPE_GRADIENT_MAP,
+            TYPE_STEEPNESS_MAP,
             TYPE_LEGEND,
             TYPE_OVERVIEW,
-            TYPE_ERROR,
             TYPE_IMAGE,
+            TYPE_GPSTRACK,
+            TYPE_ERROR,
         };
-        virtual ~RasterMap();
+        virtual ~GeoDrawable();
 
-        virtual RasterMapType GetType() const = 0;
+        virtual DrawableType GetType() const = 0;
         virtual unsigned int GetWidth() const = 0;
         virtual unsigned int GetHeight() const = 0;
         virtual MapPixelDeltaInt GetSize() const = 0;
@@ -40,8 +41,10 @@ class RasterMap /Abstract/ {
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
 
-        virtual bool PixelToPCS(double *x, double *y) const = 0;
-        virtual bool PCSToPixel(double *x, double *y) const = 0;
+        virtual bool PixelToPCS(double *x /In,Out/,
+                                double *y /In,Out/) const = 0;
+        virtual bool PCSToPixel(double *x /In,Out/,
+                                double *y /In,Out/) const = 0;
         virtual Projection GetProj() const = 0;
         virtual bool PixelToLatLon(
                 const MapPixelCoord &pos, LatLon *result /Out/) const = 0;
@@ -51,6 +54,21 @@ class RasterMap /Abstract/ {
         virtual const std::wstring &GetFname() const = 0;
 
         virtual bool IsViewable() const;
+};
+
+class GeoDrawableShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
+%TypeHeaderCode
+#include <memory>
+#include "rastermap.h"
+typedef std::shared_ptr<GeoDrawable> GeoDrawableShPtr;
+%End
+    public:
+        GeoDrawable *get();
+};
+
+class RasterMap : public GeoDrawable /Abstract/ {
+    public:
+        virtual ~RasterMap();
 };
 
 class RasterMapShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
@@ -123,3 +141,35 @@ bool MetersPerPixel(const RasterMapShPtr &map, const MapPixelCoord &pos,
                     double *mpp /Out/);
 bool MetersPerPixel(const RasterMapShPtr &map, const MapPixelCoordInt &pos,
                     double *mpp /Out/);
+bool GetMapDistance(const GeoDrawableShPtr &map, const MapPixelCoord &pos,
+                    double dx, double dy, double *distance /Out/);
+bool MetersPerPixel(const GeoDrawableShPtr &map, const MapPixelCoord &pos,
+                    double *mpp /Out/);
+bool MetersPerPixel(const GeoDrawableShPtr &map, const MapPixelCoordInt &pos,
+                    double *mpp /Out/);
+
+
+class GPSSegment : public GeoDrawable {
+%TypeHeaderCode
+#include "gpstracks.h"
+%End
+    public:
+        GPSSegment(const std::wstring &fname,
+                   const std::vector<LatLon> &points);
+        virtual const std::vector<LatLon> &GetPoints() const;
+};
+
+class GPSSegmentShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
+%TypeHeaderCode
+#include <memory>
+#include "gpstracks.h"
+typedef std::shared_ptr<GPSSegment> GPSSegmentShPtr;
+%End
+    public:
+        GPSSegmentShPtr(const std::wstring &fname,
+                        const std::vector<LatLon> &points);
+        %MethodCode
+            sipCpp = new std::shared_ptr<GPSSegment>(new GPSSegment(*a0, *a1));
+        %End
+        GPSSegment *get();
+};

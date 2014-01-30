@@ -5,6 +5,7 @@ import wx
 import wx.xrc as xrc
 import wx.adv
 from wx.lib.wordwrap import wordwrap
+import gpxpy
 
 import pymaplib
 from mapsevolved import frmMapManager, util
@@ -109,7 +110,22 @@ class MainFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_BUTTON, id=xrc.XRCID('GoButton'))
     def on_go_button(self, evt):
-        print("on_go_button()")
+        openFileDialog = wx.FileDialog(
+                self, "Open GPX file", "", "",
+                "GPX Files (*.gpx)|*.gpx|" +
+                "All files (*.*)|*.*",
+                wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        if openFileDialog.ShowModal() == wx.ID_CANCEL:
+            return
+        fname = openFileDialog.GetPath()
+
+        with open(fname, 'r') as f:
+            gpx = gpxpy.parse(f)
+        points = gpx.tracks[0].segments[0].points
+        points = [pymaplib.LatLon(p.latitude, p.longitude) for p in points]
+        gps_segment = pymaplib.GPSSegmentShPtr(fname, points)
+        self.add_overlay(gps_segment)
+
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ManageMapsMenuItem'))
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ManageMapsTBButton'))
