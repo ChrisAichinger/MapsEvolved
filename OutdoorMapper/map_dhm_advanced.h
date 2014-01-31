@@ -3,7 +3,7 @@
 
 #include "rastermap.h"
 
-class GradientMap : public RasterMap {
+class EXPORT GradientMap : public RasterMap {
     public:
         explicit GradientMap(const std::shared_ptr<RasterMap> &orig_map);
         virtual GeoDrawable::DrawableType GetType() const;
@@ -28,7 +28,7 @@ class GradientMap : public RasterMap {
         const std::shared_ptr<RasterMap> m_orig_map;
 };
 
-class SteepnessMap : public RasterMap {
+class EXPORT SteepnessMap : public RasterMap {
     public:
         explicit SteepnessMap(const std::shared_ptr<RasterMap> &orig_map);
         virtual GeoDrawable::DrawableType GetType() const;

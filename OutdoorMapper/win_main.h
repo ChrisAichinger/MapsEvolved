@@ -37,7 +37,7 @@ class RootWindow : public Window
         RootSizer m_sizer;
 
         std::shared_ptr<class UIMode> m_mode;
-        class RasterMapCollection m_maps;
+        class DefaultRasterMapCollection m_maps;
         class HeightFinder m_heightfinder;
         std::shared_ptr<class MapDisplayManager> m_mapdisplay;
 

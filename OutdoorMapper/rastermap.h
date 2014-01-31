@@ -12,6 +12,7 @@
 
 class EXPORT MapRegion {
     public:
+        MapRegion() : m_data(), m_width(0), m_height(0) {};
         MapRegion(const std::shared_ptr<unsigned int> &data,
                   int width, int height)
             : m_data(data), m_width(width), m_height(height) {};
@@ -74,7 +75,28 @@ class EXPORT RasterMap : public GeoDrawable {
 
 class EXPORT RasterMapCollection {
     public:
-        RasterMapCollection();
+        RasterMapCollection() {};
+        virtual ~RasterMapCollection();
+        virtual void AddMap(const std::shared_ptr<RasterMap> &map) = 0;
+        virtual void DeleteMap(unsigned int index) = 0;
+        virtual size_t Size() const = 0;
+        virtual std::shared_ptr<RasterMap> Get(size_t i) const = 0;
+        virtual const std::vector<const std::shared_ptr<RasterMap> >
+            GetAlternateRepresentations(size_t i) const = 0;
+        virtual bool
+            IsToplevelMap(const std::shared_ptr<RasterMap> &map) const = 0;
+
+        virtual bool
+            StoreTo(const std::unique_ptr<PersistentStore> &store) const = 0;
+        virtual bool
+            RetrieveFrom(const std::unique_ptr<PersistentStore> &store) = 0;
+    private:
+        DISALLOW_COPY_AND_ASSIGN(RasterMapCollection);
+};
+
+class EXPORT DefaultRasterMapCollection : public RasterMapCollection {
+    public:
+        DefaultRasterMapCollection();
         void AddMap(const std::shared_ptr<RasterMap> &map);
         void DeleteMap(unsigned int index);
         size_t Size() const {
@@ -100,7 +122,7 @@ class EXPORT RasterMapCollection {
         };
         std::vector<MapAndReps> m_maps;
 
-        DISALLOW_COPY_AND_ASSIGN(RasterMapCollection);
+        DISALLOW_COPY_AND_ASSIGN(DefaultRasterMapCollection);
 };
 
 void EXPORT LoadMap(RasterMapCollection &maps, const std::wstring &fname);

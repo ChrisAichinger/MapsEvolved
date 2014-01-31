@@ -36,12 +36,14 @@ void GetAlternateRepresentation(const std::shared_ptr<RasterMap> &map,
 }
 
 
-RasterMapCollection::RasterMapCollection()
+RasterMapCollection::~RasterMapCollection() { }
+
+DefaultRasterMapCollection::DefaultRasterMapCollection()
     : m_maps()
 { }
 
-void RasterMapCollection::AddMap(const std::shared_ptr<class RasterMap> &map) {
-    struct RasterMapCollection::MapAndReps insert;
+void DefaultRasterMapCollection::AddMap(const std::shared_ptr<class RasterMap> &map) {
+    struct DefaultRasterMapCollection::MapAndReps insert;
     insert.map = map;
     if (map->GetType() == RasterMap::TYPE_DHM) {
         std::shared_ptr<class RasterMap> deriv_map(new GradientMap(map));
@@ -52,11 +54,11 @@ void RasterMapCollection::AddMap(const std::shared_ptr<class RasterMap> &map) {
     m_maps.push_back(insert);
 }
 
-void RasterMapCollection::DeleteMap(unsigned int index) {
+void DefaultRasterMapCollection::DeleteMap(unsigned int index) {
     m_maps.erase(m_maps.begin() + index);
 }
 
-bool RasterMapCollection::StoreTo(
+bool DefaultRasterMapCollection::StoreTo(
         const std::unique_ptr<PersistentStore> &store) const
 {
     if (!store->IsOpen())
@@ -70,7 +72,7 @@ bool RasterMapCollection::StoreTo(
     return store->SetStringList(L"maps", filenames);
 }
 
-bool RasterMapCollection::RetrieveFrom(
+bool DefaultRasterMapCollection::RetrieveFrom(
         const std::unique_ptr<PersistentStore> &store)
 {
     if (!store->IsOpen())
@@ -87,7 +89,7 @@ bool RasterMapCollection::RetrieveFrom(
     return true;
 }
 
-bool RasterMapCollection::IsToplevelMap(
+bool DefaultRasterMapCollection::IsToplevelMap(
         const std::shared_ptr<RasterMap> &map) const
 {
     for (auto it = m_maps.cbegin(); it != m_maps.cend(); ++it) {

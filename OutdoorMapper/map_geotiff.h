@@ -4,7 +4,7 @@
 #include "rastermap.h"
 #include "projection.h"
 
-class TiffMap : public RasterMap {
+class EXPORT TiffMap : public RasterMap {
     public:
         explicit TiffMap(const wchar_t *fname);
         virtual GeoDrawable::DrawableType GetType() const;
