@@ -30,7 +30,17 @@ class EXPORT MapRegion {
 };
 
 
-class EXPORT GeoDrawable {
+class EXPORT GeoPixels {
+    public:
+        virtual ~GeoPixels();
+        virtual bool
+        PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const = 0;
+        virtual bool
+        LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const = 0;
+};
+
+
+class EXPORT GeoDrawable : public GeoPixels {
     public:
         enum DrawableType {
             TYPE_MAP = 1,
@@ -43,6 +53,7 @@ class EXPORT GeoDrawable {
             TYPE_GPSTRACK,
             TYPE_ERROR,
         };
+        virtual ~GeoDrawable();
         virtual DrawableType GetType() const = 0;
         virtual unsigned int GetWidth() const = 0;
         virtual unsigned int GetHeight() const = 0;
@@ -52,11 +63,6 @@ class EXPORT GeoDrawable {
                       const MapPixelDeltaInt &size) const = 0;
 
         virtual Projection GetProj() const = 0;
-        virtual bool
-        PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const = 0;
-        virtual bool
-        LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const = 0;
-
         virtual const std::wstring &GetFname() const = 0;
 
         virtual bool IsViewable() const {

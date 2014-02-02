@@ -21,6 +21,8 @@
 #include "bezier.h"
 #include "projection.h"
 
+GeoPixels::~GeoPixels() {};
+GeoDrawable::~GeoDrawable() {};
 RasterMap::~RasterMap() {};
 
 void GetAlternateRepresentation(const std::shared_ptr<RasterMap> &map,

@@ -26,8 +26,6 @@ class EXPORT GPSSegment : public GeoDrawable {
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
 
-        virtual bool PixelToPCS(double *x, double *y) const;
-        virtual bool PCSToPixel(double *x, double *y) const;
         virtual Projection GetProj() const;
         virtual bool
         PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const;
@@ -39,6 +37,9 @@ class EXPORT GPSSegment : public GeoDrawable {
         std::vector<LatLon> m_points;
         double m_lat_min, m_lat_max, m_lon_min, m_lon_max;
         MapPixelDeltaInt m_size;
+
+        virtual bool PixelToPCS(double *x, double *y) const;
+        virtual bool PCSToPixel(double *x, double *y) const;
 };
 
 class GPSOverlay {
