@@ -26,12 +26,6 @@ unsigned int GradientMap::GetHeight() const {
 MapPixelDeltaInt GradientMap::GetSize() const {
     return m_orig_map->GetSize();
 }
-bool GradientMap::PixelToPCS(double *x, double *y) const {
-    return m_orig_map->PixelToPCS(x, y);
-}
-bool GradientMap::PCSToPixel(double *x, double *y) const {
-    return m_orig_map->PCSToPixel(x, y);
-}
 Projection GradientMap::GetProj() const {
     return m_orig_map->GetProj();
 }
@@ -106,12 +100,6 @@ unsigned int SteepnessMap::GetHeight() const {
 }
 MapPixelDeltaInt SteepnessMap::GetSize() const {
     return m_orig_map->GetSize();
-}
-bool SteepnessMap::PixelToPCS(double *x, double *y) const {
-    return m_orig_map->PixelToPCS(x, y);
-}
-bool SteepnessMap::PCSToPixel(double *x, double *y) const {
-    return m_orig_map->PCSToPixel(x, y);
 }
 Projection SteepnessMap::GetProj() const {
     return m_orig_map->GetProj();

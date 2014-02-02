@@ -15,10 +15,8 @@ class EXPORT TiffMap : public RasterMap {
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
 
-        virtual bool PixelToPCS(double *x, double *y) const;
-        virtual bool PCSToPixel(double *x, double *y) const;
-        virtual Projection GetProj() const;
 
+        virtual Projection GetProj() const;
         virtual bool
         PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const;
         virtual bool
@@ -28,6 +26,9 @@ class EXPORT TiffMap : public RasterMap {
     private:
         const std::shared_ptr<class GeoTiff> m_geotiff;
         Projection m_proj;
+
+        virtual bool PixelToPCS(double *x, double *y) const;
+        virtual bool PCSToPixel(double *x, double *y) const;
 };
 
 #endif

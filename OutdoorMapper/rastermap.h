@@ -50,8 +50,6 @@ class EXPORT GeoDrawable {
         virtual MapRegion
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const = 0;
-        virtual bool PixelToPCS(double *x, double *y) const = 0;
-        virtual bool PCSToPixel(double *x, double *y) const = 0;
 
         virtual Projection GetProj() const = 0;
         virtual bool
