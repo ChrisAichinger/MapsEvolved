@@ -73,15 +73,15 @@ class MainFrame(wx.Frame):
         self.layermgr_panel = xrc.XRCCTRL(self, 'LayerMgrPanel')
         self.toolbar = xrc.XRCCTRL(self, 'MainToolbar')
 
-        self.maplist = pymaplib.RasterMapCollection()
+        rastermapcollection = pymaplib.DefaultRasterMapCollection()
+        self.filelist = pymaplib.GeoFilesCollection(rastermapcollection)
         with pymaplib.DefaultPersistentStore.Read() as ps:
-            maps = ps.GetStringList('maps')
-        for mapfile in maps:
-            pymaplib.LoadMap(self.maplist, mapfile)
+            self.filelist.retrieve_from(ps)
         self.ogldisplay = pymaplib.CreateOGLDisplay(self.panel.GetHandle())
-        self.mapdisplay = pymaplib.MapDisplayManager(self.ogldisplay,
-                                                     self.maplist.Get(0))
-        self.heightfinder = pymaplib.HeightFinder(self.maplist)
+
+        self.mapdisplay = pymaplib.MapDisplayManager(
+                self.ogldisplay, self.filelist.maplist[0].item)
+        self.heightfinder = pymaplib.HeightFinder(rastermapcollection)
 
         self.drag_enabled = False
         self.drag_suppress = False
@@ -110,22 +110,7 @@ class MainFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_BUTTON, id=xrc.XRCID('GoButton'))
     def on_go_button(self, evt):
-        openFileDialog = wx.FileDialog(
-                self, "Open GPX file", "", "",
-                "GPX Files (*.gpx)|*.gpx|" +
-                "All files (*.*)|*.*",
-                wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-        if openFileDialog.ShowModal() == wx.ID_CANCEL:
-            return
-        fname = openFileDialog.GetPath()
-
-        with open(fname, 'r') as f:
-            gpx = gpxpy.parse(f)
-        points = gpx.tracks[0].segments[0].points
-        points = [pymaplib.LatLon(p.latitude, p.longitude) for p in points]
-        gps_segment = pymaplib.GPSSegmentShPtr(fname, points)
-        self.add_overlay(gps_segment)
-
+        print("Go pressed")
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ManageMapsMenuItem'))
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ManageMapsTBButton'))
@@ -137,7 +122,7 @@ class MainFrame(wx.Frame):
             self.manage_maps_window.Show()
         else:
             self.manage_maps_window = frmMapManager.MapManagerFrame(
-                    self, self.maplist, self.mapdisplay)
+                    self, self.filelist, self.mapdisplay)
             self.manage_maps_window.Show()
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ExitMenuItem'))

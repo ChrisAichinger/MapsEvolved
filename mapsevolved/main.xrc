@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<resource class="">
+<resource class="wxMenu">
   <object class="wxFrame" name="MainFrame">
     <object class="wxMenuBar">
       <object class="wxMenu">
@@ -247,9 +247,13 @@
         <bitmap>images\famfamfam_silk_icons\map_add.png</bitmap>
         <tooltip>Add Map</tooltip>
       </object>
+      <object class="tool" name="GPXAddTBButton">
+        <bitmap>images\famfamfam_silk_icons\chart_line_add.png</bitmap>
+        <tooltip>Add GPS Track</tooltip>
+      </object>
       <object class="tool" name="MapRemoveTBButton">
-        <bitmap>images\famfamfam_silk_icons\map_delete.png</bitmap>
-        <tooltip>Remove Map</tooltip>
+        <bitmap>images\famfamfam_silk_icons\map-gpstrack-delete.png</bitmap>
+        <tooltip>Remove Map/GPS Track</tooltip>
       </object>
       <object class="separator"/>
       <object class="tool" name="DisplayTBButton">
@@ -264,6 +268,18 @@
     <object class="wxBoxSizer">
       <orient>wxHORIZONTAL</orient>
       <object class="sizeritem">
+        <object class="wxListBox" name="FiletypeFilter">
+          <content>
+            <item>Maps</item>
+            <item>GPS Tracks</item>
+          </content>
+          <selection>0</selection>
+          <style>wxLB_MULTIPLE</style>
+        </object>
+        <option>0</option>
+        <flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
+      </object>
+      <object class="sizeritem">
         <object class="wxBoxSizer">
           <object class="sizeritem">
             <object class="TreeListCtrl" name="MapTreeList">
@@ -272,14 +288,13 @@
                 <item>Map Type</item>
                 <item>Directory</item>
               </content>
-              <widths>-1, 150, 250</widths>
+              <widths>200,150,250</widths>
               <style>wxTR_SINGLE</style>
             </object>
             <option>3</option>
             <flag>wxALL|wxEXPAND</flag>
             <minsize>600,300</minsize>
           </object>
-          <orient>wxVERTICAL</orient>
           <object class="sizeritem">
             <object class="wxPanel">
               <object class="wxBoxSizer">
@@ -296,8 +311,9 @@
             <option>1</option>
             <flag>wxALL|wxEXPAND</flag>
           </object>
+          <orient>wxVERTICAL</orient>
         </object>
-        <option>1</option>
+        <option>5</option>
         <flag>wxALL|wxEXPAND</flag>
         <border>0</border>
       </object>
@@ -305,7 +321,7 @@
     <title>Map Manager - Maps Evolved</title>
     <style>wxDEFAULT_FRAME_STYLE|wxCAPTION|wxSYSTEM_MENU</style>
   </object>
-  <object class="wxMenu" name="MapManagerPopupMenu">
+  <object class="wxMenu" name="MapPopup">
     <object class="wxMenuItem" name="DisplayMenuItem">
       <label>&amp;Display</label>
     </object>
@@ -315,6 +331,23 @@
     <object class="separator"/>
     <object class="wxMenuItem" name="RemoveMenuItem">
       <label>&amp;Remove from list</label>
+    </object>
+  </object>
+  <object class="wxMenu" name="GPSTrackPopup">
+    <object class="wxMenuItem" name="DisplayOverlayMenuItem">
+      <label>Display as &amp;Overlay</label>
+    </object>
+    <object class="separator"/>
+    <object class="wxMenuItem" name="RemoveMenuItem">
+      <label>&amp;Remove from list</label>
+    </object>
+  </object>
+  <object class="wxMenu" name="NoItemPopup">
+    <object class="wxMenuItem" name="AddMapMenuItem">
+      <label>Add &amp;Map</label>
+    </object>
+    <object class="wxMenuItem" name="AddGPXMenuItem">
+      <label>Add &amp;GPS Track</label>
     </object>
   </object>
 </resource>
