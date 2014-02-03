@@ -76,18 +76,36 @@ class EXPORT MapDisplayManager {
                          const std::shared_ptr<class GeoDrawable> &map) const;
 
     private:
-        void PaintOneLayer(std::list<class DisplayOrder> *orders,
-                           const std::shared_ptr<class GeoDrawable> &map,
-                           const MapPixelCoordInt &tile_topleft,
-                           const MapPixelCoordInt &tile_botright,
-                           const MapPixelDeltaInt &tile_size,
-                           double transparency = 0.0);
+        // Calculate the map tiles required for filligng the display region,
+        // and add display orders to show those tiles.
+        // This is the default for most maps.
+        void PaintLayerTiled(
+                std::list<std::shared_ptr<class DisplayOrder>> *orders,
+                const std::shared_ptr<class GeoDrawable> &map,
+                const MapPixelCoordInt &base_pixel_topleft,
+                const MapPixelCoordInt &base_pixel_botright,
+                const MapPixelDeltaInt &tile_size,
+                double transparency);
+        // Add an order effecting GetRegionDirect(), which takes information
+        // about the current projection, and returns a MapRegion with the size
+        // of the current display. That region is then shown directly on the
+        // display without the need for rotation, stretching, ...
+        // This is impractical for typical maps, as it requires re-reading the
+        // image each time, it is however useful for displaying GPS Tracks and
+        // other overlays. Moving overlays through the tile mechanism would
+        // cause stretching, compromising display quality.
+        void PaintLayerDirect(
+                std::list<std::shared_ptr<DisplayOrder>> *orders,
+                const std::shared_ptr<class GeoDrawable> &map,
+                const MapPixelDelta &half_disp_size,
+                double transparency);
 
         bool AdvanceAlongBorder(MapPixelCoordInt *base_point,
                                 const MapPixelCoordInt &base_tl,
                                 const MapPixelCoordInt &base_br);
         bool CalcOverlayTiles(
                 const std::shared_ptr<class GeoDrawable> &overlay_map,
+                const MapPixelDeltaInt &tile_size,
                 const MapPixelCoordInt &base_tl,
                 const MapPixelCoordInt &base_br,
                 MapPixelCoordInt *overlay_tl,

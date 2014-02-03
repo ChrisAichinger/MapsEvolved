@@ -32,6 +32,13 @@ class EXPORT GPSSegment : public GeoDrawable {
         virtual bool
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const;
         virtual const std::wstring &GetFname() const { return m_fname; }
+
+        virtual bool SupportsDirectDrawing() const { return true; };
+        virtual MapRegion
+        GetRegionDirect(const MapPixelDeltaInt &output_size,
+                        const GeoPixels &base,
+                        const MapPixelCoord &base_tl,
+                        const MapPixelCoord &base_br) const;
     private:
         std::wstring m_fname;
         std::vector<LatLon> m_points;

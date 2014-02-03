@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "coordinates.h"
+#include "util.h"
 
 class TileCode {
     public:
@@ -64,38 +65,109 @@ inline bool operator>=(const TileCode& lhs, const TileCode& rhs) {
 class DisplayOrder {
     public:
         DisplayOrder(const DisplayCoordCentered &pos, const DisplayDelta &size,
-                     const TileCode& tilecode,
                      const double transparency = 0)
-            : m_topleft  (pos.x         , pos.y),
+            : m_topleft  (pos.x,          pos.y),
               m_topright (pos.x + size.x, pos.y),
-              m_botleft  (pos.x         , pos.y + size.y),
+              m_botleft  (pos.x,          pos.y + size.y),
               m_botright (pos.x + size.x, pos.y + size.y),
-              m_tilecode(tilecode), m_transparency(transparency)
+              m_transparency(transparency)
             {};
         DisplayOrder(const DisplayCoordCentered &TopLeft,
                      const DisplayCoordCentered &TopRight,
                      const DisplayCoordCentered &BotLeft,
                      const DisplayCoordCentered &BotRight,
-                     const TileCode& tilecode,
                      const double transparency = 0)
             : m_topleft(TopLeft), m_topright(TopRight),
               m_botleft(BotLeft), m_botright(BotRight),
-              m_tilecode(tilecode), m_transparency(transparency)
+              m_transparency(transparency)
             {};
-        const DisplayCoordCentered &GetTopLeft()  const { return m_topleft; };
-        const DisplayCoordCentered &GetTopRight() const { return m_topright; };
-        const DisplayCoordCentered &GetBotLeft()  const { return m_botleft; };
-        const DisplayCoordCentered &GetBotRight() const { return m_botright; };
-        const TileCode &GetTileCode() const { return m_tilecode; };
-        double GetTransparency() const { return m_transparency; };
+        virtual ~DisplayOrder() {};
 
-    private:
+        virtual const DisplayCoordCentered &GetTopLeft()  const {
+            return m_topleft;
+        };
+        virtual const DisplayCoordCentered &GetTopRight() const {
+            return m_topright;
+        };
+        virtual const DisplayCoordCentered &GetBotLeft()  const {
+            return m_botleft;
+        };
+        virtual const DisplayCoordCentered &GetBotRight() const {
+            return m_botright;
+        };
+        virtual double GetTransparency() const { return m_transparency; };
+        virtual std::shared_ptr<unsigned int> GetPixels() const = 0;
+        virtual MapPixelDeltaInt GetPixelSize() const = 0;
+
+        virtual bool IsCachable() const { return !!GetTileCode(); };
+        virtual const TileCode *GetTileCode() const = 0;
+    protected:
         DisplayCoordCentered m_topleft;
         DisplayCoordCentered m_topright;
         DisplayCoordCentered m_botleft;
         DisplayCoordCentered m_botright;
-        const TileCode m_tilecode;
         double m_transparency;
+};
+
+
+class DisplayOrderTiled : public DisplayOrder {
+    public:
+        DisplayOrderTiled(const DisplayCoordCentered &pos,
+                          const DisplayDelta &size,
+                          const TileCode& tilecode,
+                          const double transparency)
+            : DisplayOrder(pos, size, transparency), m_tilecode(tilecode)
+            {};
+        DisplayOrderTiled(const DisplayCoordCentered &TopLeft,
+                          const DisplayCoordCentered &TopRight,
+                          const DisplayCoordCentered &BotLeft,
+                          const DisplayCoordCentered &BotRight,
+                          const TileCode& tilecode,
+                          const double transparency)
+            : DisplayOrder(TopLeft, TopRight, BotLeft, BotRight),
+              m_tilecode(tilecode)
+            {};
+        virtual ~DisplayOrderTiled() {};
+        const TileCode *GetTileCode() const { return &m_tilecode; };
+        virtual std::shared_ptr<unsigned int> GetPixels() const {
+            return m_tilecode.GetTile();
+        }
+        virtual MapPixelDeltaInt GetPixelSize() const {
+            return m_tilecode.GetTileSize();
+        }
+
+    private:
+        const TileCode m_tilecode;
+};
+
+class DisplayOrderDirect : public DisplayOrder {
+    public:
+        DisplayOrderDirect(
+                const std::shared_ptr<class GeoDrawable> &map,
+                const MapPixelDeltaInt &size,
+                const std::shared_ptr<class GeoPixels> &base_map,
+                const MapPixelCoord &base_pixel_tl,
+                const MapPixelCoord &base_pixel_br,
+                const double transparency)
+            : DisplayOrder(DisplayCoordCentered(-size.x/2.0, -size.y/2.0),
+                           DisplayDelta(size.x, size.y), transparency),
+              m_map(map), m_size(size), m_base_map(base_map),
+              m_base_pixel_tl(base_pixel_tl), m_base_pixel_br(base_pixel_br)
+            {};
+        virtual ~DisplayOrderDirect() {};
+        virtual const TileCode *GetTileCode() const { return nullptr; };
+        virtual std::shared_ptr<unsigned int> GetPixels() const;
+        virtual MapPixelDeltaInt GetPixelSize() const {
+            return MapPixelDeltaInt(round_to_int(m_size.x),
+                                    round_to_int(m_size.y));
+        }
+
+    private:
+        const std::shared_ptr<class GeoDrawable> m_map;
+        const MapPixelDeltaInt m_size;
+        const std::shared_ptr<class GeoPixels> m_base_map;
+        const MapPixelCoord m_base_pixel_tl;
+        const MapPixelCoord m_base_pixel_br;
 };
 
 #endif

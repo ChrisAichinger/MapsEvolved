@@ -105,33 +105,28 @@ void MapDisplayManager::SetOverlayList(OverlayList overlaylist) {
 };
 
 void MapDisplayManager::Paint() {
+    std::list<std::shared_ptr<DisplayOrder>> orders;
+    MapPixelDeltaInt tile_size(TILE_SIZE, TILE_SIZE);
     DisplayDelta half_disp_size_d(m_display->GetDisplaySize() / m_zoom / 2.0);
     MapPixelDelta half_disp_size(half_disp_size_d.x, half_disp_size_d.y);
 
-    MapPixelCoordInt tile_topleft(m_center - half_disp_size, TILE_SIZE);
-    MapPixelCoordInt tile_botright(m_center + half_disp_size, TILE_SIZE);
+    MapPixelCoordInt base_pixel_tl(m_center - half_disp_size);
+    MapPixelCoordInt base_pixel_br(m_center + half_disp_size);
 
-    MapPixelDeltaInt tile_size(TILE_SIZE, TILE_SIZE);
-    std::list<DisplayOrder> orders;
-    PaintOneLayer(&orders, m_base_map,
-                  tile_topleft, tile_botright, tile_size);
+    // We can't PaintLayerDirect() the base map, which is fine for now since we
+    // only use Direct for overlays (e.g. GPS tracks).
+    PaintLayerTiled(&orders, m_base_map, base_pixel_tl, base_pixel_br,
+                  tile_size, 0.0);
     for (auto ci = m_overlays.cbegin(); ci != m_overlays.cend(); ++ci) {
         if (!ci->GetEnabled()) {
             continue;
         }
-        MapPixelCoordInt overlay_pixel_tl, overlay_pixel_br;
-        if (!CalcOverlayTiles(ci->GetMap(),
-                              MapPixelCoordInt(m_center - half_disp_size),
-                              MapPixelCoordInt(m_center + half_disp_size),
-                              &overlay_pixel_tl, &overlay_pixel_br))
-        {
-            // Failed to paint overlay
-            assert(false);
+        if (ci->GetMap()->SupportsDirectDrawing()) {
+            PaintLayerDirect(&orders, ci->GetMap(), half_disp_size,
+                             ci->GetTransparency());
+            continue;
         }
-        MapPixelCoordInt overlay_tiles_tl(overlay_pixel_tl, TILE_SIZE);
-        MapPixelCoordInt overlay_tiles_br(overlay_pixel_br, TILE_SIZE);
-        PaintOneLayer(&orders, ci->GetMap(),
-                      overlay_tiles_tl, overlay_tiles_br,
+        PaintLayerTiled(&orders, ci->GetMap(), base_pixel_tl, base_pixel_br,
                       tile_size, ci->GetTransparency());
     }
     m_display->Render(orders);
@@ -161,9 +156,15 @@ bool MapDisplayManager::AdvanceAlongBorder(MapPixelCoordInt *base_point,
 
 bool MapDisplayManager::CalcOverlayTiles(
         const std::shared_ptr<class GeoDrawable> &overlay_map,
+        const MapPixelDeltaInt &tile_size,
         const MapPixelCoordInt &base_tl, const MapPixelCoordInt &base_br,
         MapPixelCoordInt *overlay_tl, MapPixelCoordInt *overlay_br)
 {
+    if (overlay_map == m_base_map) {
+        *overlay_tl = MapPixelCoordInt(base_tl, tile_size.x);
+        *overlay_br = MapPixelCoordInt(base_br, tile_size.x);
+        return true;
+    }
     LatLon point;
     MapPixelCoord overlay_point;
     long int x_min, x_max, y_min, y_max;
@@ -184,19 +185,48 @@ bool MapDisplayManager::CalcOverlayTiles(
         if (overlay_point.y > y_max) y_max = round_to_int(overlay_point.y);
     } while (AdvanceAlongBorder(&base_border, base_tl, base_br));
 
-    *overlay_tl = MapPixelCoordInt(x_min, y_min);
-    *overlay_br = MapPixelCoordInt(x_max, y_max);
+    // Create MapPixelCoords out of the minmax values, then round to tile_size.
+    *overlay_tl = MapPixelCoordInt(MapPixelCoordInt(x_min, y_min),
+                                   tile_size.x);
+    *overlay_br = MapPixelCoordInt(MapPixelCoordInt(x_max, y_max),
+                                   tile_size.y);
     return true;
 }
 
-void MapDisplayManager::PaintOneLayer(
-        std::list<class DisplayOrder> *orders,
+void MapDisplayManager::PaintLayerDirect(
+        std::list<std::shared_ptr<DisplayOrder>> *orders,
         const std::shared_ptr<class GeoDrawable> &map,
-        const MapPixelCoordInt &tile_topleft,
-        const MapPixelCoordInt &tile_botright,
+        const MapPixelDelta &half_disp_size,
+        double transparency)
+{
+    const MapPixelCoord &base_pixel_tl = m_center - half_disp_size;
+    const MapPixelCoord &base_pixel_br = m_center + half_disp_size;
+    DisplayDelta disp_size = m_display->GetDisplaySize();
+    MapPixelDeltaInt disp_size_int = MapPixelDeltaInt(
+                round_to_int(disp_size.x), round_to_int(disp_size.y));
+    orders->push_back(std::shared_ptr<DisplayOrder>(
+            new DisplayOrderDirect(
+                map, disp_size_int, m_base_map,
+                base_pixel_tl, base_pixel_br, transparency)));
+}
+
+void MapDisplayManager::PaintLayerTiled(
+        std::list<std::shared_ptr<DisplayOrder>> *orders,
+        const std::shared_ptr<class GeoDrawable> &map,
+        const MapPixelCoordInt &base_pixel_topleft,
+        const MapPixelCoordInt &base_pixel_botright,
         const MapPixelDeltaInt &tile_size,
         double transparency)
 {
+    MapPixelCoordInt tile_topleft, tile_botright;
+    if (!CalcOverlayTiles(map, tile_size,
+                          base_pixel_topleft, base_pixel_botright,
+                          &tile_topleft, &tile_botright))
+    {
+        // Failed to paint overlay
+        assert(false);
+    }
+
     MapPixelDeltaInt tile_size_h(tile_size.x, 0);
     MapPixelDeltaInt tile_size_v(0, tile_size.y);
 
@@ -214,8 +244,10 @@ void MapDisplayManager::PaintOneLayer(
             DisplayCoordCentered disp_br = DisplayCoordCenteredFromMapPixel(
                                            map_pos + tile_size, map);
 
-            orders->push_back(DisplayOrder(disp_tl, disp_tr, disp_bl, disp_br,
-                                           tilecode, transparency));
+            orders->push_back(
+                std::shared_ptr<DisplayOrder>(
+                    new DisplayOrderTiled(disp_tl, disp_tr, disp_bl, disp_br,
+                                          tilecode, transparency)));
         }
     }
 }

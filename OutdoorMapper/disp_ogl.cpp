@@ -101,7 +101,8 @@ DispOpenGL::DispOpenGL(const std::shared_ptr<OGLContext> &ogl_context)
     if (!glBlendColor)
         glBlendColor = (PFNGLBLENDCOLORPROC)wglGetProcAddress("glBlendColor");
     if (!glBlendColor)
-        throw std::runtime_error("Could not access glBlendColor to initialize OpenGL");
+        throw std::runtime_error(
+                "Could not access glBlendColor to initialize OpenGL");
 }
 
 void DispOpenGL::Resize(unsigned int width, unsigned int height) {
@@ -112,7 +113,7 @@ void DispOpenGL::ForceRepaint() {
     m_opengl->GetDevContext()->ForceRepaint();
 }
 
-void DispOpenGL::Render(std::list<class DisplayOrder> &orders) {
+void DispOpenGL::Render(std::list<std::shared_ptr<DisplayOrder>> &orders) {
     DisplayDelta target_size(GetDisplaySize());
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -120,21 +121,32 @@ void DispOpenGL::Render(std::list<class DisplayOrder> &orders) {
     glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
 
     for (auto it=orders.cbegin(); it != orders.cend(); ++it) {
-        std::shared_ptr<Texture> tex = m_texcache->Get(it->GetTileCode());
-        if (!tex) {
-            tex.reset(new Texture(it->GetTileCode()));
-            m_texcache->Insert(it->GetTileCode(), tex);
+        auto dorder = *it;
+        const TileCode *tilecode = dorder->GetTileCode();
+        std::shared_ptr<Texture> tex;
+        if (dorder->IsCachable()) {
+            tex = m_texcache->Get(*tilecode);
+            if (!tex) {
+                std::shared_ptr<unsigned int> pixels(dorder->GetPixels());
+                tex.reset(new Texture(dorder->GetPixelSize().x,
+                                      dorder->GetPixelSize().y, pixels.get()));
+                m_texcache->Insert(*tilecode, tex);
+            }
+        } else {
+            std::shared_ptr<unsigned int> pixels(dorder->GetPixels());
+            tex.reset(new Texture(dorder->GetPixelSize().x,
+                                  dorder->GetPixelSize().y, pixels.get()));
         }
 
         glBlendColor(0.0f, 0.0f, 0.0f,
-                     static_cast<GLfloat>(1.0 - it->GetTransparency()));
+                     static_cast<GLfloat>(1.0 - dorder->GetTransparency()));
 
         tex->Activate();
         glBegin(GL_QUADS);
-        OGLDisplayCoord(it->GetBotRight(), target_size).TexVertex2d(1, 0);
-        OGLDisplayCoord(it->GetBotLeft(), target_size).TexVertex2d(0, 0);
-        OGLDisplayCoord(it->GetTopLeft(), target_size).TexVertex2d(0, 1);
-        OGLDisplayCoord(it->GetTopRight(), target_size).TexVertex2d(1, 1);
+        OGLDisplayCoord(dorder->GetBotRight(), target_size).TexVertex2d(1, 0);
+        OGLDisplayCoord(dorder->GetBotLeft(), target_size).TexVertex2d(0, 0);
+        OGLDisplayCoord(dorder->GetTopLeft(), target_size).TexVertex2d(0, 1);
+        OGLDisplayCoord(dorder->GetTopRight(), target_size).TexVertex2d(1, 1);
         glEnd();
         tex->Deactivate();
     }
@@ -172,13 +184,6 @@ Texture::Texture(unsigned int width, unsigned int height,
     : m_width(width), m_height(height)
 {
     MakeTexture(pixels);
-}
-
-Texture::Texture(const class TileCode& tilecode)
-    : m_width(tilecode.GetTileSize().x), m_height(tilecode.GetTileSize().y) {
-
-    std::shared_ptr<unsigned int> pixels(tilecode.GetTile());
-    MakeTexture(pixels.get());
 }
 
 void Texture::MakeTexture(const unsigned int *pixels) {

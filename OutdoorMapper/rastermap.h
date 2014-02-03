@@ -59,14 +59,24 @@ class EXPORT GeoDrawable : public GeoPixels {
         virtual unsigned int GetHeight() const = 0;
         virtual MapPixelDeltaInt GetSize() const = 0;
         virtual MapRegion
-            GetRegion(const MapPixelCoordInt &pos,
-                      const MapPixelDeltaInt &size) const = 0;
+        GetRegion(const MapPixelCoordInt &pos,
+                  const MapPixelDeltaInt &size) const = 0;
 
         virtual Projection GetProj() const = 0;
         virtual const std::wstring &GetFname() const = 0;
 
         virtual bool IsViewable() const {
             return GetType() != TYPE_DHM && GetType() != TYPE_ERROR;
+        };
+
+        virtual bool SupportsDirectDrawing() const { return false; };
+        virtual MapRegion
+        GetRegionDirect(const MapPixelDeltaInt &output_size,
+                        const GeoPixels &base,
+                        const MapPixelCoord &base_tl,
+                        const MapPixelCoord &base_br) const
+        {
+            return MapRegion();
         };
 };
 

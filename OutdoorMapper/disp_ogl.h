@@ -2,6 +2,7 @@
 #define ODM__DISP_OGL_H
 
 #include <list>
+#include <memory>
 
 #include "util.h"
 #include "odm_config.h"
@@ -17,7 +18,8 @@ class EXPORT Display {
         virtual unsigned int GetDisplayHeight() const = 0;
         virtual DisplayDelta GetDisplaySize() const = 0;
 
-        virtual void Render(class std::list<class DisplayOrder> &orders) = 0;
+        virtual void Render(
+            class std::list<std::shared_ptr<class DisplayOrder>> &orders) = 0;
         virtual void Resize(unsigned int width, unsigned int height) = 0;
         virtual void ForceRepaint() = 0;
 };
@@ -37,7 +39,8 @@ class EXPORT DispOpenGL : public Display {
         virtual unsigned int GetDisplayHeight() const;
         virtual DisplayDelta GetDisplaySize() const;
 
-        virtual void Render(class std::list<class DisplayOrder> &orders);
+        virtual void Render(
+                class std::list<std::shared_ptr<DisplayOrder>> &orders);
         virtual void Resize(unsigned int width, unsigned int height);
         virtual void ForceRepaint();
 
@@ -52,7 +55,6 @@ class Texture {
     public:
         Texture(unsigned int width, unsigned int height,
                 const unsigned int *pixels);
-        explicit Texture(const class TileCode& tilecode);
         ~Texture();
 
         void Activate();
