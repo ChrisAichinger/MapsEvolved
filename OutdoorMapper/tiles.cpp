@@ -12,3 +12,9 @@ std::shared_ptr<unsigned int> DisplayOrderDirect::GetPixels() const {
             m_base_pixel_tl, m_base_pixel_br).GetData();
 
 }
+ODMPixelFormat DisplayOrderTiled::GetPixelFormat() const {
+    return m_tilecode.GetMap()->GetPixelFormat();
+}
+ODMPixelFormat DisplayOrderDirect::GetPixelFormat() const {
+    return m_map->GetPixelFormat();
+}

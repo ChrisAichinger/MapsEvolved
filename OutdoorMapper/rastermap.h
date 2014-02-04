@@ -9,6 +9,7 @@
 #include "util.h"
 #include "coordinates.h"
 #include "projection.h"
+#include "pixelformat.h"
 
 class EXPORT MapRegion {
     public:
@@ -78,6 +79,7 @@ class EXPORT GeoDrawable : public GeoPixels {
         {
             return MapRegion();
         };
+        virtual ODMPixelFormat GetPixelFormat() const = 0;
 };
 
 

@@ -141,6 +141,7 @@ class RasterMapError : public RasterMap {
         virtual const std::wstring &GetDescription() const {
             return m_fname;
         }
+        virtual ODMPixelFormat GetPixelFormat() const { return ODM_PIX_RGBX4; }
 
     private:
         const std::wstring m_fname;

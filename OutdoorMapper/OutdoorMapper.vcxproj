@@ -169,6 +169,7 @@
     <ClInclude Include="map_dhm_advanced.h" />
     <ClInclude Include="map_geotiff.h" />
     <ClInclude Include="odm_config.h" />
+    <ClInclude Include="pixelformat.h" />
     <ClInclude Include="print_map.h" />
     <ClInclude Include="uimode.h" />
     <ClInclude Include="win_main.h" />

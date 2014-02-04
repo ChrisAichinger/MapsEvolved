@@ -130,7 +130,7 @@ GPSSegment::GetRegion(const MapPixelCoordInt &pos,
         int y = round_to_int(point_rel.y);
         for (int j = y - 1; j < y + 1; j++)
             for (int i = x - 1; i < x+1; i++)
-                ClippedSetPixel(dest, size, i, j, 0x000000FF);
+                ClippedSetPixel(dest, size, i, j, 0xFF0000FF);
     }
     return result;
 }
@@ -226,11 +226,11 @@ MapRegion GPSSegment::GetRegionDirect(
         int y = point_disp.y;
         for (int j = y - 2; j < y + 2; j++)
             for (int i = x - 2; i < x+2; i++)
-                ClippedSetPixel(dest, output_size, i, j, 0x000000FF);
+                ClippedSetPixel(dest, output_size, i, j, 0xFF0000FF);
 
         if (it != m_points.cbegin()) {
             // Not the first point -> old_point is valid
-            ClippedLine(dest, output_size, old_point, point_disp, 0x000000FF);
+            ClippedLine(dest, output_size, old_point, point_disp, 0xFF0000FF);
         }
         old_point = point_disp;
 

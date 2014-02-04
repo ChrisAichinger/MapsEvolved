@@ -118,7 +118,6 @@ void DispOpenGL::Render(std::list<std::shared_ptr<DisplayOrder>> &orders) {
 
     glClear(GL_COLOR_BUFFER_BIT);
     glEnable(GL_BLEND);
-    glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
 
     for (auto it=orders.cbegin(); it != orders.cend(); ++it) {
         auto dorder = *it;
@@ -129,17 +128,30 @@ void DispOpenGL::Render(std::list<std::shared_ptr<DisplayOrder>> &orders) {
             if (!tex) {
                 std::shared_ptr<unsigned int> pixels(dorder->GetPixels());
                 tex.reset(new Texture(dorder->GetPixelSize().x,
-                                      dorder->GetPixelSize().y, pixels.get()));
+                                      dorder->GetPixelSize().y,
+                                      pixels.get(), dorder->GetPixelFormat()));
                 m_texcache->Insert(*tilecode, tex);
             }
         } else {
             std::shared_ptr<unsigned int> pixels(dorder->GetPixels());
             tex.reset(new Texture(dorder->GetPixelSize().x,
-                                  dorder->GetPixelSize().y, pixels.get()));
+                                  dorder->GetPixelSize().y,
+                                  pixels.get(), dorder->GetPixelFormat()));
         }
 
-        glBlendColor(0.0f, 0.0f, 0.0f,
-                     static_cast<GLfloat>(1.0 - dorder->GetTransparency()));
+        switch (dorder->GetPixelFormat()) {
+            case ODM_PIX_RGBA4:
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+            case ODM_PIX_RGBX4:
+                glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+                glBlendColor(
+                        0.0f, 0.0f, 0.0f,
+                        static_cast<GLfloat>(1.0 - dorder->GetTransparency()));
+                break;
+            default:
+                assert(false);
+        }
 
         tex->Activate();
         glBegin(GL_QUADS);
@@ -180,13 +192,13 @@ DisplayDelta DispOpenGL::GetDisplaySize() const {
 }
 
 Texture::Texture(unsigned int width, unsigned int height,
-                 const unsigned int *pixels)
+                 const unsigned int *pixels, ODMPixelFormat format)
     : m_width(width), m_height(height)
 {
-    MakeTexture(pixels);
+    MakeTexture(pixels, format);
 }
 
-void Texture::MakeTexture(const unsigned int *pixels) {
+void Texture::MakeTexture(const unsigned int *pixels, ODMPixelFormat format) {
     glGenTextures(1, &m_texhandle);
     glBindTexture(GL_TEXTURE_2D, m_texhandle);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -196,9 +208,16 @@ void Texture::MakeTexture(const unsigned int *pixels) {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);   // No padding in pixels
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    switch (format) {
+        case ODM_PIX_RGBA4:
+        case ODM_PIX_RGBX4:
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);   // No padding in pixels
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0,
+                         GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+            break;
+        default:
+            assert(0);
+    }
     assert(glGetError() == 0);
 }
 

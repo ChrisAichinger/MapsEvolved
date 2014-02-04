@@ -5,6 +5,7 @@
 
 #include "coordinates.h"
 #include "util.h"
+#include "pixelformat.h"
 
 class TileCode {
     public:
@@ -101,6 +102,7 @@ class DisplayOrder {
 
         virtual bool IsCachable() const { return !!GetTileCode(); };
         virtual const TileCode *GetTileCode() const = 0;
+        virtual ODMPixelFormat GetPixelFormat() const = 0;
     protected:
         DisplayCoordCentered m_topleft;
         DisplayCoordCentered m_topright;
@@ -135,6 +137,7 @@ class DisplayOrderTiled : public DisplayOrder {
         virtual MapPixelDeltaInt GetPixelSize() const {
             return m_tilecode.GetTileSize();
         }
+        virtual ODMPixelFormat GetPixelFormat() const;
 
     private:
         const TileCode m_tilecode;
@@ -161,6 +164,7 @@ class DisplayOrderDirect : public DisplayOrder {
             return MapPixelDeltaInt(round_to_int(m_size.x),
                                     round_to_int(m_size.y));
         }
+        virtual ODMPixelFormat GetPixelFormat() const;
 
     private:
         const std::shared_ptr<class GeoDrawable> m_map;

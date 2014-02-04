@@ -39,6 +39,9 @@ class EXPORT GPSSegment : public GeoDrawable {
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
                         const MapPixelCoord &base_br) const;
+        virtual ODMPixelFormat GetPixelFormat() const {
+            return ODM_PIX_RGBA4;
+        }
     private:
         std::wstring m_fname;
         std::vector<LatLon> m_points;

@@ -4,9 +4,10 @@
 #include <list>
 #include <memory>
 
-#include "util.h"
 #include "odm_config.h"
+#include "util.h"
 #include "coordinates.h"
+#include "pixelformat.h"
 
 class DevContext;
 class OGLContext;
@@ -54,7 +55,7 @@ class EXPORT DispOpenGL : public Display {
 class Texture {
     public:
         Texture(unsigned int width, unsigned int height,
-                const unsigned int *pixels);
+                const unsigned int *pixels, ODMPixelFormat format);
         ~Texture();
 
         void Activate();
@@ -66,7 +67,7 @@ class Texture {
     private:
         DISALLOW_COPY_AND_ASSIGN(Texture);
 
-        void MakeTexture(const unsigned int *pixels);
+        void MakeTexture(const unsigned int *pixels, ODMPixelFormat format);
 
         unsigned int m_width;
         unsigned int m_height;
