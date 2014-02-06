@@ -2,6 +2,8 @@
 #include "coordinates.h"
 
 #include <cmath>
+#include <cassert>
+#include <limits>
 
 #include "util.h"
 
@@ -185,3 +187,80 @@ double MapBezierGradient::Abs() const {
     return sqrt(x*x + y*y);
 }
 OPERATORS_COORD_MULDIV(MapBezierGradient, x, y)
+
+
+BorderIterator::BorderIterator(const MapPixelCoordInt &rect_tl,
+                              const MapPixelCoordInt &rect_br)
+    : m_tl(rect_tl), m_br(rect_br), m_value(rect_tl), m_pos(0)
+{}
+
+BorderIterator& BorderIterator::operator=(BorderIterator rhs) {
+    std::swap(*this, rhs);
+    return *this;
+}
+
+bool BorderIterator::operator==(const BorderIterator& rhs) const {
+    if (m_tl != rhs.m_tl || m_br != rhs.m_br)
+        return false;
+    if (HasEnded() && rhs.HasEnded())
+        return true;
+    return m_value == rhs.m_value && m_pos == rhs.m_pos;
+}
+
+bool BorderIterator::operator!=(const BorderIterator& rhs) const {
+    return !(*this == rhs);
+}
+
+BorderIterator& BorderIterator::operator++() {
+    Advance(+1);
+    return *this;
+}
+BorderIterator& BorderIterator::operator--() {
+    Advance(-1);
+    return *this;
+}
+BorderIterator BorderIterator::operator++(int) {
+    BorderIterator tmp(*this);
+    operator++();
+    return tmp;
+}
+BorderIterator BorderIterator::operator--(int) {
+    BorderIterator tmp(*this);
+    operator--();
+    return tmp;
+}
+
+BorderIterator::const_reference BorderIterator::operator*() const {
+    return m_value;
+}
+
+BorderIterator::const_pointer BorderIterator::operator->() const {
+    return &m_value;
+}
+
+bool BorderIterator::HasEnded() const {
+    return abs(m_pos) >= 2 * (m_br.x - m_tl.x) + 2 * (m_br.y - m_tl.y);
+}
+
+BorderIterator BorderIterator::End() const {
+    BorderIterator result(*this);
+    result.m_pos = std::numeric_limits<int>::max();
+    return result;
+}
+
+void BorderIterator::Advance(int increment) {
+    assert(increment == 1 || increment == -1);
+    if (m_value.y == m_tl.y && m_value.x != m_br.x) {
+        m_value.x += increment;  // top border
+    }
+    if (m_value.x == m_br.x && m_value.y != m_br.y) {
+        m_value.y += increment;  // right border
+    }
+    if (m_value.y == m_br.y && m_value.x != m_tl.x) {
+        m_value.x -= increment;  // bottom border
+    }
+    if (m_value.x == m_tl.x && m_value.y != m_tl.y) {
+        m_value.y -= increment;  // left border
+    }
+    m_pos += increment;
+}

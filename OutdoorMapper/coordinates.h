@@ -2,6 +2,7 @@
 #define ODM__COORDINATES_H
 
 #include <ostream>
+#include <algorithm>
 #include "odm_config.h"
 
 class EXPORT BezierCoord {
@@ -309,5 +310,58 @@ operator/(const MapPixelDeltaInt &lhs, double rhs) {
 }
 
 
+class BorderIterator {
+    /* An iterator returning points along the border of the rectangle defined
+     * by rect_tl (top left corner) and rect_br (bottom right corner).
+     * Iteration starts at the top-left corner, forward iteration (++)
+     * proceeds clockwise, reverse iteration (--) proceeds counter-clockwise.
+     *
+     * The rectangle is INCLUSIVE, thus rect_br is traversed!
+     */
+    public:
+        typedef MapPixelCoordInt value_type;
+        typedef const MapPixelCoordInt &const_reference;
+        typedef const MapPixelCoordInt *const_pointer;
+        typedef std::bidirectional_iterator_tag iterator_category;
+
+        BorderIterator(const MapPixelCoordInt &rect_tl,
+                       const MapPixelCoordInt &rect_br);
+
+        BorderIterator& operator=(BorderIterator);
+        bool operator==(const BorderIterator&) const;
+        bool operator!=(const BorderIterator&) const;
+
+        BorderIterator& operator++();
+        BorderIterator& operator--();
+        BorderIterator operator++(int);
+        BorderIterator operator--(int);
+
+        const_reference operator*() const;
+        const_pointer operator->() const;
+
+        friend void swap(BorderIterator& lhs, BorderIterator& rhs) {
+            // enable ADL (not necessary in our case, but good practice)
+            using std::swap;
+
+            std::swap(lhs.m_tl, rhs.m_tl);
+            std::swap(lhs.m_br, rhs.m_br);
+            std::swap(lhs.m_value, rhs.m_value);
+            std::swap(lhs.m_pos, rhs.m_pos);
+        }
+
+        // Return true if the iterator has ended (i.e. we finished one complete
+        // loop around the rectangle).
+        bool HasEnded() const;
+        // Use as (it == it.End()), however, HasEnded() is more efficient.
+        BorderIterator End() const;
+    private:
+        MapPixelCoordInt m_tl;
+        MapPixelCoordInt m_br;
+        MapPixelCoordInt m_value;
+        int m_pos;
+
+        // Move to the next or the previous value. Increment must be +1 or -1.
+        void Advance(int increment);
+};
 
 #endif

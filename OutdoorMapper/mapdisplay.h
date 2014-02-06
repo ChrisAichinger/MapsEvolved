@@ -100,9 +100,6 @@ class EXPORT MapDisplayManager {
                 const MapPixelDelta &half_disp_size,
                 double transparency);
 
-        bool AdvanceAlongBorder(MapPixelCoordInt *base_point,
-                                const MapPixelCoordInt &base_tl,
-                                const MapPixelCoordInt &base_br);
         bool CalcOverlayTiles(
                 const std::shared_ptr<class GeoDrawable> &overlay_map,
                 const MapPixelDeltaInt &tile_size,

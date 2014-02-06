@@ -132,28 +132,6 @@ void MapDisplayManager::Paint() {
     m_display->Render(orders);
 }
 
-bool MapDisplayManager::AdvanceAlongBorder(MapPixelCoordInt *base_point,
-                                           const MapPixelCoordInt &base_tl,
-                                           const MapPixelCoordInt &base_br)
-{
-    if (base_point->y == base_tl.y && base_point->x != base_br.x) {
-        base_point->x++;  // top border
-    }
-    if (base_point->x == base_br.x && base_point->y != base_br.y) {
-        base_point->y++;  // right border
-    }
-    if (base_point->y == base_br.y && base_point->x != base_tl.x) {
-        base_point->x--;  // bottom border
-    }
-    if (base_point->x == base_tl.x && base_point->y != base_tl.y) {
-        base_point->y--;  // right border
-    }
-    // Abort if we are back at the tl corner, otherwise continue
-    if (*base_point == base_tl)
-        return false;
-    return true;
-}
-
 bool MapDisplayManager::CalcOverlayTiles(
         const std::shared_ptr<class GeoDrawable> &overlay_map,
         const MapPixelDeltaInt &tile_size,
@@ -172,9 +150,8 @@ bool MapDisplayManager::CalcOverlayTiles(
     x_max = y_max = std::numeric_limits<long int>::min();
 
     // Iterate along the display border and find min/max overlay map pixels
-    MapPixelCoordInt base_border = base_tl;
-    do {
-        if (!m_base_map->PixelToLatLon(MapPixelCoord(base_border), &point))
+    for (BorderIterator it(base_tl, base_br); !it.HasEnded(); ++it) {
+        if (!m_base_map->PixelToLatLon(MapPixelCoord(*it), &point))
             return false;
         if (!overlay_map->LatLonToPixel(point, &overlay_point))
             return false;
@@ -183,7 +160,7 @@ bool MapDisplayManager::CalcOverlayTiles(
         if (overlay_point.y < y_min) y_min = round_to_int(overlay_point.y);
         if (overlay_point.x > x_max) x_max = round_to_int(overlay_point.x);
         if (overlay_point.y > y_max) y_max = round_to_int(overlay_point.y);
-    } while (AdvanceAlongBorder(&base_border, base_tl, base_br));
+    };
 
     // Create MapPixelCoords out of the minmax values, then round to tile_size.
     *overlay_tl = MapPixelCoordInt(MapPixelCoordInt(x_min, y_min),
