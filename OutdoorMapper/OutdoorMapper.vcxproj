@@ -142,10 +142,12 @@
     <ClCompile Include="bezier.cpp" />
     <ClCompile Include="coordinates.cpp" />
     <ClCompile Include="disp_ogl.cpp" />
+    <ClCompile Include="drawing.cpp" />
     <ClCompile Include="gpstracks.cpp" />
     <ClCompile Include="mapdisplay.cpp" />
     <ClCompile Include="map_dhm_advanced.cpp" />
     <ClCompile Include="map_geotiff.cpp" />
+    <ClCompile Include="map_gridlines.cpp" />
     <ClCompile Include="OutdoorMapper.cpp" />
     <ClCompile Include="print_map.cpp" />
     <ClCompile Include="projection.cpp" />
@@ -162,12 +164,14 @@
     <ClInclude Include="bezier.h" />
     <ClInclude Include="coordinates.h" />
     <ClInclude Include="disp_ogl.h" />
+    <ClInclude Include="drawing.h" />
     <ClInclude Include="external\glext.h" />
     <ClInclude Include="geotiff_impl.h" />
     <ClInclude Include="gpstracks.h" />
     <ClInclude Include="mapdisplay.h" />
     <ClInclude Include="map_dhm_advanced.h" />
     <ClInclude Include="map_geotiff.h" />
+    <ClInclude Include="map_gridlines.h" />
     <ClInclude Include="odm_config.h" />
     <ClInclude Include="pixelformat.h" />
     <ClInclude Include="print_map.h" />

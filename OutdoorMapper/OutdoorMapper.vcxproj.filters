@@ -69,6 +69,12 @@
     <ClCompile Include="gpstracks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="map_gridlines.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="drawing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="disp_ogl.h">
@@ -135,6 +141,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pixelformat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="map_gridlines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="drawing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
