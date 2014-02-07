@@ -36,7 +36,7 @@
           <help>Set the zoom level so one map pixel is shown as one display pixel.</help>
         </object>
         <object class="separator"/>
-        <object class="wxMenuItem" name="ShowGridMenuItem">
+        <object class="wxMenuItem" name="ToggleGridMenuItem">
           <label>Show &amp;Grid</label>
           <help>Toggle the display of grid lines.</help>
           <checkable>1</checkable>

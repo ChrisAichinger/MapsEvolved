@@ -88,6 +88,7 @@ class MainFrame(wx.Frame):
         self.drag_last_pos = None
         self.manage_maps_window = None
         self.have_shown_layermgr_once = False
+        self.special_layers = []
 
         self.update_layerlist_from_map()
         self.expand_to_fit_sizer()
@@ -143,6 +144,17 @@ class MainFrame(wx.Frame):
     def on_zoom_reset_menu(self, evt):
         self.mapdisplay.SetZoomOneToOne()
         self.update_statusbar()
+
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ToggleGridMenuItem'))
+    def on_toggle_gridlines_menu(self, evt):
+        if evt.GetInt():  # Item checked
+            m = pymaplib.GeoDrawableShPtr(pymaplib.Gridlines())
+            o = pymaplib.OverlaySpec(m, True, 1.0)
+            self.special_layers.append(o)
+        else:
+            self.special_layers = [o for o in self.special_layers
+                                   if o.Map.GetType() != o.Map.TYPE_GRIDLINES]
+        self.update_map_from_layerlist()
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('WxInspectorMenuItem'))
     def on_wx_inspector(self, evt):
@@ -401,6 +413,9 @@ class MainFrame(wx.Frame):
         # from 0 to len() - 1. Thus, we reverse the layer list here.
         overlays = reversed(self.mapdisplay.GetOverlayList())
         for overlayspec in overlays:
+            if overlayspec.Map in [o.Map for o in self.special_layers]:
+                # Do not show our special layers in the overlay list.
+                continue
             rastermap = overlayspec.GetMap()
             name = self.name_from_map(rastermap, is_basemap=False)
             idx = self.layerlistbox.Append(name)
@@ -414,11 +429,14 @@ class MainFrame(wx.Frame):
         self.layerlistbox.SetClientData(idx, None)
 
         self.update_layermgr_ui()
+        # Update map so special layers (e.g. gridlines) stay on top.
+        self.update_map_from_layerlist()
 
     def update_map_from_layerlist(self):
-        # We disregard the basemap entirely (Count - 1)
+        layers = self.special_layers.copy()
+        # Count - 1: We disregard the basemap entirely.
         size = self.layerlistbox.Count - 1
-        layers = [self.layerlistbox.GetClientData(i) for i in range(size)]
+        layers.extend(self.layerlistbox.GetClientData(i) for i in range(size))
         self.mapdisplay.SetOverlayList(reversed(layers))
 
     def set_initial_size(self):

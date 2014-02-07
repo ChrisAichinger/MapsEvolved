@@ -15,7 +15,20 @@ class MapRegion
 };
 
 
-class GeoDrawable /Abstract/ {
+class GeoPixels /Abstract/ {
+%TypeHeaderCode
+#include "rastermap.h"
+%End
+    public:
+        virtual ~GeoPixels();
+        virtual bool PixelToLatLon(
+                const MapPixelCoord &pos, LatLon *result /Out/) const = 0;
+        virtual bool LatLonToPixel(
+                const LatLon &pos, MapPixelCoord *result /Out/) const = 0;
+};
+
+
+class GeoDrawable : public GeoPixels /Abstract/ {
 %TypeHeaderCode
 #include "rastermap.h"
 %End
@@ -29,6 +42,7 @@ class GeoDrawable /Abstract/ {
             TYPE_OVERVIEW,
             TYPE_IMAGE,
             TYPE_GPSTRACK,
+            TYPE_GRIDLINES,
             TYPE_ERROR,
         };
         virtual ~GeoDrawable();
@@ -41,19 +55,17 @@ class GeoDrawable /Abstract/ {
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
 
-        virtual bool PixelToPCS(double *x /In,Out/,
-                                double *y /In,Out/) const = 0;
-        virtual bool PCSToPixel(double *x /In,Out/,
-                                double *y /In,Out/) const = 0;
         virtual Projection GetProj() const = 0;
-        virtual bool PixelToLatLon(
-                const MapPixelCoord &pos, LatLon *result /Out/) const = 0;
-        virtual bool LatLonToPixel(
-                const LatLon &pos, MapPixelCoord *result /Out/) const = 0;
 
         virtual const std::wstring &GetFname() const = 0;
 
         virtual bool IsViewable() const;
+        virtual bool SupportsDirectDrawing() const;
+        virtual MapRegion
+        GetRegionDirect(const MapPixelDeltaInt &output_size,
+                        const GeoPixels &base,
+                        const MapPixelCoord &base_tl,
+                        const MapPixelCoord &base_br) const;
 };
 
 class GeoDrawableShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
@@ -63,6 +75,8 @@ class GeoDrawableShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
 typedef std::shared_ptr<GeoDrawable> GeoDrawableShPtr;
 %End
     public:
+        GeoDrawableShPtr(GeoDrawable* ref /Transfer/);
+        GeoDrawableShPtr(const GeoDrawableShPtr& ref);
         GeoDrawable *get();
 };
 
