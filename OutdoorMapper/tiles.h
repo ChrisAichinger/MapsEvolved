@@ -66,7 +66,7 @@ inline bool operator>=(const TileCode& lhs, const TileCode& rhs) {
 class DisplayOrder {
     public:
         DisplayOrder(const DisplayCoordCentered &pos, const DisplayDelta &size,
-                     const double transparency = 0)
+                     const double transparency)
             : m_topleft  (pos.x,          pos.y),
               m_topright (pos.x + size.x, pos.y),
               m_botleft  (pos.x,          pos.y + size.y),
@@ -77,7 +77,7 @@ class DisplayOrder {
                      const DisplayCoordCentered &TopRight,
                      const DisplayCoordCentered &BotLeft,
                      const DisplayCoordCentered &BotRight,
-                     const double transparency = 0)
+                     const double transparency)
             : m_topleft(TopLeft), m_topright(TopRight),
               m_botleft(BotLeft), m_botright(BotRight),
               m_transparency(transparency)
@@ -126,7 +126,7 @@ class DisplayOrderTiled : public DisplayOrder {
                           const DisplayCoordCentered &BotRight,
                           const TileCode& tilecode,
                           const double transparency)
-            : DisplayOrder(TopLeft, TopRight, BotLeft, BotRight),
+            : DisplayOrder(TopLeft, TopRight, BotLeft, BotRight, transparency),
               m_tilecode(tilecode)
             {};
         virtual ~DisplayOrderTiled() {};
