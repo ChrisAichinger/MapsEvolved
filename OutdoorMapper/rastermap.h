@@ -154,6 +154,9 @@ class EXPORT HeightFinder {
     public:
         explicit HeightFinder(const class RasterMapCollection &maps);
         bool CalcTerrain(const LatLon &pos, TerrainInfo *result);
+        std::shared_ptr<class RasterMap> GetActiveMap() const {
+            return m_active_dhm;
+        }
     private:
         const class RasterMapCollection &m_maps;
         std::shared_ptr<class RasterMap> m_active_dhm;
@@ -188,4 +191,8 @@ bool EXPORT
 MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
                const MapPixelCoordInt &pos,
                double *mpp);
+
+MapRegion EXPORT
+CalcPanorama(const std::shared_ptr<GeoDrawable> &map, const LatLon &pos);
+
 #endif

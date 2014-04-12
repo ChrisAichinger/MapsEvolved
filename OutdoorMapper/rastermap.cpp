@@ -12,14 +12,18 @@
 #include <algorithm>
 #include <cctype>
 #include <limits>
+#include <cmath>
+#include <stdio.h>
 
-#include <GeographicLib\Geodesic.hpp>
+#include <GeographicLib/Geodesic.hpp>
+#include <GeographicLib/LocalCartesian.hpp>
 
 #include "util.h"
 #include "map_geotiff.h"
 #include "map_dhm_advanced.h"
 #include "bezier.h"
 #include "projection.h"
+#include "drawing.h"
 
 GeoPixels::~GeoPixels() {};
 GeoDrawable::~GeoDrawable() {};
@@ -306,3 +310,139 @@ MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
     return MetersPerPixel(std::static_pointer_cast<GeoDrawable>(map),
                           pos, mpp);
 }
+
+
+struct PanoramaListEntry {
+    int y;
+    double distance;
+
+    PanoramaListEntry() : y(0), distance(0) {};
+    PanoramaListEntry(int yy, double ddistance) : y(yy), distance(ddistance) {};
+};
+
+struct PanoramaList {
+    PanoramaListEntry highpoint;
+    std::vector<PanoramaListEntry> points;
+
+    PanoramaList() : highpoint(std::numeric_limits<int>::max(), 0), points() {};
+};
+
+static bool CalcPanoramaOneTile(const std::shared_ptr<GeoDrawable> &map,
+                                const GeographicLib::LocalCartesian &proj,
+                                const MapPixelCoordInt &tile_coord,
+                                const MapPixelDeltaInt &tile_size,
+                                std::vector<PanoramaList> &highpoints,
+                                unsigned int *dest,
+                                const MapPixelDeltaInt &output_size)
+{
+    unsigned int scale = output_size.x / 360;
+    auto region = map->GetRegion(tile_coord, tile_size);
+    const unsigned int *data = region.GetRawData();
+    for (unsigned int py = 0; py < region.GetHeight(); py++) {
+        for (unsigned int px = 0; px < region.GetWidth(); px++) {
+            short int ele = static_cast<short int>(region.GetPixel(px, py));
+            MapPixelCoord pixel_coord(tile_coord.x + px, tile_coord.y + py);
+            LatLon ll;
+            if (!map->PixelToLatLon(pixel_coord, &ll)) {
+                return false;
+            }
+            double x, y, z;
+            proj.Forward(ll.lat, ll.lon, ele, x, y, z);
+            double heading = atan2(x, y) * RAD_to_DEG;
+            heading += (heading < 0) ? 360 : 0;
+
+            double horiz_distance = sqrt(x*x + y*y);
+            double elevation_angle = atan(z / horiz_distance) * RAD_to_DEG;
+            // We modulo vs the output size, otherwise we can get
+            // pixel_x == output_size.x (=> vector overflow) due to rounding.
+            int pixel_x = round_to_int(scale * heading);
+            if (pixel_x > output_size.x) {
+                assert(false);
+            }
+            pixel_x %= output_size.x;
+            int pixel_y = output_size.y / 2 + round_to_int(scale * elevation_angle);
+            PanoramaList &cur = highpoints[pixel_x];
+            if (pixel_y > cur.highpoint.y && horiz_distance >= cur.highpoint.distance) {
+                continue;
+            }
+
+            if (pixel_y > cur.highpoint.y) {
+                cur.highpoint.y = pixel_y;
+                cur.highpoint.distance = horiz_distance;
+            }
+            cur.points.push_back(PanoramaListEntry(pixel_y, horiz_distance));
+        }
+    }
+    return true;
+}
+
+MapRegion
+CalcPanorama(const std::shared_ptr<GeoDrawable> &map, const LatLon &pos) {
+    static const unsigned int TILE_SIZE = 512;
+    if (!(map->GetType() == GeoDrawable::TYPE_DHM)) {
+        return MapRegion();
+    }
+    MapPixelCoord mp_pos;
+    if (!map->LatLonToPixel(pos, &mp_pos)) {
+        return MapRegion();
+    }
+    MapPixelCoordInt mp_pos_int(static_cast<unsigned int>(mp_pos.x),
+                                static_cast<unsigned int>(mp_pos.y));
+    auto region = map->GetRegion(mp_pos_int, MapPixelDeltaInt(2, 2));
+    double dx = mp_pos.x - mp_pos_int.x;
+    double dy = mp_pos.y - mp_pos_int.y;
+    double pos_elevation = lerp(dy,
+            lerp(dx, region.GetPixel(0, 0), region.GetPixel(1, 0)),
+            lerp(dx, region.GetPixel(0, 1), region.GetPixel(1, 1))) + 50;
+    GeographicLib::LocalCartesian proj(pos.lat, pos.lon, pos_elevation);
+
+    MapPixelDeltaInt output_size(360*20, 180*20);
+    MapRegion result(std::shared_ptr<unsigned int>(
+                     new unsigned int[output_size.x*output_size.y](),
+                     ArrayDeleter<unsigned int>()),
+             output_size.x, output_size.y);
+    unsigned int *dest = result.GetRawData();
+    ClippedRect(dest, output_size, MapPixelCoordInt(0, 0),
+                MapPixelCoordInt(output_size.x - 1, output_size.y - 1),
+                0xFFDDDDFF);
+
+    PanoramaList pano_init;
+    std::vector<PanoramaList> highpoints(output_size.x, pano_init);
+
+    MapPixelCoordInt tile_center(mp_pos, TILE_SIZE);
+    MapPixelDeltaInt tile_size(TILE_SIZE, TILE_SIZE);
+    for (int tile_y = -5; tile_y <= 5; tile_y++) {
+        for (int tile_x = -5; tile_x <= 5; tile_x++) {
+            MapPixelCoordInt tile_coord(tile_center.x + tile_x*TILE_SIZE,
+                                        tile_center.y + tile_y*TILE_SIZE);
+            if (!CalcPanoramaOneTile(map, proj, tile_coord, tile_size,
+                                     highpoints, dest, output_size))
+            {
+                return MapRegion();
+            }
+        }
+    }
+    for (auto xit = highpoints.begin(); xit != highpoints.end(); ++xit) {
+        int pixel_x = xit - highpoints.begin();
+        std::sort(xit->points.begin(), xit->points.end(),
+                  [](const PanoramaListEntry &lhs, const PanoramaListEntry &rhs) {
+                      return lhs.distance < rhs.distance;
+                  });
+        int cur_hi = std::numeric_limits<int>::max();
+        for (auto yit = xit->points.cbegin(); yit != xit->points.cend(); ++yit) {
+            if (yit->y > cur_hi)
+                continue;
+            cur_hi = yit->y;
+            unsigned char color = round_to_int(yit->distance / 100000.0 * 255);
+            ClippedSetPixel(dest, output_size, pixel_x, yit->y,
+                            makeRGB(color, color, color, 1));
+        }
+    }
+    ClippedLine(dest, output_size,
+                MapPixelCoordInt(0, output_size.y/2),
+                MapPixelCoordInt(output_size.x, output_size.y / 2),
+                0xFFFF0000);
+    SaveBufferAsBMP(L"test_panorama.bmp", dest, output_size.x, output_size.y, 32);
+    return result;
+}
+

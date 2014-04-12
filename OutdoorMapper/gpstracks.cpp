@@ -143,10 +143,9 @@ MapRegion GPSSegment::GetRegionDirect(
     double lon_values[] = {latlon_tl.lon, latlon_bl.lon,
                            latlon_tr.lon, latlon_br.lon};
     double *lat_min, *lat_max, *lon_min, *lon_max;
-    std::tie(lat_min, lat_max) = std::minmax_element(&lat_values[0],
-                                                     &lat_values[4]);
-    std::tie(lon_min, lon_max) = std::minmax_element(&lon_values[0],
-                                                     &lat_values[4]);
+    using std::tie; using std::minmax_element;
+    tie(lat_min, lat_max) = minmax_element(&lat_values[0], &lat_values[4]);
+    tie(lon_min, lon_max) = minmax_element(&lon_values[0], &lat_values[4]);
 
     if (m_lat_min > *lat_max || m_lat_max < *lat_min ||
         m_lon_min > *lon_max || m_lon_max < *lon_min)

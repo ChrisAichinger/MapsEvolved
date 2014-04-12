@@ -2,6 +2,14 @@
 
 #include <algorithm>
 
+unsigned int GetPixel(const unsigned int* dest, const MapPixelDeltaInt &size,
+                      int xx, int yy)
+{
+    if ((xx) >= 0 && (yy) >= 0 && (xx) < (size).x && (yy) < (size).y) {
+        return dest[(xx) + size.x * (size.y - (yy) - 1)];
+    }
+    return 0xBADF00D;
+}
 void ClippedSetPixel(unsigned int* dest, const MapPixelDeltaInt &size,
                      int xx, int yy, unsigned int val)
 {
@@ -49,6 +57,22 @@ void ClippedLine(unsigned int* dest, MapPixelDeltaInt size,
         if (error < 0) {
             y += ystep;
             error += 2 * dx;
+        }
+    }
+}
+
+
+void ClippedRect(unsigned int* dest, MapPixelDeltaInt size,
+                 const MapPixelCoordInt &start, const MapPixelCoordInt &end,
+                 const unsigned int color)
+{
+    int x1 = start.x;
+    int x2 = end.x;
+    int y1 = start.y;
+    int y2 = end.y;
+    for (int y = y1; y <= y2; y++) {
+        for (int x = x1; x <= x2; x++) {
+            ClippedSetPixel(dest, size, x, y, color);
         }
     }
 }
