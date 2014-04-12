@@ -8,7 +8,7 @@ from wx.lib.wordwrap import wordwrap
 import gpxpy
 
 import pymaplib
-from mapsevolved import frmMapManager, util
+from mapsevolved import frmMapManager, frmPanorama, util
 
 def _(s): return s
 
@@ -87,6 +87,7 @@ class MainFrame(wx.Frame):
         self.drag_suppress = False
         self.drag_last_pos = None
         self.manage_maps_window = None
+        self.panorama_window = None
         self.have_shown_layermgr_once = False
         self.special_layers = []
 
@@ -99,6 +100,8 @@ class MainFrame(wx.Frame):
         # Close all other windows to force wx.App to exit
         if self.manage_maps_window:
             self.manage_maps_window.Close()
+        if self.panorama_window:
+            self.panorama_window.Close()
 
     @util.EVENT(wx.EVT_PAINT, id=xrc.XRCID('MapPanel'))
     def on_repaint_mappanel(self, evt):
@@ -270,6 +273,18 @@ class MainFrame(wx.Frame):
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ToggleLayerMgrTBButton'))
     def on_toggle_layermgr_btn(self, evt):
         self.show_layermgr(evt.GetInt())
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('PanoramaTBButton'))
+    def on_show_panorama(self, evt):
+        if self.panorama_window:
+            self.panorama_window.Iconize(False)
+            self.panorama_window.SetFocus()
+            self.panorama_window.Raise()
+            self.panorama_window.Show()
+        else:
+            self.panorama_window = frmPanorama.PanoramaFrame(
+                    self, self.heightfinder.GetActiveMap())
+            self.panorama_window.Show()
 
     @util.EVENT(wx.EVT_SCROLL, id=xrc.XRCID('OpacitySlider'))
     def on_opacity_slider(self, evt):

@@ -12,6 +12,13 @@ class MapRegion
         unsigned int GetWidth() const;
         unsigned int GetHeight() const;
         unsigned int GetPixel(int x, int y);
+        PyObject *GetData();
+        %MethodCode
+            unsigned int size = sipCpp->GetWidth() * sipCpp->GetHeight() *
+                                 sizeof(unsigned int);
+            sipRes = sipConvertFromConstVoidPtrAndSize(sipCpp->GetRawData(),
+                                                       size);
+        %End
 };
 
 
@@ -227,6 +234,7 @@ class HeightFinder {
     public:
         explicit HeightFinder(const RasterMapCollection &maps /KeepReference/);
         bool CalcTerrain(const LatLon &pos, TerrainInfo *result /Out/);
+        RasterMapShPtr GetActiveMap() const;
 };
 
 bool GetMapDistance(const RasterMapShPtr &map, const MapPixelCoord &pos,

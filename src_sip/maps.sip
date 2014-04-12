@@ -226,3 +226,5 @@ class MapDisplayManager /NoDefaultCtors/ {
 };
 
 std::wstring CompassPointFromDirection(double degrees);
+MapRegion CalcPanorama(const GeoDrawableShPtr &map, const LatLon &pos);
+MapRegion CalcPanorama(const RasterMapShPtr &map, const LatLon &pos);
