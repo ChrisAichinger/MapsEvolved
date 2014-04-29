@@ -8,7 +8,7 @@ from wx.lib.wordwrap import wordwrap
 import gpxpy
 
 import pymaplib
-from mapsevolved import frmMapManager, frmPanorama, util
+from mapsevolved import frmMapManager, frmPanorama, frmGPSAnalyzer, util
 
 def _(s): return s
 
@@ -88,6 +88,7 @@ class MainFrame(wx.Frame):
         self.drag_last_pos = None
         self.manage_maps_window = None
         self.panorama_window = None
+        self.gpstrackanalyzer_window = None
         self.have_shown_layermgr_once = False
         self.special_layers = []
 
@@ -102,6 +103,8 @@ class MainFrame(wx.Frame):
             self.manage_maps_window.Close()
         if self.panorama_window:
             self.panorama_window.Close()
+        if self.gpstrackanalyzer_window:
+            self.gpstrackanalyzer_window.Close()
 
     @util.EVENT(wx.EVT_PAINT, id=xrc.XRCID('MapPanel'))
     def on_repaint_mappanel(self, evt):
@@ -287,6 +290,46 @@ class MainFrame(wx.Frame):
             self.panorama_window = frmPanorama.PanoramaFrame(
                     self, self.heightfinder.GetActiveMap())
             self.panorama_window.Show()
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('GPSTrackAnalyzerTBButton'))
+    def on_show_gpstrackanalyzer(self, evt):
+        for overlay in self.mapdisplay.GetOverlayList():
+            maptype = overlay.GetMap().GetType()
+            if maptype == pymaplib.GeoDrawable.TYPE_GPSTRACK:
+                gpstrack = overlay.GetMap()
+                break
+        else:
+            util.Warn(self, _("No GPS Track currently displayed."))
+            return
+
+        self.show_gpstrackanalyzer(gpstrack)
+
+    def show_gpstrackanalyzer(self, gpstrack):
+        if self.gpstrackanalyzer_window:
+            if gpstrack == self.gpstrackanalyzer_window.track:
+                # Analyze the track that is already open: just bring the window
+                # to front.
+                util.force_show_window(self.gpstrackanalyzer_window)
+                return
+            else:
+                # Analyze new track: Close the old window and create a new one.
+                self.gpstrackanalyzer_window.Close()
+
+                # We need to let wx process the destroy events before
+                # re-creating the window, otherwise no events are handled in
+                # the new child window (possibly an oddity in wxPython?)
+                #
+                # Waiting for EVT_WINDOW_DESTROY is not enough, unfortunately.
+                # The 50 ms timer seems to solve the issue reliably, though.
+                self.gpstrack_timer = wx.Timer(self)
+                self.gpstrack_timer.Notify = \
+                        lambda: self.show_gpstrackanalyzer(gpstrack)
+                self.gpstrack_timer.StartOnce(50)
+                return
+
+        self.gpstrackanalyzer_window = frmGPSAnalyzer.GPSTrackAnalyzerFrame(
+                                            self, gpstrack, self.heightfinder)
+        self.gpstrackanalyzer_window.Show()
 
     @util.EVENT(wx.EVT_SCROLL, id=xrc.XRCID('OpacitySlider'))
     def on_opacity_slider(self, evt):

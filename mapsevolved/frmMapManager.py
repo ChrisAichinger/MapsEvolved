@@ -130,6 +130,11 @@ class MapManagerFrame(wx.Frame):
     def on_overlay_menu(self, evt):
         self.overlay_map(self.popup_list_item)
 
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('GPSTrackAnalyzerMenuItem'))
+    def on_gpsanalyzer_menu(self, evt):
+        rastermap = self.maptreectrl.GetItemData(self.popup_list_item)
+        self.parent.show_gpstrackanalyzer(rastermap)
+
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('RemoveMenuItem'))
     def on_remove_map_menu(self, evt):
         self.delete(self.popup_list_item)
