@@ -159,6 +159,14 @@ class MainFrame(wx.Frame):
                                    if o.Map.GetType() != o.Map.TYPE_GRIDLINES]
         self.update_map_from_layerlist()
 
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('IPdbMenuItem'))
+    def on_ipdb(self, evt):
+        try:
+            import ipdb
+        except ImportError:
+            import pdb as ipdb
+        ipdb.set_trace()
+
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('WxInspectorMenuItem'))
     def on_wx_inspector(self, evt):
         import wx.lib.inspection

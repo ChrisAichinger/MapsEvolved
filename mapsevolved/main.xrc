@@ -53,7 +53,11 @@
         </object>
         <label>&amp;View</label>
       </object>
-      <object class="wxMenu" name="WXInspectorMenuItem">
+      <object class="wxMenu">
+        <object class="wxMenuItem" name="IPdbMenuItem">
+          <label>Launch &amp;IPdb</label>
+          <help>Start the IPdb Python debugger.</help>
+        </object>
         <object class="wxMenuItem" name="WxInspectorMenuItem">
           <label>WX &amp;Inspector Tool</label>
           <help>Open the Wx Inspector Tool, which is used for debugging the program.</help>
