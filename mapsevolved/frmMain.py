@@ -120,10 +120,7 @@ class MainFrame(wx.Frame):
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ManageMapsTBButton'))
     def on_manage_maps(self, evt):
         if self.manage_maps_window:
-            self.manage_maps_window.Iconize(False)
-            self.manage_maps_window.SetFocus()
-            self.manage_maps_window.Raise()
-            self.manage_maps_window.Show()
+            util.force_show_window(self.manage_maps_window)
         else:
             self.manage_maps_window = frmMapManager.MapManagerFrame(
                     self, self.filelist, self.mapdisplay)
@@ -285,10 +282,7 @@ class MainFrame(wx.Frame):
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('PanoramaTBButton'))
     def on_show_panorama(self, evt):
         if self.panorama_window:
-            self.panorama_window.Iconize(False)
-            self.panorama_window.SetFocus()
-            self.panorama_window.Raise()
-            self.panorama_window.Show()
+            util.force_show_window(self.panorama_window)
         else:
             self.panorama_window = frmPanorama.PanoramaFrame(
                     self, self.heightfinder.GetActiveMap())
