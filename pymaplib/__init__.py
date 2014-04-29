@@ -99,7 +99,7 @@ class GeoFilesCollection:
         try:
             with open(fname, 'r') as f:
                 gpx = gpxpy.parse(f)
-        except gpxpy.gpx.GPXException:
+        except (gpxpy.gpx.GPXException, FileNotFoundError):
             raise  # TODO: Transform this into one of our own exceptions.
 
         segments = []
