@@ -53,6 +53,7 @@ class EXPORT GeoDrawable : public GeoPixels {
             TYPE_IMAGE,
             TYPE_GPSTRACK,
             TYPE_GRIDLINES,
+            TYPE_POI_DB,
             TYPE_ERROR,
         };
         virtual ~GeoDrawable();
