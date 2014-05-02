@@ -245,6 +245,16 @@ double MapDisplayManager::GetCenterY() const {
     return m_center.y;
 }
 
+void MapDisplayManager::SetCenter(const BaseMapCoord &center) {
+    m_center = center;
+}
+
+void MapDisplayManager::SetCenter(const LatLon &center) {
+    BaseMapCoord new_center;
+    m_base_map->LatLonToPixel(center, &new_center);
+    SetCenter(new_center);
+}
+
 const BaseMapCoord &MapDisplayManager::GetCenter() const {
     return m_center;
 }

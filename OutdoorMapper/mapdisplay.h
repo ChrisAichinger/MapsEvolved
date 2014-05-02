@@ -42,6 +42,8 @@ class EXPORT MapDisplayManager {
         double GetZoom() const;
         double GetCenterX() const;
         double GetCenterY() const;
+        void SetCenter(const BaseMapCoord &center);
+        void SetCenter(const LatLon &center);
         const BaseMapCoord &GetCenter() const;
 
         void ChangeMap(const std::shared_ptr<class GeoDrawable> &new_map,
