@@ -264,7 +264,7 @@ class MapManagerFrame(wx.Frame):
                         "Try to delete the corresponding (parent) DHM file " +
                         "instead."))
             return
-        self.filelist.delete_map(rastermap)
+        self.filelist.delete(rastermap)
         self.finish_list_change()
 
     def finish_list_change(self):

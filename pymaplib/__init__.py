@@ -220,14 +220,14 @@ class GeoFilesCollection:
 
         self._maplist.DeleteMap(i)
 
-    def delete_gpx(self, rastermap):
-        for i in range(self._maplist.Size()):
-            if self._maplist.Get(i) == rastermap:
+    def delete_gpx(self, gpx):
+        for i in range(len(self.gpxlist)):
+            if gpx == self.gpxlist[i].item:
+                del self.gpxlist[i]
                 break
         else:
-            raise RuntimeError("map to delete not found?")
+            raise RuntimeError("gpx file to delete not found?")
 
-        self._maplist.DeleteMap(i)
     def delete_db(self, db):
         for i in range(len(self.dblist)):
             if db == self.dblist[i].item:
