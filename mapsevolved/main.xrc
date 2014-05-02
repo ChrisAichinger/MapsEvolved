@@ -111,6 +111,11 @@
         <bitmap>images\famfamfam_silk_icons\gpstrack-analyze.png</bitmap>
         <tooltip>Show GPS Track Analyzer</tooltip>
       </object>
+      <object class="separator"/>
+      <object class="tool" name="GotoCoordTBButton">
+        <bitmap>images\famfamfam_silk_icons\find.png</bitmap>
+        <tooltip>Go to coordinate</tooltip>
+      </object>
     </object>
     <object class="wxBoxSizer">
       <object class="sizeritem">
@@ -263,6 +268,10 @@
         <bitmap>images\famfamfam_silk_icons\chart_line_add.png</bitmap>
         <tooltip>Add GPS Track</tooltip>
       </object>
+      <object class="tool" name="DBAddTBButton">
+        <bitmap>images\famfamfam_silk_icons\poi_db_add.png</bitmap>
+        <tooltip>Add POI database</tooltip>
+      </object>
       <object class="tool" name="MapRemoveTBButton">
         <bitmap>images\famfamfam_silk_icons\map-gpstrack-delete.png</bitmap>
         <tooltip>Remove Map/GPS Track</tooltip>
@@ -284,6 +293,7 @@
           <content>
             <item>Maps</item>
             <item>GPS Tracks</item>
+            <item>POI Databases</item>
           </content>
           <selection>0</selection>
           <style>wxLB_MULTIPLE</style>
@@ -363,6 +373,14 @@
     </object>
     <object class="wxMenuItem" name="AddGPXMenuItem">
       <label>Add &amp;GPS Track</label>
+    </object>
+    <object class="wxMenuItem" name="AddDBMenuItem">
+      <label>Add POI database</label>
+    </object>
+  </object>
+  <object class="wxMenu" name="POIDBPopup">
+    <object class="wxMenuItem" name="RemoveMenuItem">
+      <label>&amp;Remove from list</label>
     </object>
   </object>
   <object class="wxFrame" name="PanoramaFrame">
@@ -500,5 +518,42 @@
       <orient>wxHORIZONTAL</orient>
     </object>
     <title>GPS Track Analyzer - Maps Evolved</title>
+  </object>
+  <object class="wxDialog" name="GotoCoordDialog">
+    <object class="wxBoxSizer">
+      <object class="sizeritem">
+        <object class="wxBoxSizer">
+          <object class="sizeritem">
+            <object class="wxStaticText">
+              <label>Input coordinates or POI</label>
+            </object>
+            <option>0</option>
+            <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+          </object>
+          <object class="sizeritem">
+            <object class="wxTextCtrl" name="InputText">
+              <style>wxTE_PROCESS_ENTER</style>
+            </object>
+            <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+          </object>
+          <object class="sizeritem">
+            <object class="wxStaticText">
+              <label>Results found:</label>
+            </object>
+          </object>
+          <orient>wxVERTICAL</orient>
+          <object class="sizeritem">
+            <object class="wxListCtrl" name="ResultList">
+              <size>400,300</size>
+              <style>wxLC_REPORT|wxLC_SINGLE_SEL</style>
+            </object>
+          </object>
+        </object>
+        <flag>wxALL|wxEXPAND</flag>
+        <border>5</border>
+      </object>
+      <orient>wxVERTICAL</orient>
+    </object>
+    <title>Jump to coordinates</title>
   </object>
 </resource>

@@ -23,6 +23,9 @@ class MapManagerFrame(wx.Frame):
         self.gps_popup = res.LoadMenu("GPSTrackPopup")
         if not self.gps_popup:
             raise RuntimeError("Could not load GPS popup menu from XRC.")
+        self.db_popup = res.LoadMenu("POIDBPopup")
+        if not self.db_popup:
+            raise RuntimeError("Could not load POI DB menu from XRC.")
         self.noitem_popup = res.LoadMenu("NoItemPopup")
         if not self.noitem_popup:
             raise RuntimeError("Could not load 'no item' popup menu from XRC.")
@@ -58,6 +61,7 @@ class MapManagerFrame(wx.Frame):
             pymaplib.GeoDrawable.TYPE_OVERVIEW: _("Overview"),
             pymaplib.GeoDrawable.TYPE_IMAGE: _("Plain image"),
             pymaplib.GeoDrawable.TYPE_GPSTRACK: _("GPS track"),
+            pymaplib.GeoDrawable.TYPE_POI_DB: _("POI database"),
             pymaplib.GeoDrawable.TYPE_ERROR: _("Error loading map"),
         }
         maptype = maptype_names[rastermap.GetType()]
@@ -73,6 +77,7 @@ class MapManagerFrame(wx.Frame):
     def insert_drawables(self):
         INDEX_MAPS = 0
         INDEX_GPSTRACKS = 1
+        INDEX_POI_DB = 2
         if self.filetype_filter.IsSelected(INDEX_MAPS):
             for rastermap, views in self.filelist.maplist:
                 item = self.insert_row(rastermap)
@@ -85,6 +90,12 @@ class MapManagerFrame(wx.Frame):
                 for section in views:
                     self.insert_row(section, item)
                 self.maptreectrl.Expand(item)
+        if self.filetype_filter.IsSelected(INDEX_POI_DB):
+            for db, views in self.filelist.dblist:
+                item = self.insert_row(db)
+                for section in views:
+                    self.insert_row(section, item)
+                self.maptreectrl.Expand(item)
 
     @util.EVENT(wx.adv.EVT_TREELIST_SELECTION_CHANGED,
                 id=xrc.XRCID('MapTreeList'))
@@ -93,7 +104,7 @@ class MapManagerFrame(wx.Frame):
             self.projstring_tb.Value = ""
             return
         rastermap = self.maptreectrl.GetItemData(evt.Item)
-        if rastermap.GetType() == rastermap.TYPE_ERROR:
+        if rastermap.GetType() == pymaplib.GeoDrawable.TYPE_ERROR:
             self.projstring_tb.Value = "Failed to open the map."
             return
         projection_bytes = rastermap.GetProj().GetProjString()
@@ -105,7 +116,9 @@ class MapManagerFrame(wx.Frame):
     def on_item_activated(self, evt):
         # User double-clicked the item or pressed enter on it
         itemdata = self.maptreectrl.GetItemData(evt.Item)
-        if itemdata.GetType() == pymaplib.GeoDrawable.TYPE_GPSTRACK:
+        if itemdata.GetType() == pymaplib.GeoDrawable.TYPE_POI_DB:
+            pass
+        elif itemdata.GetType() == pymaplib.GeoDrawable.TYPE_GPSTRACK:
             self.overlay_map(evt.Item)
         else:
             self.display_map(evt.Item)
@@ -119,6 +132,8 @@ class MapManagerFrame(wx.Frame):
             self.PopupMenu(self.noitem_popup)
         elif itemdata.GetType() == pymaplib.GeoDrawable.TYPE_GPSTRACK:
             self.PopupMenu(self.gps_popup)
+        elif itemdata.GetType() == pymaplib.GeoDrawable.TYPE_POI_DB:
+            self.PopupMenu(self.db_popup)
         else:
             self.PopupMenu(self.map_popup)
 
@@ -148,6 +163,11 @@ class MapManagerFrame(wx.Frame):
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('GPXAddTBButton'))
     def on_add_gpx(self, evt):
         self.add_gpx()
+
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('AddDBMenuItem'))
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('DBAddTBButton'))
+    def on_add_db(self, evt):
+        self.add_db()
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('MapRemoveTBButton'))
     def on_remove_map(self, evt):
@@ -215,6 +235,19 @@ class MapManagerFrame(wx.Frame):
             return
 
         self.filelist.add_file(openFileDialog.GetPath(), ftype='GPX')
+        self.finish_list_change()
+
+    def add_db(self):
+        openFileDialog = wx.FileDialog(
+                self, "Open POI DB file", "", "",
+                "Supported files|*.db;|" +
+                "POI DB files (*.db)|*.db|" +
+                "All files (*.*)|*.*",
+                wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        if openFileDialog.ShowModal() == wx.ID_CANCEL:
+            return
+
+        self.filelist.add_file(openFileDialog.GetPath(), ftype='DB')
         self.finish_list_change()
 
     def delete(self, item):

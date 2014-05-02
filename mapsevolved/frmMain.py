@@ -8,7 +8,8 @@ from wx.lib.wordwrap import wordwrap
 import gpxpy
 
 import pymaplib
-from mapsevolved import frmMapManager, frmPanorama, frmGPSAnalyzer, util
+from mapsevolved import frmMapManager, frmPanorama, frmGPSAnalyzer
+from mapsevolved import dlgGotoCoord, util
 
 def _(s): return s
 
@@ -337,6 +338,27 @@ class MainFrame(wx.Frame):
         data = self.layerlistbox.GetClientData(sel_index)
         data.Transparency = 1 - evt.Position / 100
         self.update_map_from_layerlist()
+
+    @util.EVENT(wx.EVT_TOOL,  id=xrc.XRCID('GotoCoordTBButton'))
+    def on_goto_coord_button(self, evt):
+        # Suppress dragging for this function, otherwise we get spurious drag
+        # events when the dialog is closed. The exact cause is unknown.
+        self.drag_suppress = True
+        try:
+            res = wx.ID_CANCEL
+            dlg = dlgGotoCoord.GotoCoordDialog(self, self.filelist.dblist)
+            try:
+                res = dlg.ShowModal()
+            finally:
+                # Destroy() must be called at all costs, otherwise we hang
+                # after closing the main frame.
+                dlg.Destroy()
+
+            if res == wx.ID_OK:
+                self.mapdisplay.SetCenter(pymaplib.LatLon(*dlg.latlon))
+                self.panel.Refresh(eraseBackground=False)
+        finally:
+            self.drag_suppress = False
 
     @util.EVENT(wx.EVT_BUTTON, id=xrc.XRCID('LayerMoveDownBtn'))
     def on_layer_move_down(self, evt):

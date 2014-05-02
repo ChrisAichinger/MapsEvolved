@@ -50,6 +50,7 @@ class GeoDrawable : public GeoPixels /Abstract/ {
             TYPE_IMAGE,
             TYPE_GPSTRACK,
             TYPE_GRIDLINES,
+            TYPE_POI_DB,
             TYPE_ERROR,
         };
         virtual ~GeoDrawable();

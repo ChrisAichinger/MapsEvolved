@@ -187,6 +187,8 @@ class MapDisplayManager /NoDefaultCtors/ {
         double GetZoom() const;
         double GetCenterX() const;
         double GetCenterY() const;
+        void SetCenter(const BaseMapCoord &center);
+        void SetCenter(const LatLon &center);
         const BaseMapCoord &GetCenter() const;
 
         void ChangeMap(const GeoDrawableShPtr &new_map,
