@@ -204,6 +204,8 @@ def main():
     makefile.extra_cxxflags.append('/D "_DEBUG" /D "_WINDOWS" /D "_WINDLL"')
     makefile.extra_cxxflags.append('/D "_UNICODE" /D "UNICODE"')
     makefile.extra_cxxflags.append('/W3 /WX /Od /Oy- /Gm /RTC1 /GS')
+    makefile.extra_cxxflags.append('/w44800')        # Ignore int-to-bool-cast
+                                                     # warnings.
     makefile.extra_cxxflags.append('/fp:precise')
     makefile.extra_lflags.append('/DEBUG /PDB:maps.pdb')
 

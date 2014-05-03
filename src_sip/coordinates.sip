@@ -197,6 +197,7 @@ class LatLon {
     public:
         LatLon();
         LatLon(double lat_, double lon_);
+        LatLon(const UTMUPS &utm);
 
         LatLon& operator+=(const LatLonDelta &rhs);
         LatLon& operator-=(const LatLonDelta &rhs);
@@ -218,6 +219,21 @@ class LatLonDelta {
 
         double lat;
         double lon;
+};
+
+class UTMUPS {
+%TypeHeaderCode
+#include "coordinates.h"
+%End
+    public:
+        UTMUPS();
+        UTMUPS(int zone_, bool northp_, double x_, double y_);
+        UTMUPS(const LatLon &ll);
+
+        int zone;     // UTM zone; may be 0 to indicate UPS.
+        bool northp;  // True if north hemisphere, false for south.
+        double x;     // UTM/UPS easting
+        double y;     // UTM/UPS northing
 };
 
 class MapBezierGradient {
