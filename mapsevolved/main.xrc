@@ -257,8 +257,28 @@
     <style>wxDEFAULT_FRAME_STYLE|wxCAPTION|wxSYSTEM_MENU</style>
   </object>
   <object class="wxMenu" name="SBCoordPopup">
+    <object class="wxMenuItem" name="NewCoordMenuItem">
+      <label>&amp;Enter new coordinates</label>
+    </object>
     <object class="wxMenuItem" name="CopyCoordMenuItem">
       <label>&amp;Copy map center coordinates</label>
+    </object>
+    <object class="separator"/>
+    <object class="wxMenuItem" name="DDDCoordFmtMenuItem">
+      <label>Format &amp;DD,DDDD°</label>
+      <radio>1</radio>
+    </object>
+    <object class="wxMenuItem" name="DMMCoordFmtMenuItem">
+      <label>Format DD° &amp;MM,MM'</label>
+      <radio>1</radio>
+    </object>
+    <object class="wxMenuItem" name="DMSCoordFmtMenuItem">
+      <label>Format DD° MM' &amp;SS'</label>
+      <radio>1</radio>
+    </object>
+    <object class="wxMenuItem" name="UTMCoordFmtMenuItem">
+      <label>Format &amp;UTM</label>
+      <radio>1</radio>
     </object>
   </object>
   <object class="wxFrame" name="MapManagerFrame">
@@ -562,6 +582,6 @@
         <size>5</size>
       </object>
     </object>
-    <title>Jump to coordinates</title>
+    <title>Go to coordinates</title>
   </object>
 </resource>

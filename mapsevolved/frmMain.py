@@ -68,8 +68,6 @@ class MainFrame(wx.Frame):
 
         self.set_initial_size()
 
-        util.bind_decorator_events(self)
-
         self.panel = xrc.XRCCTRL(self, 'MapPanel')
         self.statusbar = xrc.XRCCTRL(self, 'MainStatusBar')
         self.layerlistbox = xrc.XRCCTRL(self, 'LayerListBox')
@@ -83,6 +81,14 @@ class MainFrame(wx.Frame):
         self.filelist = pymaplib.GeoFilesCollection(rastermapcollection)
         with pymaplib.DefaultPersistentStore.Read() as ps:
             self.filelist.retrieve_from(ps)
+            try:
+                self._coord_fmt = ps.GetString('coord_fmt')
+            except RuntimeError:
+                # No data in persistenstore yet.
+                self._coord_fmt = "DDD"
+
+        util.bind_decorator_events(self)
+
         self.ogldisplay = pymaplib.CreateOGLDisplay(self.panel.GetHandle())
 
         self.mapdisplay = pymaplib.MapDisplayManager(
@@ -345,6 +351,7 @@ class MainFrame(wx.Frame):
         self.update_map_from_layerlist()
 
     @util.EVENT(wx.EVT_TOOL,  id=xrc.XRCID('GotoCoordTBButton'))
+    @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('NewCoordMenuItem'))
     def on_goto_coord_button(self, evt):
         # Suppress dragging for this function, otherwise we get spurious drag
         # events when the dialog is closed. The exact cause is unknown.
@@ -369,6 +376,8 @@ class MainFrame(wx.Frame):
     def on_statusbar_rclick(self, evt):
         latlon_rect = self.statusbar.GetFieldRect(0)
         if latlon_rect.Contains(evt.Position):
+            coord_fmt_id = wx.xrc.XRCID(self.coord_fmt + "CoordFmtMenuItem")
+            self.sb_coord_popup.Check(coord_fmt_id, True)
             self.PopupMenu(self.sb_coord_popup)
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('CopyCoordMenuItem'))
@@ -384,12 +393,42 @@ class MainFrame(wx.Frame):
             util.Warn(_("Could not open clipboard for copying.\n"))
             return
 
-        s = _("%.6f,%.6f") % (ll.lat, ll.lon)
-        tdo = util.CustomTextDataObject(s)
+        tdo = util.CustomTextDataObject(self.format_latlon(ll))
         try:
             wx.TheClipboard.SetData(tdo)
         finally:
             wx.TheClipboard.Close()
+
+    @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('DDDCoordFmtMenuItem'))
+    def on_coord_fmt_ddd(self, evt):
+        self.coord_fmt = 'DDD'
+    @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('DMMCoordFmtMenuItem'))
+    def on_coord_fmt_dmm(self, evt):
+        self.coord_fmt = 'DMM'
+    @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('DMSCoordFmtMenuItem'))
+    def on_coord_fmt_dms(self, evt):
+        self.coord_fmt = 'DMS'
+    @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('UTMCoordFmtMenuItem'))
+    def on_coord_fmt_utm(self, evt):
+        self.coord_fmt = 'UTM'
+
+    @property
+    def coord_fmt(self):
+        """The current coordinate format
+
+        Valid values: "DDD", "DMM", "DMS", "UTM".
+        """
+
+        return self._coord_fmt
+
+    @coord_fmt.setter
+    def coord_fmt(self, fmt):
+        self._coord_fmt = fmt
+        with pymaplib.DefaultPersistentStore.Write() as ps:
+             ps.SetString('coord_fmt', self._coord_fmt)
+
+    def format_latlon(self, latlon):
+        return pymaplib.format_coordinate(self.coord_fmt, latlon)
 
     @util.EVENT(wx.EVT_BUTTON, id=xrc.XRCID('LayerMoveDownBtn'))
     def on_layer_move_down(self, evt):
@@ -447,8 +486,8 @@ class MainFrame(wx.Frame):
             self.statusbar.SetStatusText(_("Terrain orientation unknown"), i=2)
             self.statusbar.SetStatusText(_("Steepness unknown"), i=3)
             return
-        self.statusbar.SetStatusText(
-                _("%.6f, %.6f") % (ll.lat, ll.lon), i=0)
+        self.statusbar.SetStatusText(_("Position: {}").format(
+                                                  self.format_latlon(ll)), i=0)
 
         ok, ti = self.heightfinder.CalcTerrain(ll)
         if not ok:

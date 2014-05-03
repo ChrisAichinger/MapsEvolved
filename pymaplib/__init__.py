@@ -12,6 +12,8 @@ from .maplib_sip import *
 
 from . import poidb
 
+def _(s): return s
+
 
 class MapLibError(RuntimeError):
     pass
@@ -245,7 +247,7 @@ class GeoFilesCollection:
             self.delete_map(item)
 
 
-def parse_coordinates(s):
+def parse_coordinate(s):
     """Parse Lat/Lon strings to LatLon objects
 
     Parse coordinates in a variety of formats to LatLon objects.
@@ -310,3 +312,30 @@ def parse_coordinates(s):
     # TODO: Handle UTM
     # N 5285350 m, 33  551660 m
     return None
+
+def format_coordinate(coord_fmt, latlon):
+    if coord_fmt == "DDD":
+        return _("{:0.06f}, {:0.06f}").format(latlon.lat, latlon.lon)
+    elif coord_fmt == "DMM":
+        m_lat = (abs(latlon.lat) % 1) * 60
+        m_lon = (abs(latlon.lon) % 1) * 60
+        return _("{:d}° {:07.04f}', {:d}° {:07.04f}'").format(
+                int(latlon.lat), m_lat,
+                int(latlon.lon), m_lon)
+    elif coord_fmt == "DMS":
+        m_lat = (abs(latlon.lat) % 1) * 60
+        m_lon = (abs(latlon.lon) % 1) * 60
+        fmt = _('''{:d}° {:02d}' {:05.02f}", {:d}° {:02d}' {:05.02f}"''')
+        return fmt.format(int(latlon.lat), int(m_lat), (m_lat % 1) * 60,
+                          int(latlon.lon), int(m_lon), (m_lon % 1) * 60)
+    elif coord_fmt == "UTM":
+        utm = UTMUPS(latlon)
+        # Omit zone number for UPS coordinates.
+        zone = _("{:02d}").format(utm.zone) if utm.zone != 0 else ""
+        return _("{}{} {:.0f} {:.0f}").format(zone,
+                                              "N" if utm.northp else "S",
+                                              utm.x, utm.y)
+    else:
+        raise NotImplementedError("Unknown coordinate format: '%s'",
+                                  coord_fmt)
+

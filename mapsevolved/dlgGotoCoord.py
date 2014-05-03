@@ -55,7 +55,7 @@ class GotoCoordDialog(wx.Dialog):
             self.latlon = data_list[0]
             return True
 
-        self.latlon = pymaplib.parse_coordinates(self.inputtext.Value)
+        self.latlon = pymaplib.parse_coordinate(self.inputtext.Value)
         if self.latlon:
             return True
         return False
@@ -81,7 +81,7 @@ class GotoCoordDialog(wx.Dialog):
         self.data = {}
         self.results.DeleteAllItems()
 
-        latlon = pymaplib.parse_coordinates(self.inputtext.Value)
+        latlon = pymaplib.parse_coordinate(self.inputtext.Value)
         if latlon:
             self.append_result(_("Coordinate matches:"), "", bold=True)
             self.append_result(_("  {:0.06f}, {:0.06f}").format(*latlon),
