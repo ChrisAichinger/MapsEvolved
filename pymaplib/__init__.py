@@ -9,23 +9,12 @@ import gpxpy.gpx
 # Load all the SIP wrappers into here
 from . import maplib_sip as maplib_sip
 from .maplib_sip import *
+from .errors import *
 
 from . import poidb
 
 def _(s): return s
 
-
-class MapLibError(RuntimeError):
-    pass
-
-class FileLoadError(MapLibError):
-    pass
-
-class FileOpenError(FileLoadError):
-    pass
-
-class FileParseError(FileLoadError):
-    pass
 
 
 class DefaultPersistentStore:
@@ -104,19 +93,13 @@ class GeoFilesCollection:
         self.gpxlist.append(listitem)
 
     def _add_db(self, fname):
-        if not os.access(fname, os.R_OK):
-            raise FileOpenError("Could not access file: '%s'", fname)
-        try:
-            db = poidb.POI_Database(fname)
-        except poidb.sqlite3.Error:
-            raise FileParseError("Not a valid database: '%s'", fname)
-
+        db = poidb.POI_Database(fname)
         self.dblist.append(GeoFilesCollection.ItemViews(db, []))
 
     def _add_geotiff(self, fname):
-        map = LoadMap(fname)
-        reps = AlternateMapViews(map)
-        self.maplist.append(GeoFilesCollection.ItemViews(map, reps))
+        rastermap = LoadMap(fname)
+        views = AlternateMapViews(rastermap)
+        self.maplist.append(GeoFilesCollection.ItemViews(rastermap, views))
 
     def store_to(self, store):
         def do_store(ps):
@@ -134,72 +117,46 @@ class GeoFilesCollection:
             do_store(store)
 
     def retrieve_from(self, store):
-        def do_retrieve(ps):
+        def do_retrieve(ps, name, ftype):
             # Exceptions reading from the persistentstore are likely
             # from running the first time - ignore them.
             try:
-                mapfiles = ps.GetStringList('maps')
+                files = ps.GetStringList(name)
             except RuntimeError:
                 pass
             else:
-                for fname in mapfiles:
-                    self.add_file(fname, ftype='TIF')
-
-            try:
-                gpxnames = ps.GetStringList('gpxlist')
-            except RuntimeError:
-                pass
-            else:
-                for fname in gpxnames:
-                    self.add_file(fname, ftype='GPX')
-
-            try:
-                dbnames = ps.GetStringList('dblist')
-            except RuntimeError:
-                pass
-            else:
-                for fname in dbnames:
-                    self.add_file(fname, ftype='DB')
+                for fname in files:
+                    self.add_file(fname, ftype=ftype)
 
         if not store.IsOpen():
             with DefaultPersistentStore.Read(store) as ps:
-                do_retrieve(ps)
+                do_retrieve(ps, 'maps', 'TIF')
+                do_retrieve(ps, 'gpxlist', 'GPX')
+                do_retrieve(ps, 'dblist', 'DB')
         else:
-            do_retrieve(store)
+            do_retrieve(store, 'maps', 'TIF')
+            do_retrieve(store, 'gpxlist', 'GPX')
+            do_retrieve(store, 'dblist', 'DB')
 
     def is_toplevel(self, item):
-        return (any(True for m, views in self.maplist if m == item) or
-                any(True for g, views in self.gpxlist if g == item) or
-                any(True for d, views in self.dblist if d == item))
+        return (any(True for e in self.maplist if e.item == item) or
+                any(True for e in self.gpxlist if e.item == item) or
+                any(True for e in self.dblist if e.item == item))
 
-    def delete_map(self, rastermap):
-        for i, map_entry in enumerate(self.maplist):
-            if map_entry.item == rastermap:
-                del self.maplist[i]
+    def _delete(self, item, lst, errormsg):
+        for i, entry in enumerate(lst):
+            if entry.item == item:
+                del lst[i]
                 return
-        raise RuntimeError("map to delete not found?")
-
-    def delete_gpx(self, gpx):
-        for i, gpx_entry in enumerate(self.gpxlist)):
-            if gpx_entry.item == gpx:
-                del self.gpxlist[i]
-                return
-        raise RuntimeError("gpx file to delete not found?")
-
-    def delete_db(self, db):
-        for i, db_entry in enumerate(self.dblist)):
-            if db_entry.item == db
-                del self.dblist[i]
-                return
-        raise RuntimeError("POI DB to delete not found?")
+        raise RuntimeError(errormsg)
 
     def delete(self, item):
         if item.GetType() == GeoDrawable.TYPE_POI_DB:
-            self.delete_db(item)
+            self._delete(item, self.dblist, "POI DB file to delete not found?")
         elif item.GetType() == GeoDrawable.TYPE_GPSTRACK:
-            self.delete_gpx(item)
+            self._delete(item, self.gpxlist, "GPX file to delete not found?")
         else:
-            self.delete_map(item)
+            self._delete(item, self.maplist, "Map file to delete not found?")
 
 
 def parse_coordinate(s):
@@ -296,7 +253,7 @@ def format_coordinate(coord_fmt, latlon):
 
 class HeightFinder(maplib_sip.HeightFinder):
     def __init__(self, maps):
-        maplib_sip.HeightFinder.__init__(self)
+        super().__init__()
         self.maps = maps
 
     def FindBestMap(self, pos, map_type):
