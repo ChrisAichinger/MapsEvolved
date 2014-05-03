@@ -31,7 +31,10 @@ class GotoCoordDialog(wx.Dialog):
         self.results.SetColumnWidth(0, wx.LIST_AUTOSIZE_USEHEADER)
         self.results.SetColumnWidth(1, wx.LIST_AUTOSIZE_USEHEADER)
 
-        self.Sizer.Add(self.CreateButtonSizer(wx.OK | wx.CANCEL))
+        # Create Ok and Cancel buttons and insert them before the final spacer.
+        # Otherwise there is no border on the bottom side of the dialog.
+        btn_idx = self.Sizer.ItemCount - 1
+        self.Sizer.Insert(btn_idx, self.CreateButtonSizer(wx.OK | wx.CANCEL))
         self.Sizer.Fit(self)
 
         util.bind_decorator_events(self)
@@ -80,7 +83,7 @@ class GotoCoordDialog(wx.Dialog):
 
         latlon = pymaplib.parse_coordinates(self.inputtext.Value)
         if latlon:
-            self.append_result(_("Coordinate matches:"), "")
+            self.append_result(_("Coordinate matches:"), "", bold=True)
             self.append_result(_("  {:0.06f}, {:0.06f}").format(*latlon),
                                _("Coordinate"), latlon)
             self.autosize_once()
@@ -99,14 +102,20 @@ class GotoCoordDialog(wx.Dialog):
                 if not header_drawn:
                     header_drawn = True
                     fname = os.path.basename(db.fname)
-                    self.append_result(_("Matches in '{}':").format(fname), "")
+                    self.append_result(_("Matches in '{}':").format(fname), "",
+                                       bold=True)
                 self.append_result("  {}".format(match.name), match.category,
                                    (match.lat, match.lon))
         self.autosize_once()
 
-    def append_result(self, col1, col2, data=None):
+    def append_result(self, col1, col2, data=None, bold=False):
         self.results.Append((col1, col2))
-        self.data[self.results.ItemCount - 1] = data
+        index = self.results.ItemCount - 1
+        self.data[index] = data
+        if bold:
+            font = self.results.GetFont()
+            font.MakeBold()
+            self.results.SetItemFont(index, font)
 
     def autosize_once(self):
         if not self.have_autosized:
