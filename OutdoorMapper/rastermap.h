@@ -91,59 +91,11 @@ class EXPORT RasterMap : public GeoDrawable {
 };
 
 
-class EXPORT RasterMapCollection {
-    public:
-        RasterMapCollection() {};
-        virtual ~RasterMapCollection();
-        virtual void AddMap(const std::shared_ptr<RasterMap> &map) = 0;
-        virtual void DeleteMap(unsigned int index) = 0;
-        virtual size_t Size() const = 0;
-        virtual std::shared_ptr<RasterMap> Get(size_t i) const = 0;
-        virtual const std::vector<const std::shared_ptr<RasterMap> >
-            GetAlternateRepresentations(size_t i) const = 0;
-        virtual bool
-            IsToplevelMap(const std::shared_ptr<RasterMap> &map) const = 0;
+std::shared_ptr<RasterMap> EXPORT LoadMap(const std::wstring &fname);
 
-        virtual bool
-            StoreTo(const std::unique_ptr<PersistentStore> &store) const = 0;
-        virtual bool
-            RetrieveFrom(const std::unique_ptr<PersistentStore> &store) = 0;
-    private:
-        DISALLOW_COPY_AND_ASSIGN(RasterMapCollection);
-};
+EXPORT std::vector<std::shared_ptr<RasterMap> >
+AlternateMapViews(const std::shared_ptr<RasterMap> &map);
 
-class EXPORT DefaultRasterMapCollection : public RasterMapCollection {
-    public:
-        DefaultRasterMapCollection();
-        void AddMap(const std::shared_ptr<RasterMap> &map);
-        void DeleteMap(unsigned int index);
-        size_t Size() const {
-            return m_maps.size();
-        }
-        std::shared_ptr<RasterMap> Get(size_t i) const {
-            return m_maps[i].map;
-        }
-        const std::vector<const std::shared_ptr<RasterMap> >
-        GetAlternateRepresentations(size_t i) const {
-            const std::vector<const std::shared_ptr<RasterMap> > res(
-                    m_maps[i].reps.cbegin(), m_maps[i].reps.cend());
-            return res;
-        }
-        bool IsToplevelMap(const std::shared_ptr<RasterMap> &map) const;
-
-        bool StoreTo(const std::unique_ptr<PersistentStore> &store) const;
-        bool RetrieveFrom(const std::unique_ptr<PersistentStore> &store);
-    private:
-        struct MapAndReps {
-            std::shared_ptr<RasterMap> map;
-            std::vector<std::shared_ptr<RasterMap> > reps;
-        };
-        std::vector<MapAndReps> m_maps;
-
-        DISALLOW_COPY_AND_ASSIGN(DefaultRasterMapCollection);
-};
-
-void EXPORT LoadMap(RasterMapCollection &maps, const std::wstring &fname);
 
 struct EXPORT TerrainInfo {
     double height_m;
@@ -153,17 +105,17 @@ struct EXPORT TerrainInfo {
 
 class EXPORT HeightFinder {
     public:
-        explicit HeightFinder(const class RasterMapCollection &maps);
-        bool CalcTerrain(const LatLon &pos, TerrainInfo *result);
+        explicit HeightFinder();
+        virtual ~HeightFinder() { m_active_dhm = nullptr; }
+        virtual bool CalcTerrain(const LatLon &pos, TerrainInfo *result);
         std::shared_ptr<class RasterMap> GetActiveMap() const {
             return m_active_dhm;
         }
-    private:
-        const class RasterMapCollection &m_maps;
+    protected:
         std::shared_ptr<class RasterMap> m_active_dhm;
 
-        bool LatLongWithinActiveDHM(const LatLon &pos) const;
-        std::shared_ptr<class RasterMap> FindBestMap(
+        virtual bool LatLongWithinActiveDHM(const LatLon &pos) const;
+        virtual std::shared_ptr<class RasterMap> FindBestMap(
                 const LatLon &pos, GeoDrawable::DrawableType type) const;
 };
 

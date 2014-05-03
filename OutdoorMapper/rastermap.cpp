@@ -29,81 +29,6 @@ GeoPixels::~GeoPixels() {};
 GeoDrawable::~GeoDrawable() {};
 RasterMap::~RasterMap() {};
 
-void GetAlternateRepresentation(const std::shared_ptr<RasterMap> &map,
-                std::vector<std::shared_ptr<RasterMap> > &representations)
-{
-    representations.clear();
-    if (map->GetType() == RasterMap::TYPE_DHM) {
-        std::shared_ptr<class RasterMap> deriv_map(new GradientMap(map));
-        representations.push_back(deriv_map);
-        deriv_map.reset(new SteepnessMap(map));
-        representations.push_back(deriv_map);
-    }
-}
-
-
-RasterMapCollection::~RasterMapCollection() { }
-
-DefaultRasterMapCollection::DefaultRasterMapCollection()
-    : m_maps()
-{ }
-
-void DefaultRasterMapCollection::AddMap(const std::shared_ptr<class RasterMap> &map) {
-    struct DefaultRasterMapCollection::MapAndReps insert;
-    insert.map = map;
-    if (map->GetType() == RasterMap::TYPE_DHM) {
-        std::shared_ptr<class RasterMap> deriv_map(new GradientMap(map));
-        insert.reps.push_back(deriv_map);
-        deriv_map.reset(new SteepnessMap(map));
-        insert.reps.push_back(deriv_map);
-    }
-    m_maps.push_back(insert);
-}
-
-void DefaultRasterMapCollection::DeleteMap(unsigned int index) {
-    m_maps.erase(m_maps.begin() + index);
-}
-
-bool DefaultRasterMapCollection::StoreTo(
-        const std::unique_ptr<PersistentStore> &store) const
-{
-    if (!store->IsOpen())
-        store->OpenWrite();
-
-    std::vector<std::wstring> filenames;
-    filenames.reserve(m_maps.size());
-    for (auto it = m_maps.cbegin(); it != m_maps.cend(); ++it) {
-        filenames.push_back(it->map->GetFname());
-    }
-    return store->SetStringList(L"maps", filenames);
-}
-
-bool DefaultRasterMapCollection::RetrieveFrom(
-        const std::unique_ptr<PersistentStore> &store)
-{
-    if (!store->IsOpen())
-        store->OpenRead();
-
-    std::vector<std::wstring> filenames;
-    if (!store->GetStringList(L"maps", &filenames)) {
-        return false;
-    }
-
-    for (auto it = filenames.cbegin(); it != filenames.cend(); ++it) {
-        LoadMap(*this, *it);
-    }
-    return true;
-}
-
-bool DefaultRasterMapCollection::IsToplevelMap(
-        const std::shared_ptr<RasterMap> &map) const
-{
-    for (auto it = m_maps.cbegin(); it != m_maps.cend(); ++it) {
-        if (it->map == map)
-            return true;
-    }
-    return false;
-}
 
 class RasterMapError : public RasterMap {
     public:
@@ -153,31 +78,44 @@ class RasterMapError : public RasterMap {
 };
 
 
-void LoadMap(RasterMapCollection &maps, const std::wstring &fname) {
+EXPORT std::shared_ptr<RasterMap> LoadMap(const std::wstring &fname) {
     std::wstring fname_lower(fname);
     std::transform(fname_lower.begin(), fname_lower.end(),
                    fname_lower.begin(), ::towlower);
 
-    std::shared_ptr<class RasterMap> map;
+    std::shared_ptr<RasterMap> map;
     try {
         if (ends_with(fname_lower, L".tif") ||
             ends_with(fname_lower, L".tiff"))
         {
             // Geotiff file
             map.reset(new TiffMap(fname.c_str()));
-            maps.AddMap(map);
+            return map;
         } else {
             assert(false);  // Not implemented
         }
     } catch (const std::runtime_error &) {
         map.reset(new RasterMapError(fname.c_str(), L"Exception"));
-        maps.AddMap(map);
     }
+    return map;
 }
 
-HeightFinder::HeightFinder(const class RasterMapCollection &maps)
-    : m_maps(maps), m_active_dhm(0)
-{ }
+EXPORT std::vector<std::shared_ptr<RasterMap> >
+AlternateMapViews(const std::shared_ptr<RasterMap> &map)
+{
+    std::vector<std::shared_ptr<RasterMap> > representations;
+    if (map->GetType() == RasterMap::TYPE_DHM) {
+        std::shared_ptr<class RasterMap> deriv_map(new GradientMap(map));
+        representations.push_back(deriv_map);
+        deriv_map.reset(new SteepnessMap(map));
+        representations.push_back(deriv_map);
+    }
+    return representations;
+}
+
+
+
+HeightFinder::HeightFinder() : m_active_dhm(nullptr) { }
 
 bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
     assert(result);
@@ -240,11 +178,7 @@ std::shared_ptr<class RasterMap>
 HeightFinder::FindBestMap(const LatLon &pos,
                           GeoDrawable::DrawableType type) const
 {
-    for (unsigned int i=0; i < m_maps.Size(); i++) {
-        auto map = m_maps.Get(i);
-        if (map->GetType() == type)
-            return map;
-    }
+    // To be reimplemented on the Python side.
     return NULL;
 }
 
