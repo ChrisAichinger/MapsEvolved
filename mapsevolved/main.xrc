@@ -256,6 +256,11 @@
     <title>Maps Evolved</title>
     <style>wxDEFAULT_FRAME_STYLE|wxCAPTION|wxSYSTEM_MENU</style>
   </object>
+  <object class="wxMenu" name="SBCoordPopup">
+    <object class="wxMenuItem" name="CopyCoordMenuItem">
+      <label>&amp;Copy map center coordinates</label>
+    </object>
+  </object>
   <object class="wxFrame" name="MapManagerFrame">
     <object class="wxToolBar">
       <bitmapsize>16</bitmapsize>

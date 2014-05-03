@@ -210,3 +210,35 @@ def round_up_to_multiple(n, unit):
         return math.floor(n / unit) * unit;
     else:
         return unit;
+
+class CustomTextDataObject(wx.DataObjectSimple):
+    """Reimplementation of wx.TextDataObject
+
+    wx.TextDataObject is currently (2014.05.03) bugged in Phoenix.
+    Reimplement it until a fix is available.
+
+    Cf. http://trac.wxwidgets.org/ticket/15488
+        https://groups.google.com/d/topic/wxpython-dev/Isw1L5_i6po/discussion
+    """
+
+    def __init__(self, txt=''):
+        super().__init__()
+        self.SetFormat(wx.DataFormat(wx.DF_TEXT))
+        self.SetText(txt)
+
+    def GetDataSize(self):
+        return len(self.value)
+
+    def GetDataHere(self, buf):
+        buf[:] = self.value
+        return True
+
+    def SetData(self, buf):
+        self.value = buf.tobytes()
+        return True
+
+    def GetText(self):
+        return str(self.value, 'utf8')
+
+    def SetText(self, txt):
+        self.value = bytes(txt + ' ', 'utf8')

@@ -58,6 +58,11 @@ class MainFrame(wx.Frame):
         if not res.LoadFrame(self, None, "MainFrame"):
             raise RuntimeError("Could not load main frame from XRC file.")
 
+        self.sb_coord_popup = res.LoadMenu("SBCoordPopup")
+        if not self.sb_coord_popup:
+            raise RuntimeError("Could not load statusbar coordinates " +
+                               "popup menu from XRC.")
+
         ctrl = CustomRearrangeList(self, id=xrc.XRCID('LayerListBox'))
         res.AttachUnknownControl('LayerListBox', ctrl, self)
 
@@ -360,6 +365,32 @@ class MainFrame(wx.Frame):
         finally:
             self.drag_suppress = False
 
+    @util.EVENT(wx.EVT_RIGHT_UP, id=xrc.XRCID('MainStatusBar'))
+    def on_statusbar_rclick(self, evt):
+        latlon_rect = self.statusbar.GetFieldRect(0)
+        if latlon_rect.Contains(evt.Position):
+            self.PopupMenu(self.sb_coord_popup)
+
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('CopyCoordMenuItem'))
+    def on_copy_coord(self, evt):
+        center = self.mapdisplay.GetCenter()
+        ok, ll = self.mapdisplay.GetBaseMap().PixelToLatLon(center)
+        if not ok:
+            util.Warn(_("Could not retrieve map center position.\n" +
+                        "Is this map georeferenced?"))
+            return
+
+        if not wx.TheClipboard.Open():
+            util.Warn(_("Could not open clipboard for copying.\n"))
+            return
+
+        s = _("%.6f,%.6f") % (ll.lat, ll.lon)
+        tdo = util.CustomTextDataObject(s)
+        try:
+            wx.TheClipboard.SetData(tdo)
+        finally:
+            wx.TheClipboard.Close()
+
     @util.EVENT(wx.EVT_BUTTON, id=xrc.XRCID('LayerMoveDownBtn'))
     def on_layer_move_down(self, evt):
         self.layerlistbox.MoveCurrentDown()
@@ -417,7 +448,7 @@ class MainFrame(wx.Frame):
             self.statusbar.SetStatusText(_("Steepness unknown"), i=3)
             return
         self.statusbar.SetStatusText(
-                _("lat/lon = %.5f / %.5f") % (ll.lat, ll.lon), i=0)
+                _("%.6f, %.6f") % (ll.lat, ll.lon), i=0)
 
         ok, ti = self.heightfinder.CalcTerrain(ll)
         if not ok:
