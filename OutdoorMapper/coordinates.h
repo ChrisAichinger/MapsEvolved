@@ -152,6 +152,7 @@ class EXPORT LatLon {
     public:
         LatLon() : lat(0), lon(0) {};
         LatLon(double lat_, double lon_) : lat(lat_), lon(lon_) {};
+        explicit LatLon(const class UTMUPS &utm);
 
         LatLon& operator+=(const class LatLonDelta &rhs);
         LatLon& operator-=(const class LatLonDelta &rhs);
@@ -168,6 +169,19 @@ class EXPORT LatLonDelta {
         LatLonDelta& operator-=(const class LatLonDelta &rhs);
 
         double lat, lon;
+};
+
+class EXPORT UTMUPS {
+    public:
+        UTMUPS() : zone(0), northp(false), x(0), y(0) {};
+        UTMUPS(int zone_, bool northp_, double x_, double y_)
+            : zone(zone_), northp(northp_), x(x_), y(y_)
+        {};
+        explicit UTMUPS(const LatLon &ll);
+
+        int zone;     // UTM zone; may be 0 to indicate UPS.
+        bool northp;  // True if north hemisphere, false for south.
+        double x, y;  // Eastings and northings.
 };
 
 class EXPORT MapBezierGradient {

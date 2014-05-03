@@ -5,6 +5,8 @@
 #include <cassert>
 #include <limits>
 
+#include <GeographicLib/UTMUPS.hpp>
+
 #include "util.h"
 
 #define OPERATORS_COORD_ADDSUB(Coord, Delta, x, y)                            \
@@ -179,8 +181,19 @@ OPERATORS_DELTA_MULDIV(MapPixelDeltaInt, int, x, y)
 // LatLon
 OPERATORS_COORD_ADDSUB(LatLon, LatLonDelta, lat, lon)
 
+LatLon::LatLon(const UTMUPS &utm) {
+    GeographicLib::UTMUPS::Reverse(utm.zone, utm.northp, utm.x, utm.y,
+                                   lat, lon);
+}
+
 // LatLonDelta
 OPERATORS_DELTA_ADDSUB(LatLonDelta, lat, lon)
+
+
+UTMUPS::UTMUPS(const LatLon &ll) {
+    GeographicLib::UTMUPS::Forward(ll.lat, ll.lon, zone, northp, x, y);
+};
+
 
 // MapPixelGradient
 double MapBezierGradient::Abs() const {
