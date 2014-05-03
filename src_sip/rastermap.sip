@@ -93,13 +93,18 @@ class RasterMap : public GeoDrawable /Abstract/ {
         virtual ~RasterMap();
 };
 
-class RasterMapShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
+class RasterMapShPtr /Supertype=maplib_sip.SmartptrProxy/ {
 %TypeHeaderCode
 #include <memory>
 #include "rastermap.h"
 typedef std::shared_ptr<RasterMap> RasterMapShPtr;
 %End
     public:
+        // Take care to make RasterMapShPtr default- and copy-constructable
+        // from SIP's view. Otherwise it won't generate an AssignmentHelper,
+        // and we get access violations when trying to move RasterMapShPtr
+        // objects from Python back to C++.
+        RasterMapShPtr();
         RasterMapShPtr(RasterMap* ref /Transfer/);
         RasterMapShPtr(const RasterMapShPtr& ref);
         RasterMap *get();
@@ -118,106 +123,6 @@ class PersistentStoreUniqPtr
 
 PersistentStoreUniqPtr CreatePersistentStore();
 
-class RasterMapCollection /NoDefaultCtors/ {
-%TypeHeaderCode
-#include "rastermap.h"
-%End
-    public:
-        virtual ~RasterMapCollection();
-        virtual void AddMap(const RasterMapShPtr &map) = 0;
-        virtual void DeleteMap(unsigned int index) = 0;
-        virtual size_t Size() const = 0;
-        virtual RasterMapShPtr Get(size_t i) const = 0;
-        virtual const std::vector<const RasterMapShPtr>
-            GetAlternateRepresentations(size_t i) const = 0;
-        virtual bool IsToplevelMap(const RasterMapShPtr &map) const = 0;
-
-        virtual bool
-            StoreTo(const PersistentStoreUniqPtr &store /In,NoCopy/) const = 0;
-        virtual bool
-            RetrieveFrom(const PersistentStoreUniqPtr &store /In,NoCopy/) = 0;
-};
-
-class DefaultRasterMapCollection : public RasterMapCollection /NoDefaultCtors/ {
-%TypeHeaderCode
-#include "rastermap.h"
-%End
-    public:
-        DefaultRasterMapCollection();
-        virtual void AddMap(const RasterMapShPtr &map);
-        virtual void DeleteMap(unsigned int index);
-        virtual size_t Size() const;
-        virtual RasterMapShPtr Get(size_t i) const;
-        virtual const std::vector<const RasterMapShPtr>
-            GetAlternateRepresentations(size_t i) const;
-        virtual bool IsToplevelMap(const RasterMapShPtr &map) const;
-
-        virtual bool
-            StoreTo(const PersistentStoreUniqPtr &store /In,NoCopy/) const;
-        virtual bool
-            RetrieveFrom(const PersistentStoreUniqPtr &store /In,NoCopy/);
-};
-
-/*
-class DerivableRasterMapCollection : public RasterMapCollection /NoDefaultCtors/ {
-%TypeHeaderCode
-#include <memory>
-#include <cassert>
-#include "rastermap.h"
-typedef std::shared_ptr<RasterMap> RasterMapShPtr;
-class DerivableRasterMapCollection : public RasterMapCollection {
-    public:
-        DerivableRasterMapCollection() {};
-        virtual void AddMap(const std::shared_ptr<RasterMap> &map) {
-            assert(false);
-        };
-        virtual void DeleteMap(unsigned int index) { assert(false); };
-        virtual size_t Size() const { assert(false);  return 0; };
-        virtual RasterMapShPtr Get(size_t i) const {
-            assert(false);
-            return RasterMapShPtr(0);
-        };
-        virtual const std::vector<const RasterMapShPtr>
-            GetAlternateRepresentations(size_t i) const
-        {
-            assert(false);
-            return *(std::vector<const RasterMapShPtr>*)(0);
-        };
-        virtual bool IsToplevelMap(const RasterMapShPtr &map) const {
-            assert(false);
-            return false;
-        };
-
-        virtual bool
-        StoreTo(const PersistentStoreUniqPtr &store) const {
-            assert(false);
-            return false;
-        };
-        virtual bool
-        RetrieveFrom(const PersistentStoreUniqPtr &store) {
-            assert(false);
-            return false;
-        };
-};
-
-%End
-    public:
-        DerivableRasterMapCollection();
-        virtual void AddMap(const RasterMapShPtr &map);
-        virtual void DeleteMap(unsigned int index);
-        virtual size_t Size() const;
-        virtual RasterMapShPtr Get(size_t i) const;
-        virtual const std::vector<const RasterMapShPtr>
-            GetAlternateRepresentations(size_t i) const;
-        virtual bool IsToplevelMap(const RasterMapShPtr &map) const;
-
-        virtual bool
-            StoreTo(const PersistentStoreUniqPtr &store /In,NoCopy/) const;
-        virtual bool
-            RetrieveFrom(const PersistentStoreUniqPtr &store /In,NoCopy/);
-};*/
-
-void LoadMap(RasterMapCollection &maps, const std::wstring &fname);
 
 struct TerrainInfo {
 %TypeHeaderCode
@@ -228,14 +133,21 @@ struct TerrainInfo {
     double steepness_deg;
 };
 
+RasterMapShPtr LoadMap(const std::wstring &fname);
+std::vector<RasterMapShPtr> AlternateMapViews(const RasterMapShPtr &map);
+
 class HeightFinder {
 %TypeHeaderCode
 #include "rastermap.h"
 %End
     public:
-        explicit HeightFinder(const RasterMapCollection &maps /KeepReference/);
-        bool CalcTerrain(const LatLon &pos, TerrainInfo *result /Out/);
+        virtual bool CalcTerrain(const LatLon &pos, TerrainInfo *result /Out/);
         RasterMapShPtr GetActiveMap() const;
+    protected:
+        virtual bool LatLongWithinActiveDHM(const LatLon &pos) const;
+        virtual RasterMapShPtr FindBestMap(
+                      const LatLon &pos,
+                      GeoDrawable::DrawableType type) const;
 };
 
 bool GetMapDistance(const RasterMapShPtr &map, const MapPixelCoord &pos,

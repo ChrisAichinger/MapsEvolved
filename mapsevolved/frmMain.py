@@ -77,8 +77,7 @@ class MainFrame(wx.Frame):
         self.layermgr_panel = xrc.XRCCTRL(self, 'LayerMgrPanel')
         self.toolbar = xrc.XRCCTRL(self, 'MainToolbar')
 
-        rastermapcollection = pymaplib.DefaultRasterMapCollection()
-        self.filelist = pymaplib.GeoFilesCollection(rastermapcollection)
+        self.filelist = pymaplib.GeoFilesCollection()
         with pymaplib.DefaultPersistentStore.Read() as ps:
             self.filelist.retrieve_from(ps)
             try:
@@ -93,7 +92,7 @@ class MainFrame(wx.Frame):
 
         self.mapdisplay = pymaplib.MapDisplayManager(
                 self.ogldisplay, self.filelist.maplist[0].item)
-        self.heightfinder = pymaplib.HeightFinder(rastermapcollection)
+        self.heightfinder = pymaplib.HeightFinder(self.filelist.maplist)
 
         self.drag_enabled = False
         self.drag_suppress = False

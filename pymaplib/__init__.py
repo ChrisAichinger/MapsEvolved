@@ -55,49 +55,10 @@ class DefaultPersistentStore:
             ps.Close()
 
 
-#class PythonRasterMapCollection(DerivableRasterMapCollection):
-#    MapsAndReps = collections.namedtuple('MapsAndReps', ['map', 'views'])
-#    def __init__(self):
-#        DerivableRasterMapCollection.__init__(self)
-#        self.lst = []
-#
-#    def AddMap(self, rastermap):
-#        views = []
-#        if rastermap.GetType == GeoDrawable.TYPE_DHM:
-#            views.append(RasterMapShPtr(GradientMap(rastermap)))
-#            views.append(RasterMapShPtr(SteepnessMap(rastermap)))
-#        self.lst.append(self.MapsAndReps(rastermap, views))
-#
-#    def DeleteMap(self, index):
-#        del self.lst[index]
-#
-#    def Size(self):
-#        return len(self.lst)
-#
-#    def Get(self, index):
-#        return self.lst[index].map
-#
-#    def GetAlternateRepresentations(self, index):
-#        return self.lst[i].views
-#
-#    def IsToplevelMap(self, rastermap):
-#        return any(True for map, views in self.lst if map == rastermap)
-#
-#    def StoreTo(self, store):
-#        if not store.IsOpen():
-#            store.OpenWrite()
-#        store.SetStringList("maps", [m.GetFname() for m, views in self.lst])
-#
-#    def LoadFrom(self, store):
-#        if not store.IsOpen():
-#            store.OpenRead()
-#        for mapname in store.GetStringList("maps"):
-#            LoadMap(self, mapname)
-
 class GeoFilesCollection:
     ItemViews = collections.namedtuple('ItemViews', ['item', 'views'])
-    def __init__(self, rastermapcollection):
-        self._maplist = rastermapcollection
+    def __init__(self):
+        self.maplist = []
         self.gpxlist = []
         self.dblist = []
 
@@ -153,15 +114,18 @@ class GeoFilesCollection:
         self.dblist.append(GeoFilesCollection.ItemViews(db, []))
 
     def _add_geotiff(self, fname):
-        LoadMap(self._maplist, fname)
+        map = LoadMap(fname)
+        reps = AlternateMapViews(map)
+        self.maplist.append(GeoFilesCollection.ItemViews(map, reps))
 
     def store_to(self, store):
         def do_store(ps):
-            self._maplist.StoreTo(ps)
+            ps.SetStringList('maps',
+                    [map_entry.item.GetFname() for map_entry in self.maplist])
             ps.SetStringList('gpxlist',
-                             [gpxfile.GetFname()
-                              for gpxfile, segments in self.gpxlist])
-            ps.SetStringList('dblist', [db.fname for db, _ in self.dblist])
+                    [gpx_entry.item.GetFname() for gpx_entry in self.gpxlist])
+            ps.SetStringList('dblist',
+                    [db_entry.item.fname for db_entry in self.dblist])
 
         if not store.IsOpen():
             with DefaultPersistentStore.Write(store) as ps:
@@ -171,27 +135,31 @@ class GeoFilesCollection:
 
     def retrieve_from(self, store):
         def do_retrieve(ps):
-            self._maplist.RetrieveFrom(ps)
+            # Exceptions reading from the persistentstore are likely
+            # from running the first time - ignore them.
+            try:
+                mapfiles = ps.GetStringList('maps')
+            except RuntimeError:
+                pass
+            else:
+                for fname in mapfiles:
+                    self.add_file(fname, ftype='TIF')
 
-            gpxnames = []
             try:
                 gpxnames = ps.GetStringList('gpxlist')
             except RuntimeError:
-                # Most likely no gpxlist has been created in the PS yet.
-                # Silently ignore the error
                 pass
-            for fname in gpxnames:
-                self.add_file(fname, ftype='GPX')
+            else:
+                for fname in gpxnames:
+                    self.add_file(fname, ftype='GPX')
 
-            dbnames = []
             try:
                 dbnames = ps.GetStringList('dblist')
             except RuntimeError:
-                # Most likely no dblist has been created in the PS yet.
-                # Silently ignore the error
                 pass
-            for fname in dbnames:
-                self.add_file(fname, ftype='DB')
+            else:
+                for fname in dbnames:
+                    self.add_file(fname, ftype='DB')
 
         if not store.IsOpen():
             with DefaultPersistentStore.Read(store) as ps:
@@ -199,44 +167,31 @@ class GeoFilesCollection:
         else:
             do_retrieve(store)
 
-    @property
-    def maplist(self):
-        result = []
-        for i in range(self._maplist.Size()):
-            result.append(GeoFilesCollection.ItemViews(
-                    self._maplist.Get(i),
-                    self._maplist.GetAlternateRepresentations(i)))
-        return result
-
     def is_toplevel(self, item):
         return (any(True for m, views in self.maplist if m == item) or
                 any(True for g, views in self.gpxlist if g == item) or
                 any(True for d, views in self.dblist if d == item))
 
     def delete_map(self, rastermap):
-        for i in range(self._maplist.Size()):
-            if self._maplist.Get(i) == rastermap:
-                break
-        else:
-            raise RuntimeError("map to delete not found?")
-
-        self._maplist.DeleteMap(i)
+        for i, map_entry in enumerate(self.maplist):
+            if map_entry.item == rastermap:
+                del self.maplist[i]
+                return
+        raise RuntimeError("map to delete not found?")
 
     def delete_gpx(self, gpx):
-        for i in range(len(self.gpxlist)):
-            if gpx == self.gpxlist[i].item:
+        for i, gpx_entry in enumerate(self.gpxlist)):
+            if gpx_entry.item == gpx:
                 del self.gpxlist[i]
-                break
-        else:
-            raise RuntimeError("gpx file to delete not found?")
+                return
+        raise RuntimeError("gpx file to delete not found?")
 
     def delete_db(self, db):
-        for i in range(len(self.dblist)):
-            if db == self.dblist[i].item:
+        for i, db_entry in enumerate(self.dblist)):
+            if db_entry.item == db
                 del self.dblist[i]
-                break
-        else:
-            raise RuntimeError("POI DB to delete not found?")
+                return
+        raise RuntimeError("POI DB to delete not found?")
 
     def delete(self, item):
         if item.GetType() == GeoDrawable.TYPE_POI_DB:
@@ -339,3 +294,14 @@ def format_coordinate(coord_fmt, latlon):
         raise NotImplementedError("Unknown coordinate format: '%s'",
                                   coord_fmt)
 
+class HeightFinder(maplib_sip.HeightFinder):
+    def __init__(self, maps):
+        maplib_sip.HeightFinder.__init__(self)
+        self.maps = maps
+
+    def FindBestMap(self, pos, map_type):
+        for map, views in self.maps:
+            if map.GetType() == map_type:
+                self.active_map = map
+                return self.active_map
+        return None
