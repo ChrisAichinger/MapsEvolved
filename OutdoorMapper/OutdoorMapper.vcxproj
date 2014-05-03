@@ -153,12 +153,8 @@
     <ClCompile Include="projection.cpp" />
     <ClCompile Include="rastermap.cpp" />
     <ClCompile Include="tiles.cpp" />
-    <ClCompile Include="uimode.cpp" />
     <ClCompile Include="util.cpp" />
     <ClCompile Include="winwrap.cpp" />
-    <ClCompile Include="win_main.cpp" />
-    <ClCompile Include="win_mappanel.cpp" />
-    <ClCompile Include="win_maplist.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bezier.h" />
@@ -166,7 +162,6 @@
     <ClInclude Include="disp_ogl.h" />
     <ClInclude Include="drawing.h" />
     <ClInclude Include="external\glext.h" />
-    <ClInclude Include="geotiff_impl.h" />
     <ClInclude Include="gpstracks.h" />
     <ClInclude Include="mapdisplay.h" />
     <ClInclude Include="map_dhm_advanced.h" />
@@ -175,16 +170,12 @@
     <ClInclude Include="odm_config.h" />
     <ClInclude Include="pixelformat.h" />
     <ClInclude Include="print_map.h" />
-    <ClInclude Include="uimode.h" />
-    <ClInclude Include="win_main.h" />
     <ClInclude Include="projection.h" />
     <ClInclude Include="rastermap.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="tiles.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="winwrap.h" />
-    <ClInclude Include="win_mappanel.h" />
-    <ClInclude Include="win_maplist.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />

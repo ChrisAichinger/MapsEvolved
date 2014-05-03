@@ -16,9 +16,123 @@
 #include "geo_normalize.h"
 
 #include "rastermap.h"
-#include "geotiff_impl.h"
 #include "map_geotiff.h"
 #include "projection.h"
+#include "util.h"
+
+class TiffHandle {
+    public:
+        explicit TiffHandle(const std::wstring &fname)
+            : m_tiff(XTIFFOpenW(fname.c_str(), "r"))
+        {
+            if (!m_tiff) {
+                throw std::runtime_error("File not found");
+            }
+        };
+        ~TiffHandle() {
+            if (m_tiff) {
+                XTIFFClose(m_tiff);
+                m_tiff = NULL;
+            }
+        }
+        TIFF *GetTIFF() { return m_tiff; };
+    private:
+        DISALLOW_COPY_AND_ASSIGN(TiffHandle);
+        TIFF* m_tiff;
+};
+
+class GeoTiffHandle {
+    public:
+        explicit GeoTiffHandle(TiffHandle &tiffhandle)
+            : m_gtif(GTIFNew(tiffhandle.GetTIFF()))
+        {
+            if (!m_gtif)
+                throw std::runtime_error("Opening GeoTiff failed.");
+        };
+        ~GeoTiffHandle() {
+            if (m_gtif) {
+                GTIFFree(m_gtif);
+                m_gtif = NULL;
+            }
+        };
+        GTIF *GetGTIF() { return m_gtif; };
+    private:
+        DISALLOW_COPY_AND_ASSIGN(GeoTiffHandle);
+        GTIF *m_gtif;
+};
+
+class Tiff {
+    public:
+        explicit Tiff(const std::wstring &fname);
+        virtual ~Tiff() { };
+        TIFF *GetTIFF() { return m_rawtiff; };
+        unsigned int GetWidth() const { return m_width; };
+        unsigned int GetHeight() const { return m_height; };
+        unsigned int GetBitsPerSample() const { return m_bitspersample; };
+        unsigned int GetSamplesPerPixel() const { return m_samplesperpixel; };
+        MapRegion GetRegion(
+                const class MapPixelCoordInt &pos,
+                const class MapPixelDeltaInt &size) const;
+
+        template <typename T>
+        std::tuple<unsigned int, const T*>
+        GetField(ttag_t field) const;
+
+
+        const std::wstring &GetFilename() const { return m_fname; };
+    protected:
+        const std::wstring m_fname;
+        TiffHandle m_tiffhandle;
+        TIFF *m_rawtiff;
+
+        virtual void Hook_TIFFRGBAImageGet(TIFFRGBAImage &img) const {};
+    private:
+        unsigned int m_width, m_height;
+        unsigned short int m_bitspersample, m_samplesperpixel;
+};
+
+class GeoTiff : public Tiff {
+    public:
+        explicit GeoTiff(const std::wstring &fname);
+        virtual ~GeoTiff() { };
+
+        bool CheckVersion() const;
+        bool LoadCoordinates();
+
+        bool PixelToPCS(double *x, double *y) const;
+        bool PCSToPixel(double *x, double *y) const;
+        const std::string &GetProj4String() const { return m_proj; };
+        GeoDrawable::DrawableType GetType() const { return m_type; };
+
+        template <typename T>
+        std::tuple<unsigned int, std::shared_ptr<T>>
+        GetKey(geokey_t key) const;
+
+        template <typename T>
+        bool GetKeySingle(geokey_t key, T *result) const;
+
+        bool HasKey(geokey_t) const;
+
+        geocode_t GetModel() const { return m_model; }
+
+    protected:
+        GeoTiffHandle m_gtifhandle;
+        GTIF *m_rawgtif;
+
+        virtual void Hook_TIFFRGBAImageGet(TIFFRGBAImage &img) const;
+    private:
+        bool CheckDHMValid() const;
+
+        geocode_t m_model;
+        const double *m_tiepoints;
+        const double *m_pixscale;
+        const double *m_transform;
+        unsigned short int m_ntiepoints, m_npixscale, m_ntransform;
+
+        std::string m_proj;
+        GeoDrawable::DrawableType m_type;
+};
+
 
 static void put16bitbw_DHM(
     TIFFRGBAImage* img,
