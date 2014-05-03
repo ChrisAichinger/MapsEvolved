@@ -1,6 +1,7 @@
 import os
 
 import wx
+import wx.dataview
 import wx.xrc as xrc
 
 import pymaplib
@@ -97,7 +98,7 @@ class MapManagerFrame(wx.Frame):
                     self.insert_row(section, item)
                 self.maptreectrl.Expand(item)
 
-    @util.EVENT(wx.adv.EVT_TREELIST_SELECTION_CHANGED,
+    @util.EVENT(wx.dataview.EVT_TREELIST_SELECTION_CHANGED,
                 id=xrc.XRCID('MapTreeList'))
     def on_selection_changed(self, evt):
         if not self.maptreectrl.GetSelection().IsOk():
@@ -111,7 +112,7 @@ class MapManagerFrame(wx.Frame):
         self.projstring_tb.Value = projection_bytes.decode('utf-8',
                                                            errors='replace')
 
-    @util.EVENT(wx.adv.EVT_TREELIST_ITEM_ACTIVATED,
+    @util.EVENT(wx.dataview.EVT_TREELIST_ITEM_ACTIVATED,
                 id=xrc.XRCID('MapTreeList'))
     def on_item_activated(self, evt):
         # User double-clicked the item or pressed enter on it
@@ -123,7 +124,7 @@ class MapManagerFrame(wx.Frame):
         else:
             self.display_map(evt.Item)
 
-    @util.EVENT(wx.adv.EVT_TREELIST_ITEM_CONTEXT_MENU,
+    @util.EVENT(wx.dataview.EVT_TREELIST_ITEM_CONTEXT_MENU,
                 id=xrc.XRCID('MapTreeList'))
     def on_item_contextmenu(self, evt):
         self.popup_list_item = evt.Item

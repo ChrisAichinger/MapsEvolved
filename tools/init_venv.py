@@ -16,11 +16,9 @@ import imp
 sip_dir = '__sip_source'
 sip_url = 'http://downloads.sourceforge.net/project/pyqt/sip/sip-4.15.4/sip-4.15.4.zip?r=&ts=1390046988&use_mirror=freefr'
 setuptools_url = 'https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py'
-wxpython_url = 'http://wxpython.org/Phoenix/snapshot-builds/wxPython_Phoenix-3.0.1.dev75695-py3.3-win32.egg'
-gpxpy_url = 'https://github.com/tkrajina/gpxpy/archive/master.zip'
-gpxpy_dir = '__gpxpy_source'
+wxpython_url = 'http://wxpython.org/Phoenix/snapshot-builds/wxPython_Phoenix-3.0.1.dev76424-cp33-none-win32.whl'
 SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
-init_shell_batch = 'init_shell.bat'
+init_shell = 'init_shell.bat'
 
 
 @contextlib.contextmanager
@@ -65,10 +63,11 @@ def copytree(src, dst, symlinks=False):
 
 
 def rerun_in_venv(venv_dir):
-    venv_enter_command = os.path.join(SCRIPT_DIR, init_shell_batch)
-    print(venv_enter_command, venv_dir, 'python.exe', sys.argv[0], '--rerun-in-venv')
-    #os.execl(venv_enter_command, venv_dir, 'python.exe', sys.argv[0], '--rerun-in-venv')
-    os.system(' '.join([venv_enter_command, venv_dir, 'python.exe', sys.argv[0], '--rerun-in-venv']))
+    venv_enter_command = os.path.join(SCRIPT_DIR, init_shell)
+    cmdline = [venv_enter_command, venv_dir,
+               'python.exe', sys.argv[0], '--rerun-in-venv']
+    print(*cmdline)
+    os.system(' '.join(cmdline))
     sys.exit(0)
 
 
@@ -140,23 +139,6 @@ def install_setuptools(setuptools_url):
     os.remove(tarball)
 
 
-def install_wxpython(wxpython_url):
-    subprocess.check_call(['easy_install.exe', wxpython_url])
-
-
-def install_gpxpy(gpxpy_dir, gpxpy_url):
-    urlopener = urllib.request.urlopen(gpxpy_url)
-    f = io.BytesIO(urlopener.read())
-    with zipfile.ZipFile(f, 'r') as zf:
-        zf.extractall(path=gpxpy_dir)
-
-    real_dir = os.path.join(gpxpy_dir, 'gpxpy*')
-    real_dir = glob.glob(real_dir)[0]
-    with temporary_chdir(real_dir):
-        subprocess.check_call(['python.exe', 'setup.py', 'install'])
-    #shutil.rmtree(gpxpy_dir)
-
-
 def main():
     parser = argparse.ArgumentParser(description='Create and populate a venv.')
     parser.add_argument('--venv', dest='venv_dir', action='store',
@@ -191,11 +173,14 @@ def main():
         print("\nInstalling setuptools")
         install_setuptools(setuptools_url)
 
+        print("\nInstalling pip")
+        subprocess.check_call(['easy_install.exe', 'pip'])
+
         print("\nInstalling wxPython")
-        install_wxpython(wxpython_url)
+        subprocess.check_call(['pip.exe', 'install', wxpython_url])
 
         print("\nInstalling gpxpy")
-        install_gpxpy(gpxpy_dir, gpxpy_url)
+        subprocess.check_call(['pip.exe', 'install', "gpxpy"])
 
         print("\nFinished setting up venv. Enjoy :)")
 

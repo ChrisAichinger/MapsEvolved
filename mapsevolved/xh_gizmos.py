@@ -109,10 +109,10 @@ class TreeListCtrlXmlHandler(xrc.XmlResourceHandler):
     def DoCreateResource(self):
         assert self.GetInstance() is None
 
-        w = wx.adv.TreeListCtrl(self.GetParentAsWindow(),
-                                self.GetID(),
-                                style=self.GetStyle(),
-                                name=self.GetName())
+        w = wx.dataview.TreeListCtrl(self.GetParentAsWindow(),
+                                     self.GetID(),
+                                     style=self.GetStyle(),
+                                     name=self.GetName())
         n = self.GetParamNode('content')
         if n: n = n.GetChildren()
         while n:
