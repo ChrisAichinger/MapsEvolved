@@ -468,6 +468,11 @@ class RegistryKey {
         bool SetStringList(const std::wstring &keyvalue,
                            const std::vector<std::wstring> &strings);
 
+        bool GetString(const std::wstring &keyvalue,
+                       std::wstring *strings);
+        bool SetString(const std::wstring &keyvalue,
+                       const std::wstring &strings);
+
         bool GetDWORD(const std::wstring &keyvalue, DWORD *value);
         bool SetDWORD(const std::wstring &keyvalue, DWORD value);
 

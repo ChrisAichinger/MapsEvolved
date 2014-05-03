@@ -1143,6 +1143,46 @@ bool RegistryKey::SetStringList(const std::wstring &keyvalue,
     return res == ERROR_SUCCESS;
 }
 
+bool RegistryKey::GetString(const std::wstring &keyvalue,
+                            std::wstring *string)
+{
+    if (!m_is_open)
+        return false;
+
+    DWORD type, char_len;
+    LONG success = RegGetValue(m_key, NULL, keyvalue.c_str(),
+                               RRF_RT_REG_SZ, &type, NULL, &char_len);
+    if (success != ERROR_SUCCESS)
+        return false;
+    if (type != REG_SZ)
+        return false;
+
+    size_t wchar_len = (char_len + sizeof(wchar_t) - 1) / sizeof(wchar_t);
+    // zero initialize data - notice the () after [wchar_len]
+    auto data = std::unique_ptr<wchar_t[]>(new wchar_t[wchar_len]());
+    success = RegGetValue(m_key, NULL, keyvalue.c_str(), RRF_RT_REG_SZ,
+                          NULL, data.get(), &char_len);
+
+    if (success != ERROR_SUCCESS)
+        return false;
+
+    *string = data.get();
+    return true;
+}
+
+bool RegistryKey::SetString(const std::wstring &keyvalue,
+                            const std::wstring &string)
+{
+    if (!m_is_open)
+        return false;
+
+    const BYTE *const data = reinterpret_cast<const BYTE*>(string.c_str());
+    LONG res = RegSetValueEx(m_key, keyvalue.c_str(), 0, REG_SZ,
+                             const_cast<BYTE*>(data),
+                             (string.length() + 1) * sizeof(wchar_t));
+    return res == ERROR_SUCCESS;
+}
+
 bool RegistryKey::GetDWORD(const std::wstring &keyvalue, DWORD *value) {
     if (!m_is_open)
         return false;
@@ -1178,6 +1218,11 @@ class WinRegistryStore : public PersistentStore {
                            std::vector<std::wstring> *strings);
         virtual bool SetStringList(const std::wstring &keyvalue,
                            const std::vector<std::wstring> &strings);
+
+        virtual bool GetString(const std::wstring &keyvalue,
+                               std::wstring *string);
+        virtual bool SetString(const std::wstring &keyvalue,
+                               const std::wstring &string);
 
         virtual bool GetUInt(const std::wstring &keyvalue,
                              unsigned long int *value);
@@ -1218,6 +1263,18 @@ bool WinRegistryStore::SetStringList(const std::wstring &keyvalue,
                                      const std::vector<std::wstring> &strings)
 {
     return IsOpen() && m_regkey->SetStringList(keyvalue, strings);
+}
+
+bool WinRegistryStore::GetString(const std::wstring &keyvalue,
+                                 std::wstring *string)
+{
+    return IsOpen() && m_regkey->GetString(keyvalue, string);
+}
+
+bool WinRegistryStore::SetString(const std::wstring &keyvalue,
+                                 const std::wstring &string)
+{
+    return IsOpen() && m_regkey->SetString(keyvalue, string);
 }
 
 bool WinRegistryStore::GetUInt(const std::wstring &keyvalue,

@@ -141,6 +141,11 @@ class EXPORT PersistentStore {
         virtual bool SetStringList(const std::wstring &keyvalue,
                            const std::vector<std::wstring> &strings) = 0;
 
+        virtual bool GetString(const std::wstring &keyvalue,
+                               std::wstring *strings) = 0;
+        virtual bool SetString(const std::wstring &keyvalue,
+                               const std::wstring &strings) = 0;
+
         virtual bool GetUInt(const std::wstring &keyvalue,
                              unsigned long int *value) = 0;
         virtual bool SetUInt(const std::wstring &keyvalue,
