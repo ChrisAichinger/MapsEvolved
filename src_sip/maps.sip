@@ -69,6 +69,28 @@ class PersistentStore /Abstract/ {
             }
         %End
 
+        virtual std::wstring GetString(const std::wstring &keyvalue) = 0;
+        %MethodCode
+            std::unique_ptr<std::wstring> string(new std::wstring);
+            bool res = sipCpp->GetString(*a0, string.get());
+            if (!res) {
+                PyErr_SetString(PyExc_RuntimeError, "Failed to GetString()");
+                sipIsErr = 1;
+            } else {
+                sipRes = string.release();
+            }
+        %End
+
+        virtual void SetString(const std::wstring &keyvalue,
+                               const std::wstring &strings) = 0;
+        %MethodCode
+            bool res = sipCpp->SetString(*a0, *a1);
+            if (!res) {
+                PyErr_SetString(PyExc_RuntimeError, "Failed to SetString()");
+                sipIsErr = 1;
+            }
+        %End
+
         virtual unsigned int GetUInt(const std::wstring &keyvalue) = 0;
         %MethodCode
             unsigned long int value;
