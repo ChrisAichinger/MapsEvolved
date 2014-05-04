@@ -77,7 +77,7 @@ class MainFrame(wx.Frame):
         self.layermgr_panel = xrc.XRCCTRL(self, 'LayerMgrPanel')
         self.toolbar = xrc.XRCCTRL(self, 'MainToolbar')
 
-        self.filelist = pymaplib.GeoFilesCollection()
+        self.filelist = pymaplib.FileList()
         with pymaplib.DefaultPersistentStore.Read() as ps:
             self.filelist.retrieve_from(ps)
             try:
@@ -90,8 +90,9 @@ class MainFrame(wx.Frame):
 
         self.ogldisplay = pymaplib.CreateOGLDisplay(self.panel.GetHandle())
 
+        # FIXME: Do something sensible if we don't have any maps available.
         self.mapdisplay = pymaplib.MapDisplayManager(
-                self.ogldisplay, self.filelist.maplist[0].item)
+                self.ogldisplay, self.filelist.maplist[0].drawable)
         self.heightfinder = pymaplib.HeightFinder(self.filelist.maplist)
 
         self.drag_enabled = False

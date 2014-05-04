@@ -41,18 +41,15 @@ class MapManagerFrame(wx.Frame):
         self.filetype_filter = xrc.XRCCTRL(self, 'FiletypeFilter')
         for i in range(self.filetype_filter.GetCount()):
             self.filetype_filter.SetSelection(i)
-        self.popup_list_item = None
+        self.popup_item = None
 
         # For some funky reason XRCed chokes on width -1 columns. Set it here.
         self.maptreectrl.SetColumnWidth(0, -1)
         self.insert_drawables()
 
-    def insert_row(self, rastermap, parent=None):
+    def insert_row(self, container, drawable, parent=None):
         if parent is None:
             parent = self.maptreectrl.RootItem
-        fname = rastermap.GetFname()
-        basename = os.path.basename(fname)
-        dirname = os.path.dirname(os.path.abspath(fname))
         maptype_names = {
             pymaplib.GeoDrawable.TYPE_MAP: _("Map"),
             pymaplib.GeoDrawable.TYPE_DHM: _("DHM"),
@@ -65,12 +62,17 @@ class MapManagerFrame(wx.Frame):
             pymaplib.GeoDrawable.TYPE_POI_DB: _("POI database"),
             pymaplib.GeoDrawable.TYPE_ERROR: _("Error loading map"),
         }
-        maptype = maptype_names[rastermap.GetType()]
+        if drawable:
+            maptype = maptype_names[drawable.GetType()]
+        else:
+            maptype = maptype_names[container.entry_type]
 
-        item = self.maptreectrl.AppendItem(parent, basename, data=rastermap)
+        # TODO: Fix item name for GPX file segments.
+        item = self.maptreectrl.AppendItem(parent, container.basename,
+                                           data=(container, drawable))
         self.maptreectrl.SetItemText(item, 1, maptype)
-        self.maptreectrl.SetItemText(item, 2, dirname)
-        if rastermap.GetType() == pymaplib.RasterMap.TYPE_ERROR:
+        self.maptreectrl.SetItemText(item, 2, container.dirname)
+        if container.entry_type == container.TYPE_ERROR:
             #lvrow.SetColor(makeRGB(0xdd, 0, 0));
             pass
         return item
@@ -79,23 +81,17 @@ class MapManagerFrame(wx.Frame):
         INDEX_MAPS = 0
         INDEX_GPSTRACKS = 1
         INDEX_POI_DB = 2
-        if self.filetype_filter.IsSelected(INDEX_MAPS):
-            for rastermap, views in self.filelist.maplist:
-                item = self.insert_row(rastermap)
-                for submap in views:
-                    self.insert_row(submap, item)
-                self.maptreectrl.Expand(item)
-        if self.filetype_filter.IsSelected(INDEX_GPSTRACKS):
-            for gpx, views in self.filelist.gpxlist:
-                item = self.insert_row(gpx)
-                for section in views:
-                    self.insert_row(section, item)
-                self.maptreectrl.Expand(item)
-        if self.filetype_filter.IsSelected(INDEX_POI_DB):
-            for db, views in self.filelist.dblist:
-                item = self.insert_row(db)
-                for section in views:
-                    self.insert_row(section, item)
+        work_list = [(INDEX_MAPS, self.filelist.maplist),
+                     (INDEX_GPSTRACKS, self.filelist.gpxlist),
+                     (INDEX_POI_DB, self.filelist.dblist),
+                    ]
+        for filter_idx, lst in work_list:
+            if not self.filetype_filter.IsSelected(filter_idx):
+                continue
+            for container in lst:
+                item = self.insert_row(container, container.drawable)
+                for view in container.alternate_views:
+                    self.insert_row(container, view, item)
                 self.maptreectrl.Expand(item)
 
     @util.EVENT(wx.dataview.EVT_TREELIST_SELECTION_CHANGED,
@@ -104,22 +100,27 @@ class MapManagerFrame(wx.Frame):
         if not self.maptreectrl.GetSelection().IsOk():
             self.projstring_tb.Value = ""
             return
-        rastermap = self.maptreectrl.GetItemData(evt.Item)
-        if rastermap.GetType() == pymaplib.GeoDrawable.TYPE_ERROR:
+
+        container, drawable = self.maptreectrl.GetItemData(evt.Item)
+        if container.entry_type == container.TYPE_ERROR:
             self.projstring_tb.Value = "Failed to open the map."
             return
-        projection_bytes = rastermap.GetProj().GetProjString()
-        self.projstring_tb.Value = projection_bytes.decode('utf-8',
-                                                           errors='replace')
+        if not drawable:
+            self.projstring_tb.Value = ""
+            return
+
+        proj_bytes = drawable.GetProj().GetProjString()
+        self.projstring_tb.Value = proj_bytes.decode('utf-8', errors='replace')
 
     @util.EVENT(wx.dataview.EVT_TREELIST_ITEM_ACTIVATED,
                 id=xrc.XRCID('MapTreeList'))
     def on_item_activated(self, evt):
-        # User double-clicked the item or pressed enter on it
-        itemdata = self.maptreectrl.GetItemData(evt.Item)
-        if itemdata.GetType() == pymaplib.GeoDrawable.TYPE_POI_DB:
-            pass
-        elif itemdata.GetType() == pymaplib.GeoDrawable.TYPE_GPSTRACK:
+        # User double-clicked the item or pressed enter on it.
+        container, drawable = self.maptreectrl.GetItemData(evt.Item)
+        if not drawable:
+            # If the item is not actually drawable, abort.
+            return
+        if drawable.GetType() == pymaplib.GeoDrawable.TYPE_GPSTRACK:
             self.overlay_map(evt.Item)
         else:
             self.display_map(evt.Item)
@@ -127,33 +128,35 @@ class MapManagerFrame(wx.Frame):
     @util.EVENT(wx.dataview.EVT_TREELIST_ITEM_CONTEXT_MENU,
                 id=xrc.XRCID('MapTreeList'))
     def on_item_contextmenu(self, evt):
-        self.popup_list_item = evt.Item
+        self.popup_item = evt.Item
         itemdata = self.maptreectrl.GetItemData(evt.Item)
         if not itemdata:
             self.PopupMenu(self.noitem_popup)
-        elif itemdata.GetType() == pymaplib.GeoDrawable.TYPE_GPSTRACK:
+            return
+        container, drawable = itemdata
+        if container.entry_type == container.TYPE_GPSTRACK:
             self.PopupMenu(self.gps_popup)
-        elif itemdata.GetType() == pymaplib.GeoDrawable.TYPE_POI_DB:
+        elif container.entry_type == container.TYPE_POI_DB:
             self.PopupMenu(self.db_popup)
         else:
             self.PopupMenu(self.map_popup)
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('DisplayMenuItem'))
     def on_display_menu(self, evt):
-        self.display_map(self.popup_list_item)
+        self.display_map(self.popup_item)
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('DisplayOverlayMenuItem'))
     def on_overlay_menu(self, evt):
-        self.overlay_map(self.popup_list_item)
+        self.overlay_map(self.popup_item)
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('GPSTrackAnalyzerMenuItem'))
     def on_gpsanalyzer_menu(self, evt):
-        rastermap = self.maptreectrl.GetItemData(self.popup_list_item)
-        self.parent.show_gpstrackanalyzer(rastermap)
+        container, drawable = self.maptreectrl.GetItemData(self.popup_item)
+        self.parent.show_gpstrackanalyzer(drawable)
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('RemoveMenuItem'))
     def on_remove_map_menu(self, evt):
-        self.delete(self.popup_list_item)
+        self.delete(self.popup_item)
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('AddMapMenuItem'))
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('MapAddTBButton'))
@@ -203,14 +206,14 @@ class MapManagerFrame(wx.Frame):
         self.insert_drawables()
 
     def display_map(self, item):
-        rastermap = self.maptreectrl.GetItemData(item)
-        self.parent.set_basemap(rastermap)
+        container, drawable = self.maptreectrl.GetItemData(item)
+        self.parent.set_basemap(drawable)
 
     def overlay_map(self, item):
-        rastermap = self.maptreectrl.GetItemData(item)
+        container, drawable = self.maptreectrl.GetItemData(item)
         # Let the parent window add the map, so it can update it's overlay list
         # as well.
-        self.parent.add_overlay(rastermap)
+        self.parent.add_overlay(drawable)
 
     def add_map(self):
         openFileDialog = wx.FileDialog(
@@ -255,17 +258,19 @@ class MapManagerFrame(wx.Frame):
         if not item:
             util.Warn(self,
                       _("No map selected for removal\n\n" +
-                        "Please select the map you want to remove"))
+                        "Please select the map you want to remove."))
             return
-        rastermap = self.maptreectrl.GetItemData(item)
-        if not self.filelist.is_toplevel(rastermap):
-            util.Warn(self,
-                      _("Can't delete map view\n\n" +
-                        "You can only remove map files, not their views. " +
-                        "Try to delete the corresponding (parent) DHM file " +
-                        "instead."))
-            return
-        self.filelist.delete(rastermap)
+        container, drawable = self.maptreectrl.GetItemData(item)
+        if drawable != container.drawable:
+            # Trying to delete an alternative view.
+            # Notify the user we're deleting the whole file.
+            force = util.YesNo(self,
+                               _("Are you sure you want to remove the " +
+                                 "following map (including all its views):" +
+                                 "\n{}").format(container.basename))
+            if not force:
+                return
+        self.filelist.delete(container)
         self.finish_list_change()
 
     def finish_list_change(self):
