@@ -6,8 +6,27 @@
 #include "util.h"
 #include "coordinates.h"
 #include "projection.h"
+
+PyObject *repr_helper(PyObject *obj, double f1, double f2);
 %End
 
+%ModuleCode
+PyObject *repr_helper(PyObject *obj, double f1, double f2) {
+    PyObject *o1 = PyFloat_FromDouble(f1);
+    PyObject *o2 = PyFloat_FromDouble(f2);
+    PyObject *result = nullptr;
+    if (o1 && o2) {
+        result = PyUnicode_FromFormat("<%s(%R, %R)>",
+                                      obj->ob_type->tp_name, o1, o2);
+    } else {
+        PyErr_Format(PyExc_ValueError,
+                     "Could not get __repr__ for type");
+    }
+    Py_XDECREF(o1);
+    Py_XDECREF(o2);
+    return result;
+}
+%End
 
 class BezierCoord {
 %TypeHeaderCode
@@ -18,6 +37,13 @@ class BezierCoord {
         BezierCoord(double x_, double y_);
         double x;
         double y;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = repr_helper(sipSelf, sipCpp->x, sipCpp->y);
+            if (!sipRes)
+                sipIsErr = 1;
+        %End
 };
 
 class DisplayCoord {
@@ -32,6 +58,13 @@ class DisplayCoord {
 
         DisplayCoord& operator+=(const DisplayDelta &rhs);
         DisplayCoord& operator-=(const DisplayDelta &rhs);
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = repr_helper(sipSelf, sipCpp->x, sipCpp->y);
+            if (!sipRes)
+                sipIsErr = 1;
+        %End
 };
 
 class DisplayCoordCentered {
@@ -49,6 +82,13 @@ class DisplayCoordCentered {
 
         double x;
         double y;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = repr_helper(sipSelf, sipCpp->x, sipCpp->y);
+            if (!sipRes)
+                sipIsErr = 1;
+        %End
 };
 
 class DisplayDelta {
@@ -66,6 +106,13 @@ class DisplayDelta {
 
         double x;
         double y;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = repr_helper(sipSelf, sipCpp->x, sipCpp->y);
+            if (!sipRes)
+                sipIsErr = 1;
+        %End
 };
 
 
@@ -93,6 +140,13 @@ class MapPixelCoord {
 
         double x;
         double y;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = repr_helper(sipSelf, sipCpp->x, sipCpp->y);
+            if (!sipRes)
+                sipIsErr = 1;
+        %End
 };
 
 class MapPixelDelta {
@@ -111,6 +165,13 @@ class MapPixelDelta {
 
         double x;
         double y;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = repr_helper(sipSelf, sipCpp->x, sipCpp->y);
+            if (!sipRes)
+                sipIsErr = 1;
+        %End
 };
 
 class MapPixelCoordInt {
@@ -137,6 +198,13 @@ class MapPixelCoordInt {
 
         int x;
         int y;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = PyUnicode_FromFormat("<%s(%d, %d)>",
+                                          sipSelf->ob_type->tp_name,
+                                          sipCpp->x, sipCpp->y);
+        %End
 };
 
 class MapPixelDeltaInt {
@@ -155,6 +223,13 @@ class MapPixelDeltaInt {
 
         int x;
         int y;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = PyUnicode_FromFormat("<%s(%d, %d)>",
+                                          sipSelf->ob_type->tp_name,
+                                          sipCpp->x, sipCpp->y);
+        %End
 };
 
 class BaseMapCoord : public MapPixelCoord {
@@ -204,6 +279,13 @@ class LatLon {
 
         double lat;
         double lon;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = repr_helper(sipSelf, sipCpp->lat, sipCpp->lon);
+            if (!sipRes)
+                sipIsErr = 1;
+        %End
 };
 
 class LatLonDelta {
@@ -219,6 +301,13 @@ class LatLonDelta {
 
         double lat;
         double lon;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = repr_helper(sipSelf, sipCpp->lat, sipCpp->lon);
+            if (!sipRes)
+                sipIsErr = 1;
+        %End
 };
 
 class UTMUPS {
@@ -234,6 +323,25 @@ class UTMUPS {
         bool northp;  // True if north hemisphere, false for south.
         double x;     // UTM/UPS easting
         double y;     // UTM/UPS northing
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            PyObject *x = PyFloat_FromDouble(sipCpp->x);
+            PyObject *y = PyFloat_FromDouble(sipCpp->y);
+            if (x && y) {
+                sipRes = PyUnicode_FromFormat("<%s(%d%c %R %R)>",
+                                              sipSelf->ob_type->tp_name,
+                                              sipCpp->zone,
+                                              sipCpp->northp ? 'N' : 'S',
+                                              x, y);
+            } else {
+                PyErr_Format(PyExc_ValueError,
+                             "Could not get __repr__ for type");
+                sipIsErr = 1;
+            }
+            Py_XDECREF(x);
+            Py_XDECREF(y);
+        %End
 };
 
 class MapBezierGradient {
@@ -251,6 +359,13 @@ class MapBezierGradient {
 
         double x;
         double y;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = repr_helper(sipSelf, sipCpp->x, sipCpp->y);
+            if (!sipRes)
+                sipIsErr = 1;
+        %End
 };
 
 
