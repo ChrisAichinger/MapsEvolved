@@ -1,3 +1,90 @@
+%ModuleHeaderCode
+#include <functional>
+#include <vector>
+#include <memory>
+
+bool check_list_type(PyObject *sipPy,
+                     std::function<bool(PyObject*)> element_check);
+
+int do_get_transfer_state(PyObject *tobj);
+
+template <typename T>
+bool vector_from_list_ptr(PyObject *sipPy, std::vector<T> **sipCppPtr,
+                          PyObject *sipTransferObj, int *sipIsErr,
+                          std::function<T*(PyObject*)> converter)
+{
+    if (!PyList_Check(sipPy)) {
+        *sipIsErr = 1;
+        return false;
+    }
+
+    auto vec = std::unique_ptr<std::vector<T>>(new std::vector<T>);
+    unsigned int size = PyList_Size(sipPy);
+    for (unsigned int i = 0; i < size; ++i) {
+        PyObject *item = PyList_GetItem(sipPy, i);
+        auto t = std::unique_ptr<T>(converter(item));
+
+        if (!t) {
+            *sipIsErr = 1;
+        }
+        if (*sipIsErr) {
+            return false;
+        }
+        vec->push_back(*t);
+    }
+    *sipCppPtr = vec.release();
+    // Ownership transfer applies to the list itself, not the individual items.
+    return do_get_transfer_state(sipTransferObj);
+}
+template <typename T>
+bool vector_from_list_val(PyObject *sipPy, std::vector<T> **sipCppPtr,
+                          PyObject *sipTransferObj, int *sipIsErr,
+                          std::function<T(PyObject*)> converter)
+{
+    if (!PyList_Check(sipPy)) {
+        *sipIsErr = 1;
+        return false;
+    }
+
+    auto vec = std::unique_ptr<std::vector<T>>(new std::vector<T>);
+    unsigned int size = PyList_Size(sipPy);
+    for (unsigned int i = 0; i < size; ++i) {
+        PyObject *item = PyList_GetItem(sipPy, i);
+        T t = converter(item);
+
+        if (*sipIsErr) {
+            return false;
+        }
+        vec->push_back(t);
+    }
+    *sipCppPtr = vec.release();
+    // Ownership transfer applies to the list itself, not the individual items.
+    return do_get_transfer_state(sipTransferObj);
+}
+%End
+
+%ModuleCode
+bool check_list_type(PyObject *sipPy,
+                     std::function<bool(PyObject*)> element_check)
+{
+    // Check if object is convertible. Ensure it is a list and that it only
+    // contains valid entries.
+    if (!PyList_Check(sipPy))
+        return false;
+
+    unsigned int size = PyList_Size(sipPy);
+    for (unsigned int i = 0; i < size; ++i) {
+        if (!element_check(PyList_GetItem(sipPy, i)))
+            return false;
+    }
+    return true;
+}
+
+int do_get_transfer_state(PyObject *tobj) {
+    return sipGetState(tobj);
+}
+%End
+
 // github.com/tagged/digsby/blob/master/digsby/ext/src/BuddyList/sip/wstring.sip
 %MappedType std::string
 {
@@ -5,7 +92,7 @@
 #include <string>
 %End
 
-// Convert std::wstring to a python str object.
+// Convert std::string to a Python bytes object.
 %ConvertFromTypeCode
     return PyBytes_FromStringAndSize(sipCpp->c_str(), sipCpp->size());
 %End
@@ -15,6 +102,12 @@
     // If sipIsErr is NULL we must only perform a type check.
     if (!sipIsErr)
         return PyBytes_Check((PyUnicodeObject*)sipPy);
+
+    if (!PyBytes_Check(sipPy)) {
+        PyErr_Format(PyExc_TypeError, "object can not be converted to std::string");
+        *sipIsErr = 1;
+        return NULL;
+    }
 
     const char *bytes = PyBytes_AsString(sipPy);
     ssize_t size = PyBytes_Size(sipPy);
@@ -41,6 +134,13 @@
     // If sipIsErr is NULL we must only perform a type check.
     if (!sipIsErr)
         return PyUnicode_Check(sipPy);
+
+    if (!PyUnicode_Check(sipPy)) {
+        PyErr_Format(PyExc_TypeError,
+                     "object can not be converted to std::wstring");
+        *sipIsErr = 1;
+        return NULL;
+    }
 
     const size_t size = PyUnicode_GetSize(sipPy);
     if (!size) {
@@ -180,41 +280,22 @@ template<TYPE>
 %End
 
 %ConvertToTypeCode
-    // Convert a Python list of string to a vector<string> on the heap.
-    if (sipIsErr == NULL)
-        return PyList_Check(sipPy);
-
-    if (sipPy == Py_None) {
-        *sipCppPtr = NULL;
-        return 0;
+    if (sipIsErr == NULL) {
+        // Use a lambda because PyUnicode_Check is a macro.
+        return check_list_type(
+                    sipPy, [](PyObject *o) { return PyUnicode_Check(o); });
     }
 
-    std::vector<std::wstring> *qvl = new std::vector<std::wstring>;
-    PyErr_Clear();
-
-    unsigned int size = PyList_Size(sipPy);
-    for (unsigned int i = 0; i < size; ++i) {
-        // Use the SIP API to convert the Python object to the
-        // corresponding C++ instance.  Note that we apply any ownership
-        // transfer to the list itself, not the individual elements.
-        std::wstring *t = reinterpret_cast<std::wstring*>(
-                sipConvertToType(PyList_GET_ITEM(sipPy, i),
-                                 sipType_std_wstring, 0, 0, 0, sipIsErr));
-
-        if (*sipIsErr) {
-            delete qvl;
-            return 0;
-        }
-
-        // Add the pointer to the C++ instance.
-        qvl->push_back(*t);
-        delete t;
-    }
-    *sipCppPtr = qvl;
-    return 1;
+    return vector_from_list_ptr<std::wstring>(
+               sipPy, sipCppPtr, sipTransferObj, sipIsErr,
+               [&](PyObject *o) {
+                   return reinterpret_cast<std::wstring*>(
+                       sipConvertToType(o, sipType_std_wstring, 0, 0, 0, sipIsErr));
+               });
 %End
 };
 
+// Unfortunately, SIP does not understand long int :-/
 %MappedType std::vector<int>
 {
 %TypeHeaderCode
@@ -250,30 +331,21 @@ template<TYPE>
 %End
 
 %ConvertToTypeCode
-    // Convert a Python list of longs to a vector<int> on the heap.
-    if (sipIsErr == NULL)
-        return PyList_Check(sipPy);
-
-    if (sipPy == Py_None) {
-        *sipCppPtr = NULL;
-        return 0;
+    if (sipIsErr == NULL) {
+        // Use a lambda because PyLong_Check is a macro.
+        return check_list_type(
+                    sipPy, [](PyObject *o) { return PyLong_Check(o); });
     }
 
-    std::vector<int> *qvl = new std::vector<int>;
-    PyErr_Clear();
-
-    unsigned int size = PyList_Size(sipPy);
-    for (unsigned int i = 0; i < size; ++i) {
-	long j = PyLong_AsLong(PyList_GET_ITEM(sipPy, i));
-        if (PyErr_Occurred()) {
-            *sipIsErr = 1;
-            delete qvl;
-            return 0;
-        }
-        qvl->push_back(j);
-    }
-    *sipCppPtr = qvl;
-    return 1;
+    return vector_from_list_val<int>(
+               sipPy, sipCppPtr, sipTransferObj, sipIsErr,
+               [&](PyObject *o) -> long int {
+                   long int j = PyLong_AsLong(o);
+                   if (PyErr_Occurred()) {
+                       *sipIsErr = 1;
+                   }
+                   return j;
+               });
 %End
 };
 
@@ -312,29 +384,22 @@ template<TYPE>
     return lst;
 %End
 
+// Convert a Python list of longs to a vector<unsigned int> on the heap.
 %ConvertToTypeCode
-    // Convert a Python list of longs to a vector<int> on the heap.
-    if (sipIsErr == NULL)
-        return PyList_Check(sipPy);
-
-    if (sipPy == Py_None) {
-        *sipCppPtr = NULL;
-        return 0;
+    if (sipIsErr == NULL) {
+        // Use a lambda because PyLong_Check is a macro.
+        return check_list_type(
+                    sipPy, [](PyObject *o) { return PyLong_Check(o); });
     }
 
-    std::vector<unsigned int> *qvl = new std::vector<unsigned int>;
-    PyErr_Clear();
-    unsigned int size = PyList_Size(sipPy);
-    for (unsigned int i = 0; i < size; ++i) {
-	long j = PyLong_AsUnsignedLong(PyList_GET_ITEM(sipPy, i));
-        if (PyErr_Occurred()) {
-            *sipIsErr = 1;
-            delete qvl;
-            return 0;
-        }
-        qvl->push_back(j);
-    }
-    *sipCppPtr = qvl;
-    return 1;
+    return vector_from_list_val<unsigned int>(
+               sipPy, sipCppPtr, sipTransferObj, sipIsErr,
+               [&](PyObject *o) -> unsigned long int {
+                   unsigned long int j = PyLong_AsUnsignedLong(o);
+                   if (PyErr_Occurred()) {
+                       *sipIsErr = 1;
+                   }
+                   return j;
+               });
 %End
 };
