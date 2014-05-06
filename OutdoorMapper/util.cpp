@@ -9,6 +9,8 @@
 #include <iostream>
 #include <fstream>
 #include <cstdint>
+#include <sstream>
+#include <iomanip>
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -39,6 +41,13 @@ int round_to_int(double r) {
     return static_cast<int>((r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5));
 }
 
+bool starts_with(const std::wstring &fullString, const std::wstring &start) {
+    if (fullString.length() >= start.length()) {
+        return 0 == fullString.compare(0, start.length(), start);
+    } else {
+        return false;
+    }
+}
 bool ends_with(const std::wstring &fullString, const std::wstring &ending) {
     if (fullString.length() >= ending.length()) {
         return 0 == fullString.compare(fullString.length() - ending.length(),
@@ -46,6 +55,59 @@ bool ends_with(const std::wstring &fullString, const std::wstring &ending) {
     } else {
         return false;
     }
+}
+
+void replace_all(std::wstring& str,
+                 const std::wstring& from,
+                 const std::wstring& to)
+{
+    if(from.empty())
+        return;
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        // Skip over 'to' in case it contains 'from'.
+        start_pos += to.length();
+    }
+}
+
+std::wstring url_encode(const std::wstring &value) {
+    // https://stackoverflow.com/questions/154536
+    // We leave " " (0x20, SPACE) unescaped, that's OK for our purposes.
+    std::wostringstream escaped;
+    escaped.fill('0');
+    escaped << std::hex;
+
+    for (auto it = value.begin(); it != value.end(); ++it) {
+        auto c = *it;
+        if (iswalnum(c) ||
+            c == '-' || c == '_' || c == '.' || c == '~' || c == ' ' ||
+            c == ':' || c == '/' || c == '\\')
+        {
+            escaped << c;
+        } else {
+            escaped << '%' << std::setw(2) << ((int) c) << std::setw(0);
+        }
+    }
+
+    return escaped.str();
+}
+
+std::wstring url_decode(const std::wstring &value) {
+    std::wostringstream result;
+
+    for (auto it = value.begin(); it != value.end(); ++it) {
+        auto c = *it;
+        if (c != L'%') {
+            result << c;
+            continue;
+        }
+        std::wstring hex(it + 1, it + 3);
+        result << static_cast<wchar_t>(std::stoi(hex, 0, 16));
+        it += 2;
+    }
+
+    return result.str();
 }
 
 std::string UTF8FromWString(const std::wstring &string) {

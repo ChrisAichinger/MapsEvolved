@@ -21,6 +21,7 @@
 #include "util.h"
 #include "map_geotiff.h"
 #include "map_dhm_advanced.h"
+#include "map_composite.h"
 #include "bezier.h"
 #include "projection.h"
 #include "drawing.h"
@@ -29,6 +30,30 @@ GeoPixels::~GeoPixels() {};
 GeoDrawable::~GeoDrawable() {};
 RasterMap::~RasterMap() {};
 
+
+MapRegion::MapRegion(int width, int height)
+    // Zero-initialize the memory block (notice the parentheses).
+    : m_data(std::shared_ptr<unsigned int>(new unsigned int[width*height](),
+                                           ArrayDeleter<unsigned int>())),
+      m_width(width), m_height(height)
+{ }
+
+void MapRegion::Insert(unsigned int x_start,
+                       unsigned int y_start,
+                       const MapRegion &source)
+{
+    unsigned int x_end = std::min(x_start + source.GetWidth(), m_width);
+    unsigned int y_end = std::min(y_start + source.GetHeight(), m_height);
+    unsigned int x_delta = x_end - x_start;
+    unsigned int y_delta = y_end - y_start;
+    for (unsigned int y = 0; y < y_delta; ++y) {
+        unsigned int *dest = GetPixelPtr(x_start, y_start + y);
+        const unsigned int *src = source.GetPixelPtr(0, y);
+        assert(dest >= GetRawData());
+        assert(dest + x_delta <= &GetRawData()[m_width*m_height]);
+        memcpy(dest, src, x_delta * sizeof(unsigned int));
+    }
+}
 
 class RasterMapError : public RasterMap {
     public:
@@ -85,6 +110,11 @@ EXPORT std::shared_ptr<RasterMap> LoadMap(const std::wstring &fname) {
 
     std::shared_ptr<RasterMap> map;
     try {
+        if (starts_with(fname_lower, L"composite_map:")) {
+            // A composite map.
+            map.reset(new CompositeMap(fname));
+            return map;
+        }
         if (ends_with(fname_lower, L".tif") ||
             ends_with(fname_lower, L".tiff"))
         {

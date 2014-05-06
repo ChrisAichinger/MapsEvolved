@@ -57,7 +57,13 @@ inline bool IsInRect(double x, double y, double width, double height) {
     return x >= 0 && y >= 0 && x < width && y < height;
 }
 
+bool starts_with(const std::wstring &fullString, const std::wstring &start);
 bool ends_with(const std::wstring &fullString, const std::wstring &ending);
+void replace_all(std::wstring& str, const std::wstring& from,
+                                    const std::wstring& to);
+std::wstring url_encode(const std::wstring &value);
+std::wstring url_decode(const std::wstring &value);
+
 std::string UTF8FromWString(const std::wstring &string);
 std::wstring WStringFromUTF8(const std::string &string);
 

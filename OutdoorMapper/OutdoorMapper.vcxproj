@@ -145,6 +145,7 @@
     <ClCompile Include="drawing.cpp" />
     <ClCompile Include="gpstracks.cpp" />
     <ClCompile Include="mapdisplay.cpp" />
+    <ClCompile Include="map_composite.cpp" />
     <ClCompile Include="map_dhm_advanced.cpp" />
     <ClCompile Include="map_geotiff.cpp" />
     <ClCompile Include="map_gridlines.cpp" />
@@ -164,6 +165,7 @@
     <ClInclude Include="external\glext.h" />
     <ClInclude Include="gpstracks.h" />
     <ClInclude Include="mapdisplay.h" />
+    <ClInclude Include="map_composite.h" />
     <ClInclude Include="map_dhm_advanced.h" />
     <ClInclude Include="map_geotiff.h" />
     <ClInclude Include="map_gridlines.h" />
