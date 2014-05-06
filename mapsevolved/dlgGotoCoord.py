@@ -96,12 +96,12 @@ class GotoCoordDialog(wx.Dialog):
             # Don't query the DB for very short strings.
             return
 
-        for db, views in self.dblist:
+        for db in self.dblist:
             header_drawn = False
             for match in db.search_name(self.inputtext.Value):
                 if not header_drawn:
                     header_drawn = True
-                    fname = os.path.basename(db.fname)
+                    fname = db.basename
                     self.append_result(_("Matches in '{}':").format(fname), "",
                                        bold=True)
                 self.append_result("  {}".format(match.name), match.category,
