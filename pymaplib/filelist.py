@@ -176,9 +176,9 @@ class FileList:
 
     def delete(self, item):
         # Raise ValueError if we can't find item.
-        if item.entry_type == GeoDrawable.TYPE_POI_DB:
+        if item.entry_type == maplib_sip.GeoDrawable.TYPE_POI_DB:
             del self.dblist[self.dblist.index(item)]
-        elif item.entry_type == GeoDrawable.TYPE_GPSTRACK:
+        elif item.entry_type == maplib_sip.GeoDrawable.TYPE_GPSTRACK:
             del self.gpxlist[self.gpxlist.index(item)]
         else:
             del self.maplist[self.maplist.index(item)]
