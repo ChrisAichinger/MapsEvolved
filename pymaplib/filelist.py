@@ -138,15 +138,15 @@ class FileList:
         if ftype is None:
             ftypes = {'gpx': 'GPX',
                       'db': 'DB',
-                      'tif': 'TIF',
-                      'tiff': 'TIF',
+                      'tif': 'MAP',
+                      'tiff': 'MAP',
                      }
             ext = fname.lower().rsplit('.', 1)[-1]
             ftype = ftypes.get(ext, None)
 
         if ftype == "GPX": self.gpxlist.append(GPXFile(fname))
         elif ftype == 'DB': self.dblist.append(POI_Database(fname))
-        elif ftype == 'TIF': self.maplist.append(MapFile(fname))
+        elif ftype == 'MAP': self.maplist.append(MapFile(fname))
         else:
             raise NotImplementedError("Couldn't detect file type")
 
@@ -170,7 +170,7 @@ class FileList:
                 for fname in files:
                     self.add_file(fname, ftype=ftype)
 
-        do_retrieve(store, 'maps', 'TIF')
+        do_retrieve(store, 'maps', 'MAP')
         do_retrieve(store, 'gpxlist', 'GPX')
         do_retrieve(store, 'dblist', 'DB')
 

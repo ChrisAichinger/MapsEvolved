@@ -225,7 +225,7 @@ class MapManagerFrame(wx.Frame):
         if openFileDialog.ShowModal() == wx.ID_CANCEL:
             return
 
-        self.filelist.add_file(openFileDialog.GetPath(), ftype='TIF')
+        self.filelist.add_file(openFileDialog.GetPath(), ftype='MAP')
         self.finish_list_change()
 
     def add_gpx(self):
