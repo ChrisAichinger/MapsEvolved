@@ -103,16 +103,16 @@ bool MapPixelCoord::IsInRect(const MapPixelCoord &topright,
                              const MapPixelDelta &dimension)
 {
     return (x >= topright.x) && (y >= topright.y) &&
-           (x <= topright.x + dimension.x) &&
-           (y <= topright.y + dimension.y);
+           (x < topright.x + dimension.x) &&
+           (y < topright.y + dimension.y);
 }
 
 bool MapPixelCoord::IsInRect(const MapPixelCoordInt &topright,
                              const MapPixelDeltaInt &dimension)
 {
     return (x >= topright.x) && (y >= topright.y) &&
-           (x <= topright.x + dimension.x) &&
-           (y <= topright.y + dimension.y);
+           (x < topright.x + dimension.x) &&
+           (y < topright.y + dimension.y);
 }
 
 
