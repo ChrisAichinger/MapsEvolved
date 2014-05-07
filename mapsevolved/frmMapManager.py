@@ -5,6 +5,7 @@ import wx.dataview
 import wx.xrc as xrc
 
 import pymaplib
+import pymaplib.composite_maps
 from mapsevolved import util
 
 def _(s): return s
@@ -204,6 +205,38 @@ class MapManagerFrame(wx.Frame):
     def on_filetype_filter_select(self, evt):
         self.maptreectrl.DeleteAllItems()
         self.insert_drawables()
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('CreateCompositeTBButton'))
+    def on_link_maps(self, evt):
+        maplist = self.filelist.maplist
+        found_any_composites = False
+        for comp in pymaplib.composite_maps.find_composites(maplist):
+            found_any_composites = True
+            names = (_("{0.basename}   \t   ({0.dirname})").format(c)
+                     for c in comp.tile_containers)
+            go_ahead = util.YesNo(
+                    self,
+                    _("Do you want to join the following maps:\n\n" +
+                      "{0}\n\n" +
+                      "This will remove all of the above maps replace " +
+                      "them with one composite map."
+                     ).format('\n'.join(sorted(names))))
+
+            if go_ahead:
+                fname = comp.get_composite_map_fname()
+                self.filelist.add_file(fname, ftype='MAP')
+                for c in comp.tile_containers:
+                    self.filelist.delete(c)
+
+        if not found_any_composites:
+            util.Info(self,
+                      _("No compositable maps were found.\n\n" +
+                        "To create composite maps, first add the " +
+                        "individual map pieces to the map list, then click " +
+                        "'Create composite maps'."))
+
+
+        self.finish_list_change()
 
     def display_map(self, item):
         container, drawable = self.maptreectrl.GetItemData(item)

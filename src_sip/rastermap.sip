@@ -11,7 +11,7 @@ class MapRegion
         //inline unsigned int * GetRawData() { return m_data.get(); }
         unsigned int GetWidth() const;
         unsigned int GetHeight() const;
-        unsigned int GetPixel(int x, int y);
+        unsigned int GetPixel(int x, int y) const;
         PyObject *GetData();
         %MethodCode
             unsigned int size = sipCpp->GetWidth() * sipCpp->GetHeight() *

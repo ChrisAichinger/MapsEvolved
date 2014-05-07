@@ -310,6 +310,11 @@
         <bitmap>images\famfamfam_silk_icons\eye-layers.png</bitmap>
         <tooltip>Display as Overlay</tooltip>
       </object>
+      <object class="separator"/>
+      <object class="tool" name="CreateCompositeTBButton">
+        <bitmap>images\famfamfam_silk_icons\link.png</bitmap>
+        <tooltip>&amp;Create composite maps</tooltip>
+      </object>
     </object>
     <object class="wxBoxSizer">
       <orient>wxHORIZONTAL</orient>

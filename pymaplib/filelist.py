@@ -1,11 +1,15 @@
 import os
 import sqlite3
+import unicodedata
 
 import gpxpy
 import gpxpy.gpx
 
 from . import maplib_sip as maplib_sip
 from .errors import MapLibError, FileLoadError, FileOpenError, FileParseError
+
+def _(s): return s
+
 
 class FileListEntry:
     TYPE_MAP = maplib_sip.GeoDrawable.TYPE_MAP
@@ -59,8 +63,41 @@ class MapFile(FileListEntry):
         super().__init__()
         self.drawable = maplib_sip.LoadMap(fname)
         self.alternate_views = maplib_sip.AlternateMapViews(self.drawable)
-        self._fname = fname
+        self._storagename = fname
         self._type = self.drawable.GetType()
+
+        self.composite = fname.startswith('composite_map:')
+        if self.composite:
+            # Set the displayed filename to the something sensible.
+            self._fname = self.composite_fname(fname)
+        else:
+            self._fname = fname
+
+    @property
+    def storagename(self):
+        return self._storagename
+
+    def _is_punctuation_or_space(self, char):
+        """Return True if char is a punctuation or space character
+
+        Works for arbitrary Unicode codepoints, looking for the categories
+        P* and Z*.
+        """
+
+        # Cf. Unicode categories: www.fileformat.info/info/unicode/category
+        return unicodedata.category(char)[0] in 'PZ'
+
+    def composite_fname(self, fname):
+        """Generate a sensible dirname/basename for composite maps"""
+
+        fnames = maplib_sip.CompositeMap.ParseFname(fname)[0]
+        prefix = os.path.commonprefix(fnames)
+        while prefix and self._is_punctuation_or_space(prefix[-1]):
+            prefix = prefix[:-1]
+        dirname, basename = os.path.split(prefix)
+        if not basename:
+            dirname, basename = os.path.split(dirname)
+        return os.path.join(dirname, _("Composite({})").format(basename))
 
 
 class GPXFile(FileListEntry):
@@ -135,6 +172,9 @@ class FileList:
         self.dblist = []
 
     def add_file(self, fname, ftype=None):
+        if ftype is None:
+            if fname.starts_with('composite_map:'):
+                ftype = 'MAP'
         if ftype is None:
             ftypes = {'gpx': 'GPX',
                       'db': 'DB',
