@@ -96,6 +96,19 @@
         <bitmap>images\famfamfam_silk_icons\zoom_exact.png</bitmap>
         <tooltip>Reset Zoom</tooltip>
       </object>
+      <object class="tool" name="LargerScaleMapTBButton">
+        <bitmap>images\famfamfam_silk_icons\map_magnify_plus.png</bitmap>
+        <tooltip>Switch to larger scale map</tooltip>
+      </object>
+      <object class="tool" name="SmallerScaleMapTBButton">
+        <bitmap>images\famfamfam_silk_icons\map_magnify_minus.png</bitmap>
+        <tooltip>Switch to smaller scale map</tooltip>
+      </object>
+      <object class="separator"/>
+      <object class="tool" name="GotoCoordTBButton">
+        <bitmap>images\famfamfam_silk_icons\find.png</bitmap>
+        <tooltip>Go to coordinate</tooltip>
+      </object>
       <object class="tool" name="ToggleLayerMgrTBButton">
         <bitmap>images\famfamfam_silk_icons\layers.png</bitmap>
         <toggle>1</toggle>
@@ -110,11 +123,6 @@
       <object class="tool" name="GPSTrackAnalyzerTBButton">
         <bitmap>images\famfamfam_silk_icons\gpstrack-analyze.png</bitmap>
         <tooltip>Show GPS Track Analyzer</tooltip>
-      </object>
-      <object class="separator"/>
-      <object class="tool" name="GotoCoordTBButton">
-        <bitmap>images\famfamfam_silk_icons\find.png</bitmap>
-        <tooltip>Go to coordinate</tooltip>
       </object>
     </object>
     <object class="wxBoxSizer">

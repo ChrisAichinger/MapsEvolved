@@ -13,7 +13,6 @@ from .filelist import FileList, FileListEntry
 def _(s): return s
 
 
-
 class DefaultPersistentStore:
     """The default PersistenStore wrapped in a Python context manager"""
 
@@ -143,3 +142,64 @@ class HeightFinder(maplib_sip.HeightFinder):
             if container.drawable.GetType() == map_type:
                 return container.drawable
         return None
+
+
+def is_within_map(latlon, drawable):
+    """Return True if the point latlon lies within drawable"""
+
+    ok, coord = drawable.LatLonToPixel(latlon)
+    if not ok:
+        return False
+    return coord.IsInRect(MapPixelCoordInt(0, 0),
+                          drawable.GetSize())
+
+def larger_scale_maps(current_drawable, latlon, maplist):
+    """Find larger-scale maps of the same type as current_drawable
+
+    Return a list of drawables, sorted by ascending meters-per-pixel values.
+    All of the returned maps have a larger scale than current_drawable (i.e.
+    lower mpp values).
+    """
+
+    return _other_scale_maps(current_drawable, latlon, maplist,
+                             lambda new_mpp, cur_mpp: new_mpp < cur_mpp)
+
+def smaler_scale_maps(current_drawable, latlon, maplist):
+    """Find smaller-scale maps of the same type as current_drawable
+
+    Return a list of drawables, sorted by ascending meters-per-pixel values.
+    All of the returned maps have a smaller scale than current_drawable (i.e.
+    higher mpp values).
+    """
+
+    return _other_scale_maps(current_drawable, latlon, maplist,
+                            lambda new_mpp, cur_mpp: new_mpp > cur_mpp)
+
+def _other_scale_maps(current_drawable, latlon, maplist, mpp_selector):
+    ok, cur_mpp = MetersPerPixel(current_drawable, MapPixelCoordInt(0, 0))
+    if not ok:
+        return []
+
+    candidates = []
+    for container in maplist:
+        if container.drawable:
+            candidates.append(container.drawable)
+        candidates.extend(container.alternate_views)
+
+    viable_maps = []
+    for drawable in candidates:
+        if drawable == current_drawable:
+            continue
+        if drawable.GetType() != current_drawable.GetType():
+            continue
+        if not is_within_map(latlon, drawable):
+            continue
+
+        ok, mpp = MetersPerPixel(drawable, MapPixelCoordInt(0, 0))
+        if not ok:
+            continue
+        if not mpp_selector(mpp, cur_mpp):
+            continue
+        viable_maps.append((mpp, drawable))
+    return [drawable for mpp, drawable in sorted(viable_maps)]
+

@@ -343,6 +343,36 @@ class MainFrame(wx.Frame):
                                             self, gpstrack, self.heightfinder)
         self.gpstrackanalyzer_window.Show()
 
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('LargerScaleMapTBButton'))
+    def on_larger_scale_map(self, evt):
+        basemap = self.mapdisplay.GetBaseMap()
+        ok, center_ll = basemap.PixelToLatLon(self.mapdisplay.GetCenter())
+        if not ok:
+            util.Warn(_("Could not retrieve map center position.\n" +
+                        "Is the current map georeferenced?"))
+            return
+
+        viable_maps = pymaplib.larger_scale_maps(basemap, center_ll,
+                                                self.filelist.maplist)
+        if viable_maps:
+            self.set_basemap(viable_maps[-1])
+            self.mapdisplay.SetZoomOneToOne()
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('SmallerScaleMapTBButton'))
+    def on_smaller_scale_map(self, evt):
+        basemap = self.mapdisplay.GetBaseMap()
+        ok, center_ll = basemap.PixelToLatLon(self.mapdisplay.GetCenter())
+        if not ok:
+            util.Warn(_("Could not retrieve map center position.\n" +
+                        "Is the current map georeferenced?"))
+            return
+
+        viable_maps = pymaplib.smaler_scale_maps(basemap, center_ll,
+                                                 self.filelist.maplist)
+        if viable_maps:
+            self.set_basemap(viable_maps[0])
+            self.mapdisplay.SetZoomOneToOne()
+
     @util.EVENT(wx.EVT_SCROLL, id=xrc.XRCID('OpacitySlider'))
     def on_opacity_slider(self, evt):
         sel_index = self.layerlistbox.Selection
