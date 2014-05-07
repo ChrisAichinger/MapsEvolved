@@ -182,8 +182,13 @@ def main():
         print("\nInstalling gpxpy")
         subprocess.check_call(['pip.exe', 'install', "gpxpy"])
 
-        print("\nFinished setting up venv. Enjoy :)")
+        print("\nInstalling pyodbc")
+        subprocess.check_call(['pip.exe', 'install',
+                               '--allow-external', 'pyodbc',
+                               '--allow-unverified', 'pyodbc',
+                               'pyodbc'])
 
+        print("\nFinished setting up venv. Enjoy :)")
 
 if __name__ == '__main__':
     main()
