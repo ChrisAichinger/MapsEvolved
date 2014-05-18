@@ -165,6 +165,14 @@ class POI_Database(FileListEntry):
             yield POI_Entry(row)
 
 
+class ErrorEntry(FileListEntry):
+    def __init__(self, fname, e):
+        super().__init__()
+        self._fname = fname
+        self._type = FileListEntry.TYPE_ERROR
+        self.exception = e
+
+
 class FileList:
     def __init__(self):
         self.maplist = []
@@ -184,11 +192,19 @@ class FileList:
             ext = fname.lower().rsplit('.', 1)[-1]
             ftype = ftypes.get(ext, None)
 
-        if ftype == "GPX": self.gpxlist.append(GPXFile(fname))
-        elif ftype == 'DB': self.dblist.append(POI_Database(fname))
-        elif ftype == 'MAP': self.maplist.append(MapFile(fname))
-        else:
-            raise NotImplementedError("Couldn't detect file type")
+        try:
+            if ftype == "GPX": self.gpxlist.append(GPXFile(fname))
+            elif ftype == 'DB': self.dblist.append(POI_Database(fname))
+            elif ftype == 'MAP': self.maplist.append(MapFile(fname))
+            else:
+                raise NotImplementedError("Couldn't detect file type")
+        except FileLoadError as e:
+            ee = ErrorEntry(fname, e)
+            if ftype == "GPX": self.gpxlist.append(ee)
+            elif ftype == 'DB': self.dblist.append(ee)
+            elif ftype == 'MAP': self.maplist.append(ee)
+            else:
+                raise NotImplementedError("Couldn't detect file type")
 
     def store_to(self, store):
         store.SetStringList('maps',
