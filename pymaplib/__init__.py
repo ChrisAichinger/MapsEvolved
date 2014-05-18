@@ -35,7 +35,7 @@ def parse_coordinate(s):
             $
             """, s, re.VERBOSE)
     if m:
-        return float(m.group(1)), float(m.group(2))
+        return LatLon(float(m.group(1)), float(m.group(2)))
 
     # Parse integer degrees, fractional minutes.
     # N 47° 43.168', O 15 ° 41.329'
@@ -52,8 +52,8 @@ def parse_coordinate(s):
                 """, s, re.VERBOSE)
     if m:
         g = m.groups()
-        return (int(g[0]) + float(g[1])/60,
-                int(g[3]) + float(g[4])/60)
+        return LatLon(int(g[0]) + float(g[1])/60,
+                      int(g[3]) + float(g[4])/60)
 
     # Parse integer degrees and minutes, possibl fractional seconds.
     # N 47° 43' 10.1", O 15 ° 41' 19.7"
@@ -72,14 +72,49 @@ def parse_coordinate(s):
                 """, s, re.VERBOSE)
     if m:
         g = m.groups()
-        return (int(g[0]) + int(g[1])/60 + float(g[2])/3600,
-                int(g[3]) + int(g[4])/60 + float(g[5])/3600)
+        return LatLon(int(g[0]) + int(g[1])/60 + float(g[2])/3600,
+                      int(g[3]) + int(g[4])/60 + float(g[5])/3600)
 
-    # TODO: Handle UTM
+    # Parse UTM, use north/south semantics. Zone letters are not recognized.
+    # 33N 23456 4567890
+    m = re.match(r"""
+            ^\s*
+            (\d*)\s*      # Zone, may be empty for UPS
+            ([NS])\s+     # North/South
+            (\d+)\s*      # Easting
+            m?\s*
+            [,;]?\s*
+            (\d+)\s*      # Northing
+            m?\s*
+            $
+            """, s, re.VERBOSE)
+    if m:
+        if m.group(1):
+            # Numerical zone given: UTM.
+            zone = int(m.group(1))
+        else:
+            # Numerical zone not given: UPS.
+            zone = 0
+
+        northp = (m.group(2) == 'N')
+        x = float(m.group(3))
+        y = float(m.group(4))
+        return LatLon(UTMUPS(zone, northp, x, y))
+
+    # Maybe handle more (non-standard) UTM coordinates here:
     # N 5285350 m, 33  551660 m
     return None
 
 def format_coordinate(coord_fmt, latlon):
+    """Format a LatLon coordinate as string
+
+    coord_fmt determines the format; valid values are:
+      "DDD": fractional degrees
+      "DMM": full degrees, fractional minutes
+      "DMS": full degrees and minutes, fractional seconds
+      "UTM": universal transversal mercator format
+    """
+
     if coord_fmt == "DDD":
         return _("{:0.06f}, {:0.06f}").format(latlon.lat, latlon.lon)
     elif coord_fmt == "DMM":
@@ -137,7 +172,7 @@ def larger_scale_maps(current_drawable, latlon, maplist):
     return _other_scale_maps(current_drawable, latlon, maplist,
                              lambda new_mpp, cur_mpp: new_mpp < cur_mpp)
 
-def smaler_scale_maps(current_drawable, latlon, maplist):
+def smaller_scale_maps(current_drawable, latlon, maplist):
     """Find smaller-scale maps of the same type as current_drawable
 
     Return a list of drawables, sorted by ascending meters-per-pixel values.
@@ -149,6 +184,8 @@ def smaler_scale_maps(current_drawable, latlon, maplist):
                             lambda new_mpp, cur_mpp: new_mpp > cur_mpp)
 
 def _other_scale_maps(current_drawable, latlon, maplist, mpp_selector):
+    """Backend for larger/smaller_scale_maps"""
+
     ok, cur_mpp = MetersPerPixel(current_drawable, MapPixelCoordInt(0, 0))
     if not ok:
         return []

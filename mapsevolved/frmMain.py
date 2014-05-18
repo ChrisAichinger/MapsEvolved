@@ -367,8 +367,8 @@ class MainFrame(wx.Frame):
                         "Is the current map georeferenced?"))
             return
 
-        viable_maps = pymaplib.smaler_scale_maps(basemap, center_ll,
-                                                 self.filelist.maplist)
+        viable_maps = pymaplib.smaller_scale_maps(basemap, center_ll,
+                                                  self.filelist.maplist)
         if viable_maps:
             self.set_basemap(viable_maps[0])
             self.mapdisplay.SetZoomOneToOne()
@@ -397,7 +397,7 @@ class MainFrame(wx.Frame):
                 dlg.Destroy()
 
             if res == wx.ID_OK:
-                self.mapdisplay.SetCenter(pymaplib.LatLon(*dlg.latlon))
+                self.mapdisplay.SetCenter(dlg.latlon)
                 self.panel.Refresh(eraseBackground=False)
         finally:
             self.drag_suppress = False

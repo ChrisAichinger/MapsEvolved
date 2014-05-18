@@ -84,7 +84,8 @@ class GotoCoordDialog(wx.Dialog):
         latlon = pymaplib.parse_coordinate(self.inputtext.Value)
         if latlon:
             self.append_result(_("Coordinate matches:"), "", bold=True)
-            self.append_result(_("  {:0.06f}, {:0.06f}").format(*latlon),
+            self.append_result(_("  {:0.06f}, {:0.06f}").format(latlon.lat,
+                                                                latlon.lon),
                                _("Coordinate"), latlon)
             self.autosize_once()
             # Don't query the DB if the input is in coordinate format.
@@ -105,7 +106,7 @@ class GotoCoordDialog(wx.Dialog):
                     self.append_result(_("Matches in '{}':").format(fname), "",
                                        bold=True)
                 self.append_result("  {}".format(match.name), match.category,
-                                   (match.lat, match.lon))
+                                   pymaplib.LatLon(match.lat, match.lon))
         self.autosize_once()
 
     def append_result(self, col1, col2, data=None, bold=False):
