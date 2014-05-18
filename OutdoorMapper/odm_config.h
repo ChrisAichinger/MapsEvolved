@@ -4,7 +4,6 @@
 #define ODM_INTERFACE __declspec(novtable)
 
 #define ODM_OS WINDOWS
-#define ODM_REG_PATH L"Software\\OutdoorMapper"
 
 
 #ifdef _MSC_VER

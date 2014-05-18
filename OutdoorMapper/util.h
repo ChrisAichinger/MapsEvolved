@@ -134,35 +134,6 @@ extern const wchar_t *ODM_PathSep_wchar;
 
 std::pair<std::wstring, std::wstring> GetAbsPath(const std::wstring &rel_path);
 
-class EXPORT PersistentStore {
-    public:
-        virtual ~PersistentStore();
-        virtual bool OpenRead() = 0;
-        virtual bool OpenWrite() = 0;
-        virtual bool IsOpen() = 0;
-        virtual void Close() = 0;
-
-        virtual bool GetStringList(const std::wstring &keyvalue,
-                           std::vector<std::wstring> *strings) = 0;
-        virtual bool SetStringList(const std::wstring &keyvalue,
-                           const std::vector<std::wstring> &strings) = 0;
-
-        virtual bool GetString(const std::wstring &keyvalue,
-                               std::wstring *strings) = 0;
-        virtual bool SetString(const std::wstring &keyvalue,
-                               const std::wstring &strings) = 0;
-
-        virtual bool GetUInt(const std::wstring &keyvalue,
-                             unsigned long int *value) = 0;
-        virtual bool SetUInt(const std::wstring &keyvalue,
-                             unsigned long int value) = 0;
-};
-typedef std::unique_ptr<PersistentStore> PersistentStoreUniqPtr;
-
-std::unique_ptr<PersistentStore> EXPORT CreatePersistentStore();
-
-
-
 double GetTimeMilliSecs();
 
 class TimeCounter {

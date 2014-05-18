@@ -188,37 +188,6 @@ bool PageSetupDialog(HWND hwnd_parent);
 bool FileExists(const wchar_t* fname);
 
 
-class RegistryKey {
-    public:
-        enum reg_access { REG_READ, REG_WRITE };
-
-        explicit RegistryKey(HKEY hkey);
-        RegistryKey(HKEY hkey, const std::wstring &subkey,
-                   enum reg_access access);
-        ~RegistryKey();
-
-        bool IsOpen() const { return m_is_open; };
-
-        bool GetStringList(const std::wstring &keyvalue,
-                           std::vector<std::wstring> *strings);
-        bool SetStringList(const std::wstring &keyvalue,
-                           const std::vector<std::wstring> &strings);
-
-        bool GetString(const std::wstring &keyvalue,
-                       std::wstring *strings);
-        bool SetString(const std::wstring &keyvalue,
-                       const std::wstring &strings);
-
-        bool GetDWORD(const std::wstring &keyvalue, DWORD *value);
-        bool SetDWORD(const std::wstring &keyvalue, DWORD value);
-
-    private:
-        HKEY m_key;
-        bool m_is_open;
-
-        DISALLOW_COPY_AND_ASSIGN(RegistryKey);
-};
-
 class COM_Initialize {
     public:
         COM_Initialize() : m_initialized(false) {}
