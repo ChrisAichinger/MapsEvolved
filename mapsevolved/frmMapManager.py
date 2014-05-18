@@ -307,10 +307,10 @@ class MapManagerFrame(wx.Frame):
         self.finish_list_change()
 
     def finish_list_change(self):
-        with pymaplib.DefaultPersistentStore.Write() as ps:
+        with config.Config.write() as conf:
             try:
-                self.filelist.store_to(ps)
-            except RuntimeError:
+                self.filelist.store_to(conf)
+            except KeyError:
                 util.Warn(self,
                           _("Couldn't save map preferences\n\n" +
                             "Maps Evolved will continue to work, but the " +

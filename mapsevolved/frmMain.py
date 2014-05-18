@@ -9,7 +9,7 @@ import gpxpy
 
 import pymaplib
 from mapsevolved import frmMapManager, frmPanorama, frmGPSAnalyzer
-from mapsevolved import dlgGotoCoord, util
+from mapsevolved import dlgGotoCoord, util, config
 
 def _(s): return s
 
@@ -78,12 +78,12 @@ class MainFrame(wx.Frame):
         self.toolbar = xrc.XRCCTRL(self, 'MainToolbar')
 
         self.filelist = pymaplib.FileList()
-        with pymaplib.DefaultPersistentStore.Read() as ps:
-            self.filelist.retrieve_from(ps)
+        with config.Config.read() as conf:
+            self.filelist.retrieve_from(conf)
             try:
-                self._coord_fmt = ps.GetString('coord_fmt')
-            except RuntimeError:
-                # No data in persistenstore yet.
+                self._coord_fmt = conf.get_string('coord_fmt')
+            except KeyError:
+                # No data in config yet.
                 self._coord_fmt = "DDD"
 
         util.bind_decorator_events(self)
@@ -454,8 +454,8 @@ class MainFrame(wx.Frame):
     @coord_fmt.setter
     def coord_fmt(self, fmt):
         self._coord_fmt = fmt
-        with pymaplib.DefaultPersistentStore.Write() as ps:
-             ps.SetString('coord_fmt', self._coord_fmt)
+        with config.Config.write() as conf:
+             conf.set_string('coord_fmt', self._coord_fmt)
 
     def format_latlon(self, latlon):
         return pymaplib.format_coordinate(self.coord_fmt, latlon)

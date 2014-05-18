@@ -13,33 +13,6 @@ from .filelist import FileList, FileListEntry
 def _(s): return s
 
 
-class DefaultPersistentStore:
-    """The default PersistenStore wrapped in a Python context manager"""
-
-    @staticmethod
-    @contextlib.contextmanager
-    def Read(ps=None):
-        if ps is None:
-            ps = maplib_sip.CreatePersistentStore()
-        ps.OpenRead()
-        try:
-            yield ps
-        finally:
-            ps.Close()
-
-    @staticmethod
-    @contextlib.contextmanager
-    def Write(ps=None):
-        if ps is None:
-            ps = maplib_sip.CreatePersistentStore()
-        ps = maplib_sip.CreatePersistentStore()
-        ps.OpenWrite()
-        try:
-            yield ps
-        finally:
-            ps.Close()
-
-
 def parse_coordinate(s):
     """Parse Lat/Lon strings to LatLon objects
 

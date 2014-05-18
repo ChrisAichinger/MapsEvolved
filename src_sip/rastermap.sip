@@ -110,19 +110,6 @@ typedef std::shared_ptr<RasterMap> RasterMapShPtr;
         RasterMap *get();
 };
 
-class PersistentStoreUniqPtr
-/NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/
-{
-%TypeHeaderCode
-#include <memory>
-#include <stdio.h>
-%End
-    public:
-        const PersistentStore *get();
-};
-
-PersistentStoreUniqPtr CreatePersistentStore();
-
 
 struct TerrainInfo {
 %TypeHeaderCode

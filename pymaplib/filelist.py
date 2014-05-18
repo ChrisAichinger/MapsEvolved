@@ -207,11 +207,11 @@ class FileList:
                 raise NotImplementedError("Couldn't detect file type")
 
     def store_to(self, store):
-        store.SetStringList('maps',
+        store.set_stringlist('maps',
                 [map_entry.storagename for map_entry in self.maplist])
-        store.SetStringList('gpxlist',
+        store.set_stringlist('gpxlist',
                 [gpx_entry.storagename for gpx_entry in self.gpxlist])
-        store.SetStringList('dblist',
+        store.set_stringlist('dblist',
                 [db_entry.storagename for db_entry in self.dblist])
 
     def retrieve_from(self, store):
@@ -219,8 +219,8 @@ class FileList:
             # Exceptions reading from the persistentstore are likely
             # from running the first time - ignore them.
             try:
-                files = ps.GetStringList(name)
-            except RuntimeError:
+                files = ps.get_stringlist(name)
+            except KeyError:
                 pass
             else:
                 for fname in files:
