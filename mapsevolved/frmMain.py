@@ -66,6 +66,9 @@ class MainFrame(wx.Frame):
         ctrl = CustomRearrangeList(self, id=xrc.XRCID('LayerListBox'))
         res.AttachUnknownControl('LayerListBox', ctrl, self)
 
+        # Install filetype handlers for wx.Image.
+        wx.InitAllImageHandlers()
+
         self.set_initial_size()
 
         self.panel = xrc.XRCCTRL(self, 'MapPanel')
@@ -140,6 +143,41 @@ class MainFrame(wx.Frame):
             self.manage_maps_window = frmMapManager.MapManagerFrame(
                     self, self.filelist, self.mapdisplay)
             self.manage_maps_window.Show()
+
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('SaveBitmapMenuItem'))
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('SaveBitmapTBButton'))
+    def on_save_bitmap(self, evt):
+        saveFileDialog = wx.FileDialog(
+                self, "Export map region as image", "", "",
+                "Bitmap files (*.bmp)|*.bmp|" +
+                "JPEG files (*.jpg)|*.jpg|" +
+                "PNG files (*.png)|*.png",
+                wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        if saveFileDialog.ShowModal() == wx.ID_CANCEL:
+            return
+
+        fname_lower = saveFileDialog.GetPath().lower()
+        if fname_lower.endswith('.bmp'):
+            ftype = wx.BITMAP_TYPE_BMP
+        elif fname_lower.endswith('.jpg') or fname_lower.endswith('.jpeg'):
+            ftype = wx.BITMAP_TYPE_JPEG
+        elif fname_lower.endswith('.png'):
+            ftype = wx.BITMAP_TYPE_PNG
+        else:
+            util.Warn(self, _("Could not infer the intended file type from " +
+                              "the filename."))
+            return
+
+        zoom = self.mapdisplay.GetZoom()
+        w = self.ogldisplay.GetDisplayWidth() / zoom
+        h = self.ogldisplay.GetDisplayHeight() / zoom
+        mr = self.mapdisplay.PaintToBuffer(pymaplib.ODM_PIX_RGBA4, w, h)
+        bmp = wx.Bitmap(w, h, 32)
+        bmp.CopyFromBuffer(mr.GetData(), wx.BitmapBufferFormat_RGBA)
+        # Mirror image horizontally - PaintToBuffer produces the wrong
+        # top-down/bottom-up orientation for us.
+        img = bmp.ConvertToImage().Mirror(horizontally=False)
+        img.SaveFile(saveFileDialog.GetPath(), ftype)
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ExitMenuItem'))
     def on_exit(self, evt):

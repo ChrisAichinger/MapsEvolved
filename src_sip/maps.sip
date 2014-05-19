@@ -20,12 +20,12 @@ smartptr_proxy_post_init(sipModuleDict);
 
 
 class Projection {
-    public:
 %TypeHeaderCode
 #include <string>
 #include "projection.h"
 #include "util.h"
 %End
+    public:
         explicit Projection(const std::string &proj_str);
 
         bool PCSToLatLong(double &x, double &y) const;
@@ -118,6 +118,12 @@ class OverlaySpec {
 
 typedef std::vector<OverlaySpec> OverlayList;
 
+
+enum ODMPixelFormat {
+    ODM_PIX_RGBA4,
+    ODM_PIX_RGBX4,
+};
+
 class MapDisplayManager /NoDefaultCtors/ {
 %TypeHeaderCode
 #include "rastermap.h"
@@ -156,6 +162,8 @@ class MapDisplayManager /NoDefaultCtors/ {
         void DragMap(const DisplayDelta &delta);
         void CenterToDisplayCoord(const DisplayCoord &center);
         void Paint();
+        MapRegion PaintToBuffer(ODMPixelFormat format,
+                                unsigned int width, unsigned int height);
 
         BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp) const;
         BaseMapCoord
