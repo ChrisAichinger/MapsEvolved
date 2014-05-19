@@ -120,6 +120,7 @@ typedef std::vector<OverlaySpec> OverlayList;
 
 
 enum ODMPixelFormat {
+    ODM_PIX_INVALID = 0,
     ODM_PIX_RGBA4,
     ODM_PIX_RGBX4,
 };
@@ -162,7 +163,7 @@ class MapDisplayManager /NoDefaultCtors/ {
         void DragMap(const DisplayDelta &delta);
         void CenterToDisplayCoord(const DisplayCoord &center);
         void Paint();
-        MapRegion PaintToBuffer(ODMPixelFormat format,
+        PixelBuf PaintToBuffer(ODMPixelFormat format,
                                 unsigned int width, unsigned int height);
 
         BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp) const;
@@ -183,5 +184,5 @@ class MapDisplayManager /NoDefaultCtors/ {
 };
 
 std::wstring CompassPointFromDirection(double degrees);
-MapRegion CalcPanorama(const GeoDrawableShPtr &map, const LatLon &pos);
-MapRegion CalcPanorama(const RasterMapShPtr &map, const LatLon &pos);
+PixelBuf CalcPanorama(const GeoDrawableShPtr &map, const LatLon &pos);
+PixelBuf CalcPanorama(const RasterMapShPtr &map, const LatLon &pos);

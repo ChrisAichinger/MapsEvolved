@@ -10,7 +10,7 @@ class TiffMap : public RasterMap {
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
         virtual MapPixelDeltaInt GetSize() const;
-        virtual MapRegion
+        virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const /Factory/;
 
@@ -23,7 +23,7 @@ class TiffMap : public RasterMap {
 
         virtual const std::wstring &GetFname() const;
         virtual bool SupportsDirectDrawing() const;
-        virtual MapRegion
+        virtual PixelBuf
         GetRegionDirect(const MapPixelDeltaInt &output_size,
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
@@ -41,7 +41,7 @@ class GradientMap : public RasterMap {
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
         virtual MapPixelDeltaInt GetSize() const;
-        virtual MapRegion
+        virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const /Factory/;
 
@@ -54,7 +54,7 @@ class GradientMap : public RasterMap {
 
         virtual const std::wstring &GetFname() const;
         virtual bool SupportsDirectDrawing() const;
-        virtual MapRegion
+        virtual PixelBuf
         GetRegionDirect(const MapPixelDeltaInt &output_size,
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
@@ -72,7 +72,7 @@ class SteepnessMap : public RasterMap {
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
         virtual MapPixelDeltaInt GetSize() const;
-        virtual MapRegion
+        virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const /Factory/;
 
@@ -85,7 +85,7 @@ class SteepnessMap : public RasterMap {
 
         virtual const std::wstring &GetFname() const;
         virtual bool SupportsDirectDrawing() const;
-        virtual MapRegion
+        virtual PixelBuf
         GetRegionDirect(const MapPixelDeltaInt &output_size,
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
@@ -104,7 +104,7 @@ class Gridlines : public GeoDrawable {
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
         virtual MapPixelDeltaInt GetSize() const;
-        virtual MapRegion
+        virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
 
@@ -116,7 +116,7 @@ class Gridlines : public GeoDrawable {
         virtual const std::wstring &GetFname() const;
 
         virtual bool SupportsDirectDrawing() const;
-        virtual MapRegion
+        virtual PixelBuf
         GetRegionDirect(const MapPixelDeltaInt &output_size,
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,

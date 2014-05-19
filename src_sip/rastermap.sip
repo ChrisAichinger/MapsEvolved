@@ -1,14 +1,11 @@
 typedef unsigned int size_t;
 
-class MapRegion
+class PixelBuf
 {
 %TypeHeaderCode
 #include "rastermap.h"
 %End
     public:
-        //MapRegion(UIntShPtr &data, int width, int height);
-        //inline std::shared_ptr<unsigned int> &GetData() { return m_data; }
-        //inline unsigned int * GetRawData() { return m_data.get(); }
         unsigned int GetWidth() const;
         unsigned int GetHeight() const;
         unsigned int GetPixel(int x, int y) const;
@@ -59,7 +56,7 @@ class GeoDrawable : public GeoPixels /Abstract/ {
         virtual unsigned int GetWidth() const = 0;
         virtual unsigned int GetHeight() const = 0;
         virtual MapPixelDeltaInt GetSize() const = 0;
-        MapRegion
+        PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
 
@@ -69,7 +66,7 @@ class GeoDrawable : public GeoPixels /Abstract/ {
 
         virtual bool IsViewable() const;
         virtual bool SupportsDirectDrawing() const;
-        virtual MapRegion
+        virtual PixelBuf
         GetRegionDirect(const MapPixelDeltaInt &output_size,
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
