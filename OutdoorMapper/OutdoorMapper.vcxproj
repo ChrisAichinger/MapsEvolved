@@ -150,6 +150,7 @@
     <ClCompile Include="map_geotiff.cpp" />
     <ClCompile Include="map_gridlines.cpp" />
     <ClCompile Include="OutdoorMapper.cpp" />
+    <ClCompile Include="pixelbuf.cpp" />
     <ClCompile Include="print_map.cpp" />
     <ClCompile Include="projection.cpp" />
     <ClCompile Include="rastermap.cpp" />
@@ -170,7 +171,7 @@
     <ClInclude Include="map_geotiff.h" />
     <ClInclude Include="map_gridlines.h" />
     <ClInclude Include="odm_config.h" />
-    <ClInclude Include="pixelformat.h" />
+    <ClInclude Include="pixelbuf.h" />
     <ClInclude Include="print_map.h" />
     <ClInclude Include="projection.h" />
     <ClInclude Include="rastermap.h" />

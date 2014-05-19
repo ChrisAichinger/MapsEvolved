@@ -7,7 +7,7 @@
 #include "odm_config.h"
 #include "util.h"
 #include "coordinates.h"
-#include "pixelformat.h"
+#include "pixelbuf.h"
 
 class DevContext;
 class OGLContext;
@@ -24,7 +24,7 @@ class EXPORT Display {
         virtual void Resize(unsigned int width, unsigned int height) = 0;
         virtual void ForceRepaint() = 0;
 
-        virtual MapRegion
+        virtual PixelBuf
         RenderToBuffer(ODMPixelFormat format,
                        unsigned int width, unsigned int height,
                        std::list<std::shared_ptr<DisplayOrder>> &orders) = 0;
@@ -50,7 +50,7 @@ class EXPORT DispOpenGL : public Display {
         virtual void Resize(unsigned int width, unsigned int height);
         virtual void ForceRepaint();
 
-        virtual MapRegion
+        virtual PixelBuf
         RenderToBuffer(ODMPixelFormat format,
                        unsigned int width, unsigned int height,
                        std::list<std::shared_ptr<DisplayOrder>> &orders);

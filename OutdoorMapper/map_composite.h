@@ -18,7 +18,7 @@ class EXPORT CompositeMap : public RasterMap {
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
         virtual MapPixelDeltaInt GetSize() const;
-        virtual MapRegion
+        virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
 

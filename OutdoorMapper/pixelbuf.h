@@ -3,18 +3,21 @@
 
 #include <memory>
 
+#include "odm_config.h"
+
 enum ODMPixelFormat {
+    ODM_PIX_INVALID = 0,
     ODM_PIX_RGBA4,
     ODM_PIX_RGBX4,
 };
 
-class EXPORT MapRegion {
+class EXPORT PixelBuf {
     public:
-        MapRegion() : m_data(), m_width(0), m_height(0) {};
-        MapRegion(int width, int height);
-        MapRegion(const std::shared_ptr<unsigned int> &data,
-                  int width, int height)
-            : m_data(data), m_width(width), m_height(height) {};
+        PixelBuf() : m_data(), m_width(0), m_height(0) {};
+        PixelBuf(int width, int height);
+        PixelBuf(const std::shared_ptr<unsigned int> &data,
+                 int width, int height);
+
         inline std::shared_ptr<unsigned int> &GetData() { return m_data; }
         inline unsigned int * GetRawData() { return m_data.get(); }
         inline const unsigned int * GetRawData() const { return m_data.get(); }
@@ -29,7 +32,7 @@ class EXPORT MapRegion {
         inline unsigned int GetPixel(int x, int y) const {
             return m_data.get()[x + y*m_width];
         }
-        void Insert(unsigned int x, unsigned int y, const MapRegion &source);
+        void Insert(unsigned int x, unsigned int y, const PixelBuf &source);
     private:
         std::shared_ptr<unsigned int> m_data;
         unsigned int m_width;

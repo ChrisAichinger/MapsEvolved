@@ -70,7 +70,7 @@ class Tiff {
         unsigned int GetHeight() const { return m_height; };
         unsigned int GetBitsPerSample() const { return m_bitspersample; };
         unsigned int GetSamplesPerPixel() const { return m_samplesperpixel; };
-        MapRegion GetRegion(
+        PixelBuf GetRegion(
                 const class MapPixelCoordInt &pos,
                 const class MapPixelDeltaInt &size) const;
 
@@ -173,7 +173,7 @@ Tiff::Tiff(const std::wstring &fname)
     }
 };
 
-MapRegion
+PixelBuf
 Tiff::GetRegion(const MapPixelCoordInt &pos,
                 const MapPixelDeltaInt &size) const
 {
@@ -182,11 +182,7 @@ Tiff::GetRegion(const MapPixelCoordInt &pos,
         pos.x > static_cast<int>(m_width) ||
         pos.y > static_cast<int>(m_height))
     {
-        // Return zero-initialized memory block (notice the parentheses)
-        return MapRegion(std::shared_ptr<unsigned int>(
-                        new unsigned int[size.x*size.y](),
-                        ArrayDeleter<unsigned int>()),
-                 size.x, size.y);
+        return PixelBuf(size.x, size.y);
     }
 
     TIFFRGBAImage img;
@@ -210,7 +206,7 @@ Tiff::GetRegion(const MapPixelCoordInt &pos,
     if (!ok) {
         throw std::runtime_error("Loading TIFF data failed.");
     }
-    return MapRegion(raster, size.x, size.y);
+    return PixelBuf(raster, size.x, size.y);
 }
 
 template <typename T>
@@ -429,7 +425,7 @@ MapPixelDeltaInt TiffMap::GetSize() const {
     return MapPixelDeltaInt(m_geotiff->GetWidth(), m_geotiff->GetHeight());
 }
 
-MapRegion TiffMap::GetRegion(
+PixelBuf TiffMap::GetRegion(
                       const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const
     { return m_geotiff->GetRegion(pos, size); };

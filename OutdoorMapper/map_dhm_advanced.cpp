@@ -47,7 +47,7 @@ static TimeCounter time_counter_loaddisc;
 
 #define DEST(xx,yy) dest[(xx) + size.x * (yy)]
 #define SRC(xx,yy) src[(xx) + req_size.x * (yy)]
-MapRegion GradientMap::GetRegion(
+PixelBuf GradientMap::GetRegion(
         const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
 {
     time_counter_loaddisc.Start();
@@ -77,7 +77,7 @@ MapRegion GradientMap::GetRegion(
         }
     }
     time_counter.Stop();
-    return MapRegion(data, size.x, size.y);
+    return PixelBuf(data, size.x, size.y);
 }
 #undef DEST
 #undef SRC
@@ -126,15 +126,13 @@ static unsigned int steepness_colors[] = {
 
 #define DEST(xx,yy) dest[(xx) + size.x * (yy)]
 #define SRC(xx,yy) src[(xx) + req_size.x * (yy)]
-MapRegion SteepnessMap::GetRegion(
+PixelBuf SteepnessMap::GetRegion(
         const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
 {
     double mpp;
     if (!MetersPerPixel(m_orig_map, pos + size/2, &mpp)) {
-        // Return zero-initialized memory block (notice the parentheses)
-        return MapRegion(std::shared_ptr<unsigned int>(new unsigned int[size.x*size.y](),
-                                             ArrayDeleter<unsigned int>()),
-                         size.x, size.y);
+        // Return zero-initialized memory block.
+        return PixelBuf(size.x, size.y);
     }
     unsigned int bezier_pixels = Bezier::N_POINTS - 1;
     double inv_bezier_meters = 1 / (bezier_pixels * mpp);
@@ -157,7 +155,7 @@ MapRegion SteepnessMap::GetRegion(
             DEST(x, y) = steepness_colors[color_index];
         }
     }
-    return MapRegion(data, size.x, size.y);
+    return PixelBuf(data, size.x, size.y);
 }
 #undef DEST
 #undef SRC

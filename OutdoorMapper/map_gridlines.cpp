@@ -20,15 +20,12 @@ Gridlines::Gridlines()
 
 Gridlines::~Gridlines() {}
 
-MapRegion
+PixelBuf
 Gridlines::GetRegion(const MapPixelCoordInt &pos,
                      const MapPixelDeltaInt &size) const
 {
-    // Zero-initialized memory block (notice the parentheses)
-    MapRegion result(std::shared_ptr<unsigned int>(
-                     new unsigned int[size.x*size.y](),
-                     ArrayDeleter<unsigned int>()),
-             size.x, size.y);
+    // Zero-initialized memory block.
+    PixelBuf result(size.x, size.y);
 
     unsigned int *dest = result.GetRawData();
     for (int x = 0; x < size.x; x++) {
@@ -84,7 +81,7 @@ Gridlines::LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const {
     return true;
 }
 
-MapRegion Gridlines::GetRegionDirect(
+PixelBuf Gridlines::GetRegionDirect(
         const MapPixelDeltaInt &output_size, const GeoPixels &base,
         const MapPixelCoord &base_tl, const MapPixelCoord &base_br) const
 {
@@ -98,7 +95,7 @@ MapRegion Gridlines::GetRegionDirect(
     MapPixelCoordInt base_br_int = MapPixelCoordInt(base_br);
     for (BorderIterator it(base_tl_int, base_br_int); !it.HasEnded(); ++it) {
         if (!base.PixelToLatLon(MapPixelCoord(*it), &point))
-            return MapRegion();
+            return PixelBuf();
         if (point.lat < lat_min) lat_min = point.lat;
         if (point.lon < lon_min) lon_min = point.lon;
         if (point.lat > lat_max) lat_max = point.lat;
@@ -122,7 +119,7 @@ MapRegion Gridlines::GetRegionDirect(
             !BisectLine(data.get(), output_size, map_start, map_end,
                         ll_start, ll_end, base, base_tl, scaling))
         {
-            return MapRegion();
+            return PixelBuf();
         }
     }
     for (double lon = lon_start; lon < lon_max; lon += line_spacing) {
@@ -134,10 +131,10 @@ MapRegion Gridlines::GetRegionDirect(
             !BisectLine(data.get(), output_size, map_start, map_end,
                         ll_start, ll_end, base, base_tl, scaling))
         {
-            return MapRegion();
+            return PixelBuf();
         }
     }
-    return MapRegion(data, output_size.x, output_size.y);
+    return PixelBuf(data, output_size.x, output_size.y);
 }
 
 bool Gridlines::LatLonToScreen(const LatLon &latlon,

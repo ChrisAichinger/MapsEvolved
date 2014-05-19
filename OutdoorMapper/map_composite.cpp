@@ -126,7 +126,7 @@ const std::wstring &CompositeMap::GetFname() const {
     return m_fname;
 }
 
-MapRegion CompositeMap::GetRegion(
+PixelBuf CompositeMap::GetRegion(
         const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
 {
     unsigned int tl_x, tl_y, br_x, br_y;
@@ -146,7 +146,7 @@ MapRegion CompositeMap::GetRegion(
         return  map->GetRegion(tl_pos, br_pos - tl_pos);
     }
 
-    MapRegion result(size.x, size.y);
+    PixelBuf result(size.x, size.y);
     MapPixelDeltaInt subregion_sz;
     unsigned int x_offset = 0;
     for (unsigned int x = tl_x; x <= br_x; ++x) {
@@ -165,7 +165,7 @@ MapRegion CompositeMap::GetRegion(
 
             auto subregion_pos = MapPixelCoordInt(x_start, y_start);
             subregion_sz = MapPixelDeltaInt(x_end - x_start, y_end - y_start);
-            MapRegion subregion = map->GetRegion(subregion_pos, subregion_sz);
+            PixelBuf subregion = map->GetRegion(subregion_pos, subregion_sz);
             // BitBlt subregion into our result region at [xy]_offset.
             result.Insert(x_offset, y_offset, subregion);
 

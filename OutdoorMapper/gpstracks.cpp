@@ -47,15 +47,11 @@ GPSSegment::GPSSegment(const std::wstring &fname,
 
 GPSSegment::~GPSSegment() {}
 
-MapRegion
+PixelBuf
 GPSSegment::GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const
 {
-    // Zero-initialized memory block (notice the parentheses)
-    MapRegion result(std::shared_ptr<unsigned int>(
-                     new unsigned int[size.x*size.y](),
-                     ArrayDeleter<unsigned int>()),
-             size.x, size.y);
+    PixelBuf result(size.x, size.y);
 
     MapPixelCoordInt endpos = pos + size;
     if (endpos.x < 0 || endpos.y < 0 ||
@@ -120,7 +116,7 @@ GPSSegment::LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const {
     return true;
 }
 
-MapRegion GPSSegment::GetRegionDirect(
+PixelBuf GPSSegment::GetRegionDirect(
         const MapPixelDeltaInt &output_size, const GeoPixels &base,
         const MapPixelCoord &base_tl, const MapPixelCoord &base_br) const
 {
@@ -132,7 +128,7 @@ MapRegion GPSSegment::GetRegionDirect(
         !base.PixelToLatLon(base_tr, &latlon_tr) ||
         !base.PixelToLatLon(base_br, &latlon_br))
     {
-        return MapRegion();
+        return PixelBuf();
     }
 
     // We might have the basemap upside-down or something like that, so don't
@@ -150,11 +146,7 @@ MapRegion GPSSegment::GetRegionDirect(
     if (m_lat_min > *lat_max || m_lat_max < *lat_min ||
         m_lon_min > *lon_max || m_lon_max < *lon_min)
     {
-        // Return zero-initialized memory block (notice the parentheses)
-        return MapRegion(std::shared_ptr<unsigned int>(
-                    new unsigned int[output_size.x * output_size.y](),
-                    ArrayDeleter<unsigned int>()),
-                output_size.x, output_size.y);
+        return PixelBuf(output_size.x, output_size.y);
     }
     std::shared_ptr<unsigned int> data(
                 new unsigned int[output_size.x * output_size.y](),
@@ -183,5 +175,5 @@ MapRegion GPSSegment::GetRegionDirect(
         old_point = point_disp;
 
     }
-    return MapRegion(data, output_size.x, output_size.y);
+    return PixelBuf(data, output_size.x, output_size.y);
 }

@@ -31,30 +31,6 @@ GeoDrawable::~GeoDrawable() {};
 RasterMap::~RasterMap() {};
 
 
-MapRegion::MapRegion(int width, int height)
-    // Zero-initialize the memory block (notice the parentheses).
-    : m_data(std::shared_ptr<unsigned int>(new unsigned int[width*height](),
-                                           ArrayDeleter<unsigned int>())),
-      m_width(width), m_height(height)
-{ }
-
-void MapRegion::Insert(unsigned int x_start,
-                       unsigned int y_start,
-                       const MapRegion &source)
-{
-    unsigned int x_end = std::min(x_start + source.GetWidth(), m_width);
-    unsigned int y_end = std::min(y_start + source.GetHeight(), m_height);
-    unsigned int x_delta = x_end - x_start;
-    unsigned int y_delta = y_end - y_start;
-    for (unsigned int y = 0; y < y_delta; ++y) {
-        unsigned int *dest = GetPixelPtr(x_start, y_start + y);
-        const unsigned int *src = source.GetPixelPtr(0, y);
-        assert(dest >= GetRawData());
-        assert(dest + x_delta <= &GetRawData()[m_width*m_height]);
-        memcpy(dest, src, x_delta * sizeof(unsigned int));
-    }
-}
-
 class RasterMapError : public RasterMap {
     public:
         explicit RasterMapError(const wchar_t *fname, const std::wstring &desc)
@@ -67,14 +43,11 @@ class RasterMapError : public RasterMap {
         virtual unsigned int GetHeight() const { return 0; }
         virtual MapPixelDeltaInt GetSize() const
             { return MapPixelDeltaInt(0,0); }
-        virtual MapRegion
+        virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &sz) const
         {
-            return MapRegion(std::shared_ptr<unsigned int>(
-                            new unsigned int[sz.x*sz.y](),
-                            ArrayDeleter<unsigned int>()),
-                     sz.x, sz.y);
+            return PixelBuf(sz.x, sz.y);
         }
         virtual bool PixelToPCS(double *x, double *y) const { return false; }
         virtual bool PCSToPixel(double *x, double *y) const { return false; }
@@ -340,15 +313,15 @@ static bool CalcPanoramaOneTile(const std::shared_ptr<GeoDrawable> &map,
     return true;
 }
 
-MapRegion
+PixelBuf
 CalcPanorama(const std::shared_ptr<GeoDrawable> &map, const LatLon &pos) {
     static const unsigned int TILE_SIZE = 512;
     if (!(map->GetType() == GeoDrawable::TYPE_DHM)) {
-        return MapRegion();
+        return PixelBuf();
     }
     MapPixelCoord mp_pos;
     if (!map->LatLonToPixel(pos, &mp_pos)) {
-        return MapRegion();
+        return PixelBuf();
     }
     MapPixelCoordInt mp_pos_int(static_cast<unsigned int>(mp_pos.x),
                                 static_cast<unsigned int>(mp_pos.y));
@@ -361,10 +334,7 @@ CalcPanorama(const std::shared_ptr<GeoDrawable> &map, const LatLon &pos) {
     GeographicLib::LocalCartesian proj(pos.lat, pos.lon, pos_elevation);
 
     MapPixelDeltaInt output_size(360*20, 180*20);
-    MapRegion result(std::shared_ptr<unsigned int>(
-                     new unsigned int[output_size.x*output_size.y](),
-                     ArrayDeleter<unsigned int>()),
-             output_size.x, output_size.y);
+    PixelBuf result(output_size.x, output_size.y);
     unsigned int *dest = result.GetRawData();
     ClippedRect(dest, output_size, MapPixelCoordInt(0, 0),
                 MapPixelCoordInt(output_size.x - 1, output_size.y - 1),
@@ -382,7 +352,7 @@ CalcPanorama(const std::shared_ptr<GeoDrawable> &map, const LatLon &pos) {
             if (!CalcPanoramaOneTile(map, proj, tile_coord, tile_size,
                                      highpoints, dest, output_size))
             {
-                return MapRegion();
+                return PixelBuf();
             }
         }
     }

@@ -66,6 +66,9 @@
     <ClCompile Include="map_composite.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pixelbuf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="disp_ogl.h">
@@ -116,9 +119,6 @@
     <ClInclude Include="gpstracks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pixelformat.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="map_gridlines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -126,6 +126,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="map_composite.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pixelbuf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

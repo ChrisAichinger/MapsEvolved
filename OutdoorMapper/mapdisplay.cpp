@@ -140,7 +140,7 @@ void MapDisplayManager::Paint() {
     m_display->Render(orders);
 }
 
-MapRegion MapDisplayManager::PaintToBuffer(ODMPixelFormat format,
+PixelBuf MapDisplayManager::PaintToBuffer(ODMPixelFormat format,
                                            unsigned int width,
                                            unsigned int height)
 {

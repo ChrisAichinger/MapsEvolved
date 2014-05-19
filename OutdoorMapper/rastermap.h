@@ -9,7 +9,7 @@
 #include "util.h"
 #include "coordinates.h"
 #include "projection.h"
-#include "pixelformat.h"
+#include "pixelbuf.h"
 
 
 
@@ -43,7 +43,7 @@ class EXPORT GeoDrawable : public GeoPixels {
         virtual unsigned int GetWidth() const = 0;
         virtual unsigned int GetHeight() const = 0;
         virtual MapPixelDeltaInt GetSize() const = 0;
-        virtual MapRegion
+        virtual PixelBuf
         GetRegion(const MapPixelCoordInt &pos,
                   const MapPixelDeltaInt &size) const = 0;
 
@@ -55,13 +55,13 @@ class EXPORT GeoDrawable : public GeoPixels {
         };
 
         virtual bool SupportsDirectDrawing() const { return false; };
-        virtual MapRegion
+        virtual PixelBuf
         GetRegionDirect(const MapPixelDeltaInt &output_size,
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
                         const MapPixelCoord &base_br) const
         {
-            return MapRegion();
+            return PixelBuf();
         };
         virtual ODMPixelFormat GetPixelFormat() const = 0;
 };
@@ -127,7 +127,7 @@ MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
                const MapPixelCoordInt &pos,
                double *mpp);
 
-MapRegion EXPORT
+PixelBuf EXPORT
 CalcPanorama(const std::shared_ptr<GeoDrawable> &map, const LatLon &pos);
 
 #endif

@@ -342,7 +342,7 @@ DisplayDelta DispOpenGL::GetDisplaySize() const {
     return DisplayDelta(rect[GLR_WIDTH], rect[GLR_HEIGHT]);
 }
 
-MapRegion DispOpenGL::RenderToBuffer(
+PixelBuf DispOpenGL::RenderToBuffer(
         ODMPixelFormat format,
         unsigned int width, unsigned int height,
         std::list<std::shared_ptr<DisplayOrder>> &orders)
@@ -363,7 +363,7 @@ MapRegion DispOpenGL::RenderToBuffer(
         Render(orders);
     }
 
-    MapRegion result(width, height);
+    PixelBuf result(width, height);
     glReadBuffer(GL_COLOR_ATTACHMENT0);
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE,
                  result.GetRawData());

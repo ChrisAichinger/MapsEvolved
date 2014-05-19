@@ -5,7 +5,7 @@
 
 #include "coordinates.h"
 #include "util.h"
-#include "pixelformat.h"
+#include "pixelbuf.h"
 
 class TileCode {
     public:

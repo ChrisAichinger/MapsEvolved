@@ -5,7 +5,7 @@
 
 #include "util.h"
 #include "coordinates.h"
-#include "pixelformat.h"
+#include "pixelbuf.h"
 
 class EXPORT OverlaySpec {
     public:
@@ -61,7 +61,7 @@ class EXPORT MapDisplayManager {
         void DragMap(const DisplayDelta &delta);
         void CenterToDisplayCoord(const DisplayCoord &center);
         void Paint();
-        MapRegion PaintToBuffer(ODMPixelFormat format,
+        PixelBuf PaintToBuffer(ODMPixelFormat format,
                                 unsigned int width, unsigned int height);
 
         BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp) const;
@@ -98,7 +98,7 @@ class EXPORT MapDisplayManager {
                 double transparency);
 
         // Add an order effecting GetRegionDirect(), which takes information
-        // about the current projection, and returns a MapRegion with the size
+        // about the current projection, and returns a PixelBuf with the size
         // of the current display. That region is then shown directly on the
         // display without the need for rotation, stretching, ...
         // This is impractical for typical maps, as it requires re-reading the

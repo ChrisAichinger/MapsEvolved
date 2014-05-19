@@ -27,7 +27,7 @@ class EXPORT Gridlines : public GeoDrawable {
         virtual unsigned int GetWidth() const { return m_size.x; }
         virtual unsigned int GetHeight() const { return m_size.y; }
         virtual MapPixelDeltaInt GetSize() const { return m_size; }
-        virtual MapRegion
+        virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
 
@@ -39,7 +39,7 @@ class EXPORT Gridlines : public GeoDrawable {
         virtual const std::wstring &GetFname() const { return fname; }
 
         virtual bool SupportsDirectDrawing() const { return true; };
-        virtual MapRegion
+        virtual PixelBuf
         GetRegionDirect(const MapPixelDeltaInt &output_size,
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
