@@ -23,6 +23,11 @@ class EXPORT Display {
             class std::list<std::shared_ptr<class DisplayOrder>> &orders) = 0;
         virtual void Resize(unsigned int width, unsigned int height) = 0;
         virtual void ForceRepaint() = 0;
+
+        virtual MapRegion
+        RenderToBuffer(ODMPixelFormat format,
+                       unsigned int width, unsigned int height,
+                       std::list<std::shared_ptr<DisplayOrder>> &orders) = 0;
 };
 
 EXPORT DisplayCoordCentered CenteredCoordFromDisplay(
@@ -45,12 +50,18 @@ class EXPORT DispOpenGL : public Display {
         virtual void Resize(unsigned int width, unsigned int height);
         virtual void ForceRepaint();
 
+        virtual MapRegion
+        RenderToBuffer(ODMPixelFormat format,
+                       unsigned int width, unsigned int height,
+                       std::list<std::shared_ptr<DisplayOrder>> &orders);
+
     private:
         DISALLOW_COPY_AND_ASSIGN(DispOpenGL);
 
         const std::shared_ptr<OGLContext> m_opengl;
         const std::shared_ptr<class TextureCache> m_texcache;
 };
+
 
 class Texture {
     public:

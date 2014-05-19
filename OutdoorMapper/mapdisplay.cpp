@@ -104,11 +104,13 @@ void MapDisplayManager::SetOverlayList(OverlayList overlaylist) {
      m_display->ForceRepaint();
 };
 
-void MapDisplayManager::Paint() {
+std::list<std::shared_ptr<class DisplayOrder>>
+MapDisplayManager::GenerateDisplayOrders(const DisplayDelta &disp_size_d) {
     std::list<std::shared_ptr<DisplayOrder>> orders;
     MapPixelDeltaInt tile_size(TILE_SIZE, TILE_SIZE);
-    DisplayDelta half_disp_size_d(m_display->GetDisplaySize() / m_zoom / 2.0);
-    MapPixelDelta half_disp_size(half_disp_size_d.x, half_disp_size_d.y);
+    DisplayDelta half_disp_size_d(disp_size_d / 2.0);
+    MapPixelDelta half_disp_size(half_disp_size_d.x / m_zoom,
+                                 half_disp_size_d.y / m_zoom);
 
     MapPixelCoordInt base_pixel_tl(m_center - half_disp_size);
     MapPixelCoordInt base_pixel_br(m_center + half_disp_size);
@@ -116,7 +118,7 @@ void MapDisplayManager::Paint() {
     // We can't PaintLayerDirect() the base map, which is fine for now since we
     // only use Direct for overlays (e.g. GPS tracks).
     PaintLayerTiled(&orders, m_base_map, base_pixel_tl, base_pixel_br,
-                  tile_size, 0.0);
+                    tile_size, 0.0);
     for (auto ci = m_overlays.cbegin(); ci != m_overlays.cend(); ++ci) {
         if (!ci->GetEnabled()) {
             continue;
@@ -124,12 +126,28 @@ void MapDisplayManager::Paint() {
         if (ci->GetMap()->SupportsDirectDrawing()) {
             PaintLayerDirect(&orders, ci->GetMap(), half_disp_size,
                              ci->GetTransparency());
-            continue;
+        } else {
+            PaintLayerTiled(&orders, ci->GetMap(),
+                            base_pixel_tl, base_pixel_br,
+                            tile_size, ci->GetTransparency());
         }
-        PaintLayerTiled(&orders, ci->GetMap(), base_pixel_tl, base_pixel_br,
-                      tile_size, ci->GetTransparency());
     }
+    return orders;
+}
+
+void MapDisplayManager::Paint() {
+    auto orders = GenerateDisplayOrders(m_display->GetDisplaySize());
     m_display->Render(orders);
+}
+
+MapRegion MapDisplayManager::PaintToBuffer(ODMPixelFormat format,
+                                           unsigned int width,
+                                           unsigned int height)
+{
+    TemporaryValue temp_zoom(&m_zoom, 1.0);
+    DisplayDelta display_size(width, height);
+    auto orders = GenerateDisplayOrders(display_size);
+    return m_display->RenderToBuffer(format, width, height, orders);
 }
 
 bool MapDisplayManager::CalcOverlayTiles(

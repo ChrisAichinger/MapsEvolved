@@ -1,4 +1,3 @@
-
 #include <memory>
 #include <list>
 #include <stdexcept>
@@ -15,7 +14,47 @@
 #include "winwrap.h"
 #include "external/glext.h"
 
-static PFNGLBLENDCOLORPROC glBlendColor = 0;
+enum OGL_Rect { GLR_TOP = 0, GLR_LEFT, GLR_WIDTH, GLR_HEIGHT, GLR_ARRAYLEN };
+
+static bool functions_loaded = false;
+static PFNGLBLENDCOLORPROC glBlendColor = nullptr;
+static PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers = nullptr;
+static PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer = nullptr;
+static PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage = nullptr;
+static PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers = nullptr;
+static PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer = nullptr;
+static PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer = nullptr;
+static PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus = nullptr;
+static PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers = nullptr;
+static PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers = nullptr;
+
+template <typename T>
+void LoadOneEntryPoint(const char* name, T &target) {
+    if (!target)
+        target = reinterpret_cast<T>(wglGetProcAddress(name));
+    if (!target)
+        throw std::runtime_error(std::string("Could not access ") +
+                                 std::string(name) +
+                                 std::string(" to initialize OpenGL"));
+}
+
+void LoadOGLEntryPoints() {
+    if (functions_loaded)
+        return;
+
+    LoadOneEntryPoint("glBlendColor", glBlendColor);
+    LoadOneEntryPoint("glGenRenderbuffers", glGenRenderbuffers);
+    LoadOneEntryPoint("glBindRenderbuffer", glBindRenderbuffer);
+    LoadOneEntryPoint("glRenderbufferStorage", glRenderbufferStorage);
+    LoadOneEntryPoint("glGenFramebuffers", glGenFramebuffers);
+    LoadOneEntryPoint("glBindFramebuffer", glBindFramebuffer);
+    LoadOneEntryPoint("glFramebufferRenderbuffer", glFramebufferRenderbuffer);
+    LoadOneEntryPoint("glCheckFramebufferStatus", glCheckFramebufferStatus);
+    LoadOneEntryPoint("glDeleteRenderbuffers", glDeleteRenderbuffers);
+    LoadOneEntryPoint("glDeleteFramebuffers", glDeleteFramebuffers);
+    functions_loaded = true;
+}
+
 
 DisplayCoordCentered CenteredCoordFromDisplay(const DisplayCoord& dc,
                                               const Display& disp)
@@ -29,6 +68,7 @@ DisplayCoord DisplayCoordFromCentered(const DisplayCoordCentered& dc,
     return DisplayCoord(dc.x + disp.GetDisplayWidth() / 2.0,
                         dc.y + disp.GetDisplayHeight() / 2.0);
 }
+
 
 class OGLDisplayCoord {
     public:
@@ -94,15 +134,131 @@ class TextureCache {
         unsigned int m_call_count;
 };
 
+
+void EnsureFrameBufferStatusOK() {
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(status == GL_FRAMEBUFFER_COMPLETE) {
+        return;
+    }
+    std::string errormsg = "framebuffer error: ";
+    switch(status) {
+        case GL_FRAMEBUFFER_UNDEFINED:
+            errormsg += "GL_FRAMEBUFFER_UNDEFINED";
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+            errormsg += "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+            errormsg += "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+            errormsg += "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER";
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+            errormsg += "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER";
+            break;
+        case GL_FRAMEBUFFER_UNSUPPORTED:
+            errormsg += "GL_FRAMEBUFFER_UNSUPPORTED";
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+            errormsg += "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE";
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+            errormsg += "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS";
+            break;
+        default:
+            errormsg += num_to_hex(status);
+    }
+    throw std::runtime_error(errormsg);
+}
+
+void EnsureNoOGLError() {
+    GLenum gl_error = glGetError();
+    if (gl_error == GL_NO_ERROR) {
+        return;
+    }
+    std::string errormsg = "OpenGL operation failed: ";
+    switch (gl_error) {
+        case GL_INVALID_ENUM: errormsg += "GL_INVALID_ENUM"; break;
+        case GL_INVALID_VALUE: errormsg += "GL_INVALID_VALUE"; break;
+        case GL_OUT_OF_MEMORY: errormsg += "GL_OUT_OF_MEMORY"; break;
+        case GL_STACK_UNDERFLOW: errormsg += "GL_STACK_UNDERFLOW"; break;
+        case GL_STACK_OVERFLOW: errormsg += "GL_STACK_OVERFLOW"; break;
+        case GL_INVALID_OPERATION: errormsg += "GL_INVALID_OPERATION"; break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            errormsg += "GL_INVALID_FRAMEBUFFER_OPERATION";
+            break;
+        default:
+            errormsg += num_to_hex(gl_error);
+    }
+    throw std::runtime_error(errormsg);
+}
+
+
+class OGLFrameBufferObject {
+    // OpenGL Framebuffer resource class.
+    public:
+        OGLFrameBufferObject() : m_handle(0)
+        {
+            LoadOGLEntryPoints();
+            glGenFramebuffers(1, &m_handle);
+            glBindFramebuffer(GL_FRAMEBUFFER, m_handle);
+        }
+        ~OGLFrameBufferObject() {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glDeleteFramebuffers(1, &m_handle);
+        }
+        unsigned int Get() { return m_handle; };
+    private:
+        GLuint m_handle;
+        DISALLOW_COPY_AND_ASSIGN(OGLFrameBufferObject);
+};
+
+class OGLRenderBufferObject {
+    // OpenGL RenderBuffer resource class.
+    public:
+        OGLRenderBufferObject(GLenum format,
+                              unsigned int width,
+                              unsigned int height)
+        : m_handle(0)
+        {
+            LoadOGLEntryPoints();
+            glGenRenderbuffers(1, &m_handle);
+            glBindRenderbuffer(GL_RENDERBUFFER, m_handle);
+            glRenderbufferStorage(GL_RENDERBUFFER, format, width, height);
+        }
+        ~OGLRenderBufferObject() {
+            glDeleteRenderbuffers(1, &m_handle);
+        }
+        GLuint Get() { return m_handle; };
+    private:
+        GLuint m_handle;
+        DISALLOW_COPY_AND_ASSIGN(OGLRenderBufferObject);
+};
+
+class OGLTemporaryViewport {
+    // Temporarily change the viewport to 0/0/width/height.
+    // Restore the old viewport on deallocation.
+    public:
+        OGLTemporaryViewport(unsigned int width, unsigned int height) {
+            glGetIntegerv(GL_VIEWPORT, m_orig_rect);
+            glViewport(0, 0, width, height);
+        }
+        ~OGLTemporaryViewport() {
+            glViewport(m_orig_rect[GLR_TOP], m_orig_rect[GLR_LEFT],
+                       m_orig_rect[GLR_WIDTH], m_orig_rect[GLR_HEIGHT]);
+        }
+    private:
+        int m_orig_rect[GLR_ARRAYLEN];
+        DISALLOW_COPY_AND_ASSIGN(OGLTemporaryViewport);
+};
+
+
 DispOpenGL::DispOpenGL(const std::shared_ptr<OGLContext> &ogl_context)
     : m_opengl(ogl_context),
       m_texcache(new TextureCache())
 {
-    if (!glBlendColor)
-        glBlendColor = (PFNGLBLENDCOLORPROC)wglGetProcAddress("glBlendColor");
-    if (!glBlendColor)
-        throw std::runtime_error(
-                "Could not access glBlendColor to initialize OpenGL");
+    LoadOGLEntryPoints();
 }
 
 void DispOpenGL::Resize(unsigned int width, unsigned int height) {
@@ -165,13 +321,8 @@ void DispOpenGL::Render(std::list<std::shared_ptr<DisplayOrder>> &orders) {
     glFlush();
     glDisable(GL_BLEND);
 
-    GLenum gl_error = glGetError();
-    if (gl_error != GL_NO_ERROR) {
-        throw std::runtime_error("OpenGL operation failed.");
-    }
+    EnsureNoOGLError();
 }
-
-enum OGL_Rect { GLR_TOP = 0, GLR_LEFT, GLR_WIDTH, GLR_HEIGHT, GLR_ARRAYLEN };
 
 unsigned int DispOpenGL::GetDisplayWidth() const {
     int rect[GLR_ARRAYLEN];
@@ -191,6 +342,36 @@ DisplayDelta DispOpenGL::GetDisplaySize() const {
     return DisplayDelta(rect[GLR_WIDTH], rect[GLR_HEIGHT]);
 }
 
+MapRegion DispOpenGL::RenderToBuffer(
+        ODMPixelFormat format,
+        unsigned int width, unsigned int height,
+        std::list<std::shared_ptr<DisplayOrder>> &orders)
+{
+    // A good overview of Framebuffer objects can be found at:
+    // http://www.songho.ca/opengl/gl_fbo.html
+    OGLFrameBufferObject m_framebuf;
+    OGLRenderBufferObject m_renderbuf_color(GL_RGBA8, width, height);
+
+    // Add a color renderbuffer to currently bound framebuffer.
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                              GL_RENDERBUFFER, m_renderbuf_color.Get());
+
+    EnsureFrameBufferStatusOK();
+
+    {
+        OGLTemporaryViewport temp_viewport(width, height);
+        Render(orders);
+    }
+
+    MapRegion result(width, height);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE,
+                 result.GetRawData());
+    EnsureNoOGLError();
+    return result;
+}
+
+
 Texture::Texture(unsigned int width, unsigned int height,
                  const unsigned int *pixels, ODMPixelFormat format)
     : m_width(width), m_height(height)
@@ -199,6 +380,9 @@ Texture::Texture(unsigned int width, unsigned int height,
 }
 
 void Texture::MakeTexture(const unsigned int *pixels, ODMPixelFormat format) {
+    static_assert(std::is_same<GLuint, decltype(m_texhandle)>::value,
+                  "m_texhandle must be compatible to GLuint");
+
     glGenTextures(1, &m_texhandle);
     glBindTexture(GL_TEXTURE_2D, m_texhandle);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -216,9 +400,9 @@ void Texture::MakeTexture(const unsigned int *pixels, ODMPixelFormat format) {
                          GL_RGBA, GL_UNSIGNED_BYTE, pixels);
             break;
         default:
-            assert(0);
+            assert(false); // Not implemented
     }
-    assert(glGetError() == 0);
+    EnsureNoOGLError();
 }
 
 Texture::~Texture() {

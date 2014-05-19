@@ -5,6 +5,7 @@
 
 #include "util.h"
 #include "coordinates.h"
+#include "pixelformat.h"
 
 class EXPORT OverlaySpec {
     public:
@@ -60,6 +61,8 @@ class EXPORT MapDisplayManager {
         void DragMap(const DisplayDelta &delta);
         void CenterToDisplayCoord(const DisplayCoord &center);
         void Paint();
+        MapRegion PaintToBuffer(ODMPixelFormat format,
+                                unsigned int width, unsigned int height);
 
         BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp) const;
         BaseMapCoord
@@ -78,6 +81,11 @@ class EXPORT MapDisplayManager {
                          const std::shared_ptr<class GeoDrawable> &map) const;
 
     private:
+        // Generate a list of DisplayOrders for the current position and zoom
+        // level. This encompasses the basemap as well as all overlays.
+        std::list<std::shared_ptr<class DisplayOrder>>
+        GenerateDisplayOrders(const DisplayDelta &disp_size_d);
+
         // Calculate the map tiles required for filligng the display region,
         // and add display orders to show those tiles.
         // This is the default for most maps.
@@ -88,6 +96,7 @@ class EXPORT MapDisplayManager {
                 const MapPixelCoordInt &base_pixel_botright,
                 const MapPixelDeltaInt &tile_size,
                 double transparency);
+
         // Add an order effecting GetRegionDirect(), which takes information
         // about the current projection, and returns a MapRegion with the size
         // of the current display. That region is then shown directly on the

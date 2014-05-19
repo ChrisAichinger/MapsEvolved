@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <numeric>
+#include <sstream>
 
 #include "odm_config.h"
 
@@ -66,6 +67,19 @@ std::wstring url_decode(const std::wstring &value);
 
 std::string UTF8FromWString(const std::wstring &string);
 std::wstring WStringFromUTF8(const std::string &string);
+
+template <typename T>
+std::string num_to_hex(T i) {
+    std::stringstream sstream;
+    sstream << "0x" << std::hex << i;
+    return sstream.str();
+}
+template <typename T>
+std::wstring num_to_hex_w(T i) {
+    std::wstringstream sstream;
+    sstream << "0x" << std::hex << i;
+    return sstream.str();
+}
 
 // Array size helper and macro
 template <size_t N> struct ArraySizeHelper { char _[N]; };
@@ -149,5 +163,25 @@ class TimeCounter {
         double m_time_started;
         std::vector<double> m_vec;
 };
+
+class TemporaryValue {
+    // Temporarily set value_ptr to new_value, restore the old value on
+    // deallocation.
+    public:
+        TemporaryValue(double *value_ptr, double new_value)
+            : m_old_value(*value_ptr), m_value_ptr(value_ptr)
+        {
+            *m_value_ptr = new_value;
+        }
+        ~TemporaryValue() {
+            *m_value_ptr = m_old_value;
+        }
+    private:
+        double m_old_value;
+        double *m_value_ptr;
+
+        DISALLOW_COPY_AND_ASSIGN(TemporaryValue);
+};
+
 
 #endif
