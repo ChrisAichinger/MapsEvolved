@@ -151,7 +151,6 @@
     <ClCompile Include="map_gridlines.cpp" />
     <ClCompile Include="OutdoorMapper.cpp" />
     <ClCompile Include="pixelbuf.cpp" />
-    <ClCompile Include="print_map.cpp" />
     <ClCompile Include="projection.cpp" />
     <ClCompile Include="rastermap.cpp" />
     <ClCompile Include="tiles.cpp" />
@@ -172,7 +171,6 @@
     <ClInclude Include="map_gridlines.h" />
     <ClInclude Include="odm_config.h" />
     <ClInclude Include="pixelbuf.h" />
-    <ClInclude Include="print_map.h" />
     <ClInclude Include="projection.h" />
     <ClInclude Include="rastermap.h" />
     <ClInclude Include="resource.h" />
