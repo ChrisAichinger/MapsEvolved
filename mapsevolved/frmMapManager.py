@@ -6,7 +6,7 @@ import wx.xrc as xrc
 
 import pymaplib
 import pymaplib.composite_maps
-from mapsevolved import util
+from mapsevolved import util, config
 
 def _(s): return s
 
