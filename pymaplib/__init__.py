@@ -1,3 +1,5 @@
+"""Pymaplib - A C++/Python library for reading and drawing maps"""
+
 import os
 import re
 import contextlib
@@ -17,7 +19,7 @@ def parse_coordinate(s):
     """Parse Lat/Lon strings to LatLon objects
 
     Parse coordinates in a variety of formats to LatLon objects.
-    Currently supported are DD.DDDDDD, DD MM.MMMM, DD MM SS.SS.
+    Currently supported are DD.DDDDDD, DD MM.MMMM, DD MM SS.SS and UTM/UPS.
     """
 
     # Parse fractional degrees.
@@ -121,8 +123,8 @@ def format_coordinate(coord_fmt, latlon):
         m_lat = (abs(latlon.lat) % 1) * 60
         m_lon = (abs(latlon.lon) % 1) * 60
         return _("{:d}° {:07.04f}', {:d}° {:07.04f}'").format(
-                int(latlon.lat), m_lat,
-                int(latlon.lon), m_lon)
+                                     int(latlon.lat), m_lat,
+                                     int(latlon.lon), m_lon)
     elif coord_fmt == "DMS":
         m_lat = (abs(latlon.lat) % 1) * 60
         m_lon = (abs(latlon.lon) % 1) * 60
@@ -181,7 +183,7 @@ def smaller_scale_maps(current_drawable, latlon, maplist):
     """
 
     return _other_scale_maps(current_drawable, latlon, maplist,
-                            lambda new_mpp, cur_mpp: new_mpp > cur_mpp)
+                             lambda new_mpp, cur_mpp: new_mpp > cur_mpp)
 
 def _other_scale_maps(current_drawable, latlon, maplist, mpp_selector):
     """Backend for larger/smaller_scale_maps"""
