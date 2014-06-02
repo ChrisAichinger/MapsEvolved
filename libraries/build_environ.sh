@@ -16,11 +16,13 @@ PROJ4_DIR="proj4"
 PROJ4_URL="http://download.osgeo.org/proj/proj-4.8.0.tar.gz"
 
 GEOGRAPHICLIB_DIR="geographiclib"
-GEOGRAPHICLIB_URL="http://heanet.dl.sourceforge.net/project/geographiclib/distrib/GeographicLib-1.28.tar.gz"
+GEOGRAPHICLIB_URL="http://switch.dl.sourceforge.net/project/geographiclib/distrib/GeographicLib-1.36.tar.gz"
 
 COPY_TARGET1="../Debug"
 COPY_TARGET2="../Release"
-COPY_TARGET3="../tests"
+COPY_TARGET3="../Debug-DLL"
+COPY_TARGET4="../Release-DLL"
+COPY_TARGET5="../tests"
 
 DO_MAKE="cscript.exe ..\\tools\\run_make.js"
 
@@ -36,6 +38,7 @@ abspath () {
 #   If IGNORE_TAR_FAIL is "true", tar failures are ignored
 #   (necessary for libgeotiff-1.4.0)
 function download_one() {
+    echo "Downloading $1"
     curl -L -O "$1"
     local f_name=`basename "$1"`
 
@@ -195,7 +198,9 @@ while [ -n "$1" ]; do
         shift
 
     elif [ "x$1" = "xcopydll" ]; then
-        for target in "$COPY_TARGET1" "$COPY_TARGET2" "$COPY_TARGET3"; do
+        for target in "$COPY_TARGET1" "$COPY_TARGET2" "$COPY_TARGET3" \
+                      "$COPY_TARGET4" "$COPY_TARGET5"
+        do
             if [ ! -e "$target" ]; then mkdir -p "$target"; fi
             cp "$JPEG_DIR/libjpeg.dll" "$target"
             cp "$PROJ4_DIR/src/proj.dll" "$target"
