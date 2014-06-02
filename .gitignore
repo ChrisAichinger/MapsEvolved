@@ -2,11 +2,9 @@ __pycache__
 /__build
 /__sip_source
 /__gpxpy_source
+/__unxutils
 /venv
 /ODM/*
 /pymaplib/*.dll
 /pymaplib/*.pyd
 /pymaplib/*/
-
-/Makefile
-

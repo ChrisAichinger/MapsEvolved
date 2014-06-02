@@ -1,3 +1,5 @@
+#!/usr/bin/python3.3
+
 import sys
 import os
 import io
@@ -16,9 +18,11 @@ import imp
 sip_dir = '__sip_source'
 sip_url = 'http://downloads.sourceforge.net/project/pyqt/sip/sip-4.15.4/sip-4.15.4.zip?r=&ts=1390046988&use_mirror=freefr'
 setuptools_url = 'https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py'
-wxpython_url = 'http://wxpython.org/Phoenix/snapshot-builds/wxPython_Phoenix-3.0.1.dev76424-cp33-none-win32.whl'
+wxpython_url = 'http://wxpython.org/Phoenix/snapshot-builds/'
 SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
-init_shell = 'init_shell.bat'
+init_shell = 'init_shell.py'
+unxutils_dir = '__unxutils'
+unxutils_url = 'http://switch.dl.sourceforge.net/project/unxutils/unxutils/current/UnxUtils.zip'
 
 
 @contextlib.contextmanager
@@ -64,11 +68,10 @@ def copytree(src, dst, symlinks=False):
 
 def rerun_in_venv(venv_dir):
     venv_enter_command = os.path.join(SCRIPT_DIR, init_shell)
-    cmdline = [venv_enter_command, venv_dir,
+    cmdline = [sys.executable, venv_enter_command, venv_dir,
                'python.exe', sys.argv[0], '--rerun-in-venv']
     print(*cmdline)
-    os.system(' '.join(cmdline))
-    sys.exit(0)
+    sys.exit(subprocess.call(cmdline))
 
 
 def make_venv(venv_dir):
@@ -91,6 +94,28 @@ def make_venv(venv_dir):
         f.seek(0)
         f.truncate()
         f.write(content)
+
+
+def install_unxutils(url, path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    urlopener = urllib.request.urlopen(url)
+    f = io.BytesIO(urlopener.read())
+    with zipfile.ZipFile(f, 'r') as zf:
+        for zinfo in zf.infolist():
+            if not zinfo.filename.startswith('usr/local/wbin/'):
+                # Only extract executables from wbin, skip documentation and
+                # headers.
+                continue
+
+            if zinfo.file_size == 0:
+                # Skip empty "files", such as directories.
+                continue
+
+            content = zf.read(zinfo)
+            outname = os.path.join(path, os.path.basename(zinfo.filename))
+            with open(outname, 'wb') as outfile:
+                outfile.write(content)
 
 
 def install_sip(sip_url, source_dir, venv_dir):
@@ -177,7 +202,8 @@ def main():
         subprocess.check_call(['easy_install.exe', 'pip'])
 
         print("\nInstalling wxPython")
-        subprocess.check_call(['pip.exe', 'install', wxpython_url])
+        subprocess.check_call(['pip.exe', 'install', '-U', '--pre', '-f',
+                               wxpython_url, 'wxPython_Phoenix'])
 
         print("\nInstalling gpxpy")
         subprocess.check_call(['pip.exe', 'install', "gpxpy"])
@@ -187,6 +213,9 @@ def main():
                                '--allow-external', 'pyodbc',
                                '--allow-unverified', 'pyodbc',
                                'pyodbc'])
+
+        print("\nInstalling UnxUtils")
+        install_unxutils(unxutils_url, unxutils_dir)
 
         print("\nFinished setting up venv. Enjoy :)")
 

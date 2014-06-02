@@ -1,0 +1,45 @@
+# Re-export $(PATH), otherwise GNU Make on Windows chokes on directories ending
+# with '\' characters within $(PATH) (e.g. C:\bin\; instead of C:\bin;).
+# Also add the GNU Make executable directory.
+export PATH := $(dir $(MAKE));$(subst \;,;,$(PATH))
+
+# Set $Path as well, as it's seemingly different and GNU Make seems to use one
+# or the other a bit randomly. That may depend on whether it executes commands
+# internally or calls out to cmd.exe.
+export Path := $(PATH)
+
+CP = cp
+CPR = cp -r
+RM = rm
+RMRF = rm -rf
+CXX = cl
+LINK = link
+
+OBJEXT=obj
+SHLIBEXT=dll
+LIBEXT=lib
+
+ifdef RELEASE
+CPPDEBUG = -DNDEBUG -MD -O2 -Oy
+# We still want the linker to generate debug information (.pdb's), but enable
+# optimizations.
+LDDEBUG = -DEBUG -PDB:$(TARGET).pdb -OPT:REF
+ODMPATH = ODM/Release-DLL
+else
+CPPDEBUG = -MDd -Od -Oy- -RTC1
+LDDEBUG = -DEBUG -PDB:$(TARGET).pdb
+ODMPATH = ODM/Debug-DLL
+endif
+
+CPPFLAGS = -I. -IODM/OutdoorMapper -Isrc_sip -Ivenv/Include
+CXXFLAGS = -D "UNICODE" -D "QT_LARGEFILE_SUPPORT" -D "STRICT" -D "NOMINMAX" \
+           -EHsc -Zc:wchar_t -W3 -WX -w44800 -Gm -GS -nologo -Zi \
+           -Fd$(BUILDDIR)\\
+CPPOUT = -Fo
+
+LDFLAGS = -nologo -DYNAMICBASE -NXCOMPAT -DLL -MANIFEST \
+          -MANIFESTFILE:$(TARGET).manifest -INCREMENTAL:NO
+LIBS = -LIBPATH:$(ODMPATH) -LIBPATH:venv/libs OutdoorMapper.lib python33.lib
+LDOUT = -OUT:
+
+MANIFEST = mt -nologo -manifest $(TARGET).manifest -outputresource:$(TARGET);2
