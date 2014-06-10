@@ -55,11 +55,10 @@ PixelBuf GradientMap::GetRegion(
     MapPixelDeltaInt req_size = size + MapPixelDeltaInt(2, 2);
     auto orig_data = m_orig_map->GetRegion(req_pos, req_size);
     //auto orig_data = LoadBufferFromBMP(L"example.bmp");
-    std::shared_ptr<unsigned int> data(new unsigned int[size.x * size.y],
-                                       ArrayDeleter<unsigned int>());
+    PixelBuf result(size.x, size.y);
 
     unsigned int *src = orig_data.GetRawData();
-    unsigned int *dest = data.get();
+    unsigned int *dest = result.GetRawData();
     time_counter_loaddisc.Stop();
     time_counter.Start();
     for (int x=0; x < size.x; x++) {
@@ -77,7 +76,7 @@ PixelBuf GradientMap::GetRegion(
         }
     }
     time_counter.Stop();
-    return PixelBuf(data, size.x, size.y);
+    return result;
 }
 #undef DEST
 #undef SRC
@@ -140,11 +139,10 @@ PixelBuf SteepnessMap::GetRegion(
     MapPixelCoordInt req_pos = pos - MapPixelDeltaInt(1, 1);
     MapPixelDeltaInt req_size = size + MapPixelDeltaInt(2, 2);
     auto orig_data = m_orig_map->GetRegion(req_pos, req_size);
-    std::shared_ptr<unsigned int> data(new unsigned int[size.x * size.y],
-                                       ArrayDeleter<unsigned int>());
+    PixelBuf result(size.x, size.y);
 
     unsigned int *src = orig_data.GetRawData();
-    unsigned int *dest = data.get();
+    unsigned int *dest = result.GetRawData();
     for (int x=0; x < size.x; x++) {
         for (int y=0; y < size.y; y++) {
             MapPixelCoordInt pos(x+1, y+1);
@@ -155,7 +153,7 @@ PixelBuf SteepnessMap::GetRegion(
             DEST(x, y) = steepness_colors[color_index];
         }
     }
-    return PixelBuf(data, size.x, size.y);
+    return result;
 }
 #undef DEST
 #undef SRC

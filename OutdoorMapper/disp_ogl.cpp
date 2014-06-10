@@ -281,18 +281,17 @@ void DispOpenGL::Render(std::list<std::shared_ptr<DisplayOrder>> &orders) {
         std::shared_ptr<Texture> tex;
         if (dorder->IsCachable()) {
             tex = m_texcache->Get(*tilecode);
-            if (!tex) {
-                std::shared_ptr<unsigned int> pixels(dorder->GetPixels());
-                tex.reset(new Texture(dorder->GetPixelSize().x,
-                                      dorder->GetPixelSize().y,
-                                      pixels.get(), dorder->GetPixelFormat()));
+        }
+
+        if (!tex) {
+            PixelBuf pixbuf = dorder->GetPixels();
+            tex.reset(new Texture(pixbuf.GetWidth(),
+                                  pixbuf.GetHeight(),
+                                  pixbuf.GetRawData(),
+                                  dorder->GetPixelFormat()));
+            if (dorder->IsCachable()) {
                 m_texcache->Insert(*tilecode, tex);
             }
-        } else {
-            std::shared_ptr<unsigned int> pixels(dorder->GetPixels());
-            tex.reset(new Texture(dorder->GetPixelSize().x,
-                                  dorder->GetPixelSize().y,
-                                  pixels.get(), dorder->GetPixelFormat()));
         }
 
         switch (dorder->GetPixelFormat()) {

@@ -148,10 +148,8 @@ PixelBuf GPSSegment::GetRegionDirect(
     {
         return PixelBuf(output_size.x, output_size.y);
     }
-    std::shared_ptr<unsigned int> data(
-                new unsigned int[output_size.x * output_size.y](),
-                ArrayDeleter<unsigned int>());
-    unsigned int *dest = data.get();
+    PixelBuf result(output_size.x, output_size.y);
+    unsigned int *dest = result.GetRawData();
     double base_scale_factor = output_size.x / (base_br.x - base_tl.x);
     MapPixelCoordInt old_point(0, 0);
     for (auto it = m_points.cbegin(); it != m_points.cend(); ++it) {
@@ -175,5 +173,5 @@ PixelBuf GPSSegment::GetRegionDirect(
         old_point = point_disp;
 
     }
-    return PixelBuf(data, output_size.x, output_size.y);
+    return result;
 }

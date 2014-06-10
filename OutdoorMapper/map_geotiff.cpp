@@ -198,15 +198,14 @@ Tiff::GetRegion(const MapPixelCoordInt &pos,
     // Give derived classes a chance to influence TIFFRGBAGetImage
     Hook_TIFFRGBAImageGet(img);
 
-    std::shared_ptr<unsigned int> raster(new unsigned int[size.x * size.y],
-                                         ArrayDeleter<unsigned int>());
-    int ok = TIFFRGBAImageGet(&img, raster.get(), size.x, size.y);
+    PixelBuf result(size.x, size.y);
+    int ok = TIFFRGBAImageGet(&img, result.GetRawData(), size.x, size.y);
     TIFFRGBAImageEnd(&img);
 
     if (!ok) {
         throw std::runtime_error("Loading TIFF data failed.");
     }
-    return PixelBuf(raster, size.x, size.y);
+    return result;
 }
 
 template <typename T>

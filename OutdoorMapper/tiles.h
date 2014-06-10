@@ -18,7 +18,7 @@ class TileCode {
         const MapPixelCoordInt &GetPosition() const { return m_pos; };
         const MapPixelDeltaInt &GetTileSize() const { return m_tilesize; };
 
-        std::shared_ptr<unsigned int> GetTile() const;
+        PixelBuf GetTile() const;
     private:
         std::shared_ptr<class GeoDrawable> m_map;
         MapPixelCoordInt m_pos;
@@ -97,7 +97,7 @@ class DisplayOrder {
             return m_botright;
         };
         virtual double GetTransparency() const { return m_transparency; };
-        virtual std::shared_ptr<unsigned int> GetPixels() const = 0;
+        virtual PixelBuf GetPixels() const = 0;
         virtual MapPixelDeltaInt GetPixelSize() const = 0;
 
         virtual bool IsCachable() const { return !!GetTileCode(); };
@@ -131,7 +131,7 @@ class DisplayOrderTiled : public DisplayOrder {
             {};
         virtual ~DisplayOrderTiled() {};
         const TileCode *GetTileCode() const { return &m_tilecode; };
-        virtual std::shared_ptr<unsigned int> GetPixels() const {
+        virtual PixelBuf GetPixels() const {
             return m_tilecode.GetTile();
         }
         virtual MapPixelDeltaInt GetPixelSize() const {
@@ -159,7 +159,7 @@ class DisplayOrderDirect : public DisplayOrder {
             {};
         virtual ~DisplayOrderDirect() {};
         virtual const TileCode *GetTileCode() const { return nullptr; };
-        virtual std::shared_ptr<unsigned int> GetPixels() const;
+        virtual PixelBuf GetPixels() const;
         virtual MapPixelDeltaInt GetPixelSize() const {
             return MapPixelDeltaInt(round_to_int(m_size.x),
                                     round_to_int(m_size.y));

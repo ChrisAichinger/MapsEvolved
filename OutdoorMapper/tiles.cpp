@@ -2,14 +2,14 @@
 #include "tiles.h"
 #include "rastermap.h"
 
-std::shared_ptr<unsigned int> TileCode::GetTile() const {
-    return m_map->GetRegion(m_pos, m_tilesize).GetData();
+PixelBuf TileCode::GetTile() const {
+    return m_map->GetRegion(m_pos, m_tilesize);
 }
 
-std::shared_ptr<unsigned int> DisplayOrderDirect::GetPixels() const {
+PixelBuf DisplayOrderDirect::GetPixels() const {
     return m_map->GetRegionDirect(
             m_size, *m_base_map,
-            m_base_pixel_tl, m_base_pixel_br).GetData();
+            m_base_pixel_tl, m_base_pixel_br);
 
 }
 ODMPixelFormat DisplayOrderTiled::GetPixelFormat() const {

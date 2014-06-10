@@ -106,9 +106,7 @@ PixelBuf Gridlines::GetRegionDirect(
     double lat_start = lat_min + line_spacing - fmod(lat_min, line_spacing);
     double lon_start = lon_min + line_spacing - fmod(lon_min, line_spacing);
 
-    std::shared_ptr<unsigned int> data(
-                new unsigned int[output_size.x * output_size.y](),
-                ArrayDeleter<unsigned int>());
+    PixelBuf result(output_size.x, output_size.y);
     double scaling = output_size.x / (base_br.x - base_tl.x);
     for (double lat = lat_start; lat < lat_max; lat += line_spacing) {
         LatLon ll_start(lat, lon_min);
@@ -116,7 +114,7 @@ PixelBuf Gridlines::GetRegionDirect(
         MapPixelCoord map_start, map_end;
         if (!LatLonToScreen(ll_start, base, base_tl, scaling, &map_start) ||
             !LatLonToScreen(ll_end, base, base_tl, scaling, &map_end) ||
-            !BisectLine(data.get(), output_size, map_start, map_end,
+            !BisectLine(result.GetRawData(), output_size, map_start, map_end,
                         ll_start, ll_end, base, base_tl, scaling))
         {
             return PixelBuf();
@@ -128,13 +126,13 @@ PixelBuf Gridlines::GetRegionDirect(
         MapPixelCoord map_start, map_end;
         if (!LatLonToScreen(ll_start, base, base_tl, scaling, &map_start) ||
             !LatLonToScreen(ll_end, base, base_tl, scaling, &map_end) ||
-            !BisectLine(data.get(), output_size, map_start, map_end,
+            !BisectLine(result.GetRawData(), output_size, map_start, map_end,
                         ll_start, ll_end, base, base_tl, scaling))
         {
             return PixelBuf();
         }
     }
-    return PixelBuf(data, output_size.x, output_size.y);
+    return result;
 }
 
 bool Gridlines::LatLonToScreen(const LatLon &latlon,
