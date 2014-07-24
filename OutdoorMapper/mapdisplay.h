@@ -129,7 +129,10 @@ class EXPORT MapDisplayManager {
         std::shared_ptr<class GeoDrawable> m_base_map;
         OverlayList m_overlays;
 
+        // The base map pixel currently shown at the center of the display.
         BaseMapCoord m_center;
+        // Zoom of the base map. Larger values indicate higher "zoom".
+        // Basemap pixels take up m_zoom display pixels on screen.
         double m_zoom;
 
         DISALLOW_COPY_AND_ASSIGN(MapDisplayManager);

@@ -14,6 +14,8 @@
 
 
 class EXPORT GeoPixels {
+    // Georeferenced pixels. Subclasses of this type support mapping
+    // pixel locations to world coordinates (LatLon) and vice versa.
     public:
         virtual ~GeoPixels();
         virtual bool
@@ -24,6 +26,16 @@ class EXPORT GeoPixels {
 
 
 class EXPORT GeoDrawable : public GeoPixels {
+    // Georeferenced drawables. Subclasses support one of two interfaces:
+    // - DirectDrawing: GetRegionDirect() is used and must return a
+    //   display-sized area. With this, GeoDrawables can draw directly to the
+    //   screen, without additional resizing/rotations/stretching.
+    //   This is used for gridlines and GPS tracks, for example.
+    // - NonDirectDrawing: GetRegion() is used to get a tile from the
+    //   underlaying map. MapDisplayManager takes care to display the resulting
+    //   image on the screen in the right location, with the right size and
+    //   orientation.
+    //   This is used for normal rastermaps (topo maps and DHMs for example).
     public:
         enum DrawableType {
             TYPE_MAP = 1,
@@ -43,6 +55,11 @@ class EXPORT GeoDrawable : public GeoPixels {
         virtual unsigned int GetWidth() const = 0;
         virtual unsigned int GetHeight() const = 0;
         virtual MapPixelDeltaInt GetSize() const = 0;
+
+        // Get a specific area of the map.
+        // pos: The topleft corner of the requested map area.
+        // size: The dimensions of the requested map area.
+        // The returned PixelBuf must have dimensions equal to size.
         virtual PixelBuf
         GetRegion(const MapPixelCoordInt &pos,
                   const MapPixelDeltaInt &size) const = 0;
@@ -68,6 +85,8 @@ class EXPORT GeoDrawable : public GeoPixels {
 
 
 class EXPORT RasterMap : public GeoDrawable {
+    // A GeoDrawable especially for maps. All logic was factored out to the
+    // parent class.
     public:
         virtual ~RasterMap();
 };
