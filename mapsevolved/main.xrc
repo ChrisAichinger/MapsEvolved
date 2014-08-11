@@ -47,6 +47,10 @@
           <checkable>1</checkable>
         </object>
         <object class="separator"/>
+        <object class="wxMenuItem" name="GotoCoordMenuItem">
+          <label>Go To Coordinate</label>
+          <help>Jump to a specific coordinate or point-of-interest.</help>
+        </object>
         <object class="wxMenuItem" name="CoordFormatMenuItem">
           <label>Coordinate &amp;Format</label>
           <help>Set the coordinate format used for displaying location (DMS, fractional degrees, UTM)</help>

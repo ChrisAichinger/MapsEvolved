@@ -227,7 +227,7 @@ class MainFrame(wx.Frame):
         info = wx.adv.AboutDialogInfo()
         info.Name = "Maps Evolved"
         info.Version = "0.0.1"
-        info.Copyright = "(C) 2013-2014 Christian Aichinger"
+        info.Copyright = "(C) 2012-2014 Christian Aichinger"
         info.Description = wordwrap(
             _("A map viewer implementing advanced features."),
             350, wx.ClientDC(self.panel))
@@ -419,6 +419,7 @@ class MainFrame(wx.Frame):
         self.update_map_from_layerlist()
 
     @util.EVENT(wx.EVT_TOOL,  id=xrc.XRCID('GotoCoordTBButton'))
+    @util.EVENT(wx.EVT_TOOL,  id=xrc.XRCID('GotoCoordMenuItem'))
     @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('NewCoordMenuItem'))
     def on_goto_coord_button(self, evt):
         # Suppress dragging for this function, otherwise we get spurious drag
@@ -470,15 +471,19 @@ class MainFrame(wx.Frame):
     @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('DDDCoordFmtMenuItem'))
     def on_coord_fmt_ddd(self, evt):
         self.coord_fmt = 'DDD'
+        self.update_statusbar()
     @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('DMMCoordFmtMenuItem'))
     def on_coord_fmt_dmm(self, evt):
         self.coord_fmt = 'DMM'
+        self.update_statusbar()
     @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('DMSCoordFmtMenuItem'))
     def on_coord_fmt_dms(self, evt):
         self.coord_fmt = 'DMS'
+        self.update_statusbar()
     @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('UTMCoordFmtMenuItem'))
     def on_coord_fmt_utm(self, evt):
         self.coord_fmt = 'UTM'
+        self.update_statusbar()
 
     @property
     def coord_fmt(self):
@@ -567,7 +572,7 @@ class MainFrame(wx.Frame):
         NESW = pymaplib.CompassPointFromDirection(ti.slope_face_deg)
         self.statusbar.SetStatusText(_("Height: %.1f m") % ti.height_m, i=1)
         self.statusbar.SetStatusText(
-               _("Orientation: %3s (%.1f°)") % (NESW, ti.slope_face_deg), i=2)
+               _("Orientation: %3s (%.0f°)") % (NESW, ti.slope_face_deg), i=2)
         self.statusbar.SetStatusText(
                _("Steepness: %.1f°") % ti.steepness_deg, i=3)
 
