@@ -138,10 +138,6 @@ class MainFrame(wx.Frame):
     def on_size_mappanel(self, evt):
         self.mapdisplay.Resize(evt.Size.x, evt.Size.y)
 
-    @util.EVENT(wx.EVT_BUTTON, id=xrc.XRCID('GoButton'))
-    def on_go_button(self, evt):
-        print("Go pressed")
-
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ManageMapsMenuItem'))
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ManageMapsTBButton'))
     def on_manage_maps(self, evt):
