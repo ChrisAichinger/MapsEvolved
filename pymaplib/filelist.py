@@ -192,19 +192,26 @@ class FileList:
             ext = fname.lower().rsplit('.', 1)[-1]
             ftype = ftypes.get(ext, None)
 
+        if ftype == "GPX":
+            targetlist = self.gpxlist
+            cls = GPXFile
+        elif ftype == 'DB':
+            targetlist = self.dblist
+            cls = POI_Database
+        elif ftype == 'MAP':
+            targetlist = self.maplist
+            cls = MapFile
+        else:
+            raise NotImplementedError("Couldn't detect file type")
+
         try:
-            if ftype == "GPX": self.gpxlist.append(GPXFile(fname))
-            elif ftype == 'DB': self.dblist.append(POI_Database(fname))
-            elif ftype == 'MAP': self.maplist.append(MapFile(fname))
-            else:
-                raise NotImplementedError("Couldn't detect file type")
+            entry = cls(fname)
         except FileLoadError as e:
-            ee = ErrorEntry(fname, e)
-            if ftype == "GPX": self.gpxlist.append(ee)
-            elif ftype == 'DB': self.dblist.append(ee)
-            elif ftype == 'MAP': self.maplist.append(ee)
-            else:
-                raise NotImplementedError("Couldn't detect file type")
+            entry = ErrorEntry(fname, e)
+        # Take care to store the original ftype for ErrorEntry as well,
+        # so we know which list to delete off!
+        entry.ftype = ftype
+        targetlist.append(entry)
 
     def store_to(self, store):
         store.set_stringlist('maps',
@@ -232,10 +239,12 @@ class FileList:
 
     def delete(self, item):
         # Raise ValueError if we can't find item.
-        if item.entry_type == maplib_sip.GeoDrawable.TYPE_POI_DB:
+        if item.ftype == 'DB':
             del self.dblist[self.dblist.index(item)]
-        elif item.entry_type == maplib_sip.GeoDrawable.TYPE_GPSTRACK:
+        elif item.ftype == 'GPX':
+            del self.gpxlist[self.gpxlist.index(item)]
+        elif item.ftype == 'MAP':
             del self.gpxlist[self.gpxlist.index(item)]
         else:
-            del self.maplist[self.maplist.index(item)]
+            raise NotImplementedError("Couldn't detect file type")
 
