@@ -8,11 +8,11 @@
           <help>Add or remove maps from the database.</help>
         </object>
         <object class="wxMenuItem" name="SaveBitmapMenuItem">
-          <label>&amp;Save as Bitmap</label>
+          <label>&amp;Save as Bitmap\tCtrl-S</label>
           <help>Save the currently shown map area to a bitmap file.</help>
         </object>
         <object class="wxMenuItem" name="PrintMenuItem">
-          <label>&amp;Print</label>
+          <label>&amp;Print\tCtrl-P</label>
           <help>Print the currently shown map area.</help>
         </object>
         <object class="separator"/>
@@ -48,7 +48,7 @@
         </object>
         <object class="separator"/>
         <object class="wxMenuItem" name="GotoCoordMenuItem">
-          <label>Go To Coordinate</label>
+          <label>Go To Coordinate\tCtrl-F</label>
           <help>Jump to a specific coordinate or point-of-interest.</help>
         </object>
         <object class="wxMenuItem" name="CoordFormatMenuItem">

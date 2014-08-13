@@ -80,6 +80,14 @@ class MainFrame(wx.Frame):
         self.layermgr_panel = xrc.XRCCTRL(self, 'LayerMgrPanel')
         self.toolbar = xrc.XRCCTRL(self, 'MainToolbar')
 
+        # Use XRC menu items (Goto Coord\tCtrl-F) for most accelerators.
+        # Only use an explicit table if necessary.
+        # self.accel_tbl = wx.AcceleratorTable(
+        #     [(wx.ACCEL_CTRL, ord('F'), xrc.XRCID('NewCoordMenuItem')),
+        #      (wx.ACCEL_CTRL, ord('S'), xrc.XRCID('SaveBitmapMenuItem')),
+        #     ])
+        # self.SetAcceleratorTable(self.accel_tbl)
+
         self.filelist = pymaplib.FileList()
         with config.Config.read() as conf:
             self.filelist.retrieve_from(conf)
