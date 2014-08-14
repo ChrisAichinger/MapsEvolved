@@ -173,11 +173,18 @@ class MainFrame(wx.Frame):
             return
 
         zoom = self.mapdisplay.GetZoom()
-        w = self.ogldisplay.GetDisplayWidth() / zoom
-        h = self.ogldisplay.GetDisplayHeight() / zoom
+        w = int(self.ogldisplay.GetDisplayWidth() / zoom)
+        h = int(self.ogldisplay.GetDisplayHeight() / zoom)
         mr = self.mapdisplay.PaintToBuffer(pymaplib.ODM_PIX_RGBA4, w, h)
-        bmp = wx.Bitmap(w, h, 32)
-        bmp.CopyFromBuffer(mr.GetData(), wx.BitmapBufferFormat_RGBA)
+        # Copy the image data to a modifyable buffer and set the alpha
+        # values to 255. wx.Bitmap multiplies R,G,B by alpha on Win32, leading
+        # to an all-black bitmap otherwise.
+        # We can't use wx.BitmapBufferFormat_RGB32, as that swaps the
+        # R and B channels.
+        data = bytearray(mr.GetData())
+        for i in range(w*h):
+            data[4*i + 3] = 0xFF
+        bmp = wx.Bitmap.FromBufferRGBA(w, h, data)
         # Mirror image horizontally - PaintToBuffer produces the wrong
         # top-down/bottom-up orientation for us.
         img = bmp.ConvertToImage().Mirror(horizontally=False)
