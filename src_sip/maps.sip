@@ -17,6 +17,7 @@ smartptr_proxy_post_init(sipModuleDict);
 %Include coordinates.sip
 %Include rastermap.sip
 %Include map_definitions.sip
+%Include exceptions.sip
 
 
 class Projection {
