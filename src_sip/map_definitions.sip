@@ -30,6 +30,37 @@ class TiffMap : public RasterMap {
                         const MapPixelCoord &base_br) const;
 };
 
+class GVGMap : public RasterMap {
+%TypeHeaderCode
+#include "rastermap.h"
+#include "map_gvg.h"
+%End
+    public:
+        explicit GVGMap(const std::wstring &fname /In/);
+        virtual GeoDrawable::DrawableType GetType() const;
+        virtual unsigned int GetWidth() const;
+        virtual unsigned int GetHeight() const;
+        virtual MapPixelDeltaInt GetSize() const;
+        virtual PixelBuf
+            GetRegion(const MapPixelCoordInt &pos,
+                      const MapPixelDeltaInt &size) const /Factory/;
+
+        virtual Projection GetProj() const;
+
+        virtual bool
+        PixelToLatLon(const MapPixelCoord &pos, LatLon *result /Out/) const;
+        virtual bool
+        LatLonToPixel(const LatLon &pos, MapPixelCoord *result /Out/) const;
+
+        virtual const std::wstring &GetFname() const;
+        virtual bool SupportsDirectDrawing() const;
+        virtual PixelBuf
+        GetRegionDirect(const MapPixelDeltaInt &output_size,
+                        const GeoPixels &base,
+                        const MapPixelCoord &base_tl,
+                        const MapPixelCoord &base_br) const;
+};
+
 class GradientMap : public RasterMap {
 %TypeHeaderCode
 #include "rastermap.h"

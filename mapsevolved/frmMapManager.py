@@ -251,8 +251,9 @@ class MapManagerFrame(wx.Frame):
     def add_map(self):
         openFileDialog = wx.FileDialog(
                 self, "Open Rastermap file", "", "",
-                "Supported files|*.tif;*.tiff|" +
+                "Supported files|*.tif;*.tiff;*.gvg|" +
                 "Geotiff files (*.tif, *.tiff)|*.tif;*.tiff|" +
+                "Alpine club map files (*.gvg)|*.gvg;|" +
                 "All files (*.*)|*.*",
                 wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_CANCEL:

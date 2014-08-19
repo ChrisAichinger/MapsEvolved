@@ -188,6 +188,7 @@ class FileList:
                       'db': 'DB',
                       'tif': 'MAP',
                       'tiff': 'MAP',
+                      'gvg': 'MAP',
                      }
             ext = fname.lower().rsplit('.', 1)[-1]
             ftype = ftypes.get(ext, None)
