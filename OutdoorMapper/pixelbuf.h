@@ -15,6 +15,7 @@ class EXPORT PixelBuf {
     public:
         PixelBuf() : m_data(), m_width(0), m_height(0) {};
         PixelBuf(int width, int height);
+        PixelBuf(int width, int height, unsigned int value);
         PixelBuf(const std::shared_ptr<unsigned int> &data,
                  int width, int height);
 
@@ -32,7 +33,7 @@ class EXPORT PixelBuf {
         inline unsigned int GetPixel(int x, int y) const {
             return m_data.get()[x + y*m_width];
         }
-        void Insert(unsigned int x, unsigned int y, const PixelBuf &source);
+        void Insert(int x, int y, const PixelBuf &source);
     private:
         std::shared_ptr<unsigned int> m_data;
         unsigned int m_width;
