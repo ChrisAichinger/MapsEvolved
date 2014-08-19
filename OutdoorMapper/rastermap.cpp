@@ -20,6 +20,7 @@
 
 #include "util.h"
 #include "map_geotiff.h"
+#include "map_gvg.h"
 #include "map_dhm_advanced.h"
 #include "map_composite.h"
 #include "bezier.h"
@@ -93,6 +94,11 @@ EXPORT std::shared_ptr<RasterMap> LoadMap(const std::wstring &fname) {
         {
             // Geotiff file
             map.reset(new TiffMap(fname.c_str()));
+            return map;
+        } else if (ends_with(fname_lower, L".gvg"))
+        {
+            // GVG file
+            map.reset(new GVGMap(fname));
             return map;
         } else {
             assert(false);  // Not implemented

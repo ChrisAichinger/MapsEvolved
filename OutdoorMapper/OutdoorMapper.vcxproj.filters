@@ -66,6 +66,12 @@
     <ClCompile Include="pixelbuf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="memjpeg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="map_gvg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="disp_ogl.h">
@@ -123,6 +129,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pixelbuf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="memjpeg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="map_gvg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
