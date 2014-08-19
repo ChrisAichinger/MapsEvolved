@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <sstream>
 #include <iomanip>
+#include <map>
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -110,15 +111,41 @@ std::wstring url_decode(const std::wstring &value) {
     return result.str();
 }
 
-std::string UTF8FromWString(const std::wstring &string) {
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>,wchar_t> convert;
-    return convert.to_bytes(string);
+// std::codecvt_byname doesn't have a public dtor.
+// Derive from it and make the dtor public to actually make it useful.
+// Cf. http://stackoverflow.com/a/7599989
+class UsableCodecvt
+    : public std::codecvt_byname<wchar_t, char, std::mbstate_t>
+{
+    public:
+        explicit UsableCodecvt(const char* name="")
+        : std::codecvt_byname<wchar_t, char, std::mbstate_t>(name)
+        {};
+        // Make destructor public to work with wstring_convert.
+        virtual ~UsableCodecvt() {}
+};
+
+typedef std::wstring_convert<UsableCodecvt> UsableConvert;
+static std::map<std::string, UsableConvert> codec_map;
+
+std::string StringFromWString(const std::wstring &string,
+                              const char* encoding)
+{
+    if (codec_map.count(encoding) == 0) {
+        codec_map[encoding] = UsableConvert(new UsableCodecvt(encoding));
+    }
+    return codec_map[encoding].to_bytes(string);
 }
 
-std::wstring WStringFromUTF8(const std::string &string) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
-    return convert.from_bytes(string);
+std::wstring WStringFromString(const std::string &string,
+                               const char* encoding)
+{
+    if (codec_map.count(encoding) == 0) {
+        codec_map[encoding] = UsableConvert(new UsableCodecvt(encoding));
+    }
+    return codec_map[encoding].from_bytes(string);
 }
+
 
 unsigned int HSV_to_RGB(unsigned char H, unsigned char S, unsigned char V) {
     unsigned char hi = H * 6 / 255;
@@ -396,4 +423,20 @@ GetAbsPath(const std::wstring &rel_path) {
     }
     return std::pair<std::wstring, std::wstring>(
               std::wstring(abspath, p_fname - abspath), std::wstring(p_fname));
+}
+
+
+long long int GetFilesize(const std::wstring &name) {
+#if ODM_OS == WINDOWS
+    // VS 2010 bug: std::streampos doesn't actually support >2GB files.
+    // Cf. http://stackoverflow.com/q/13837810
+    __stat64 st;
+    if (_wstat64(name.c_str(), &st) != 0)
+        throw std::runtime_error("Failed to get file size.");
+
+    return st.st_size;
+#else
+    std::ifstream ifs(filename, std::ifstream::ate | std::ifstream::binary);
+    return ifs.tellg();
+#endif
 }

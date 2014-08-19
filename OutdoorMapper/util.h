@@ -65,8 +65,10 @@ void replace_all(std::wstring& str, const std::wstring& from,
 std::wstring url_encode(const std::wstring &value);
 std::wstring url_decode(const std::wstring &value);
 
-std::string UTF8FromWString(const std::wstring &string);
-std::wstring WStringFromUTF8(const std::string &string);
+std::string StringFromWString(const std::wstring &string,
+                              const char* encoding);
+std::wstring WStringFromString(const std::string &string,
+                               const char* encoding);
 
 template <typename T>
 std::string num_to_hex(T i) {
@@ -183,5 +185,6 @@ class TemporaryValue {
         DISALLOW_COPY_AND_ASSIGN(TemporaryValue);
 };
 
+long long int  GetFilesize(const std::wstring &filename);
 
 #endif
