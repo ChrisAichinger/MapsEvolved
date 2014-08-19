@@ -74,7 +74,7 @@ void MapDisplayManager::ChangeMap(
 
     bool preserve_pos = try_preserve_pos && TryChangeMapPreservePos(new_map);
     if (!preserve_pos) {
-        m_center = BaseMapCoord(BaseMapDelta(m_base_map->GetSize() / 2.0));
+        m_center = BaseMapCoord(BaseMapDelta(new_map->GetSize() / 2.0));
         m_zoom = 1.0;
     }
 
