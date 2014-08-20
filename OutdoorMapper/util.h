@@ -65,10 +65,10 @@ void replace_all(std::wstring& str, const std::wstring& from,
 std::wstring url_encode(const std::wstring &value);
 std::wstring url_decode(const std::wstring &value);
 
-std::string StringFromWString(const std::wstring &string,
-                              const char* encoding);
-std::wstring WStringFromString(const std::string &string,
-                               const char* encoding);
+EXPORT std::string StringFromWString(const std::wstring &string,
+                                     const char* encoding);
+EXPORT std::wstring WStringFromString(const std::string &string,
+                                      const char* encoding);
 
 template <typename T>
 std::string num_to_hex(T i) {
