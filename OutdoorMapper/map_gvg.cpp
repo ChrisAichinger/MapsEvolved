@@ -796,9 +796,10 @@ GVGMap::GetRegion(const MapPixelCoordInt &pos,
             if (!tile.GetData()) {
                 continue;
             }
-            result.Insert(tx * m_tile_width - pos.x,
-                          (last_ty - ty + first_ty) * m_tile_height - pos.y,
-                          tile);
+            auto insert_pos = PixelBufCoord(
+                    tx * m_tile_width - pos.x,
+                    (last_ty - ty + first_ty) * m_tile_height - pos.y);
+            result.Insert(insert_pos, tile);
         }
     }
     return result;

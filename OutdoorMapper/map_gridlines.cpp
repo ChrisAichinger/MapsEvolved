@@ -7,7 +7,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "drawing.h"
+#include "coordinates.h"
 
 
 std::wstring Gridlines::fname = L"";
@@ -30,16 +30,14 @@ Gridlines::GetRegion(const MapPixelCoordInt &pos,
     unsigned int *dest = result.GetRawData();
     for (int x = 0; x < size.x; x++) {
         if ((pos.x + x) % 10 == 0) {
-            ClippedLine(dest, size,
-                        MapPixelCoordInt(x, 0),
-                        MapPixelCoordInt(x, size.y), 0xFF000000);
+            result.Line(PixelBufCoord(x, 0), PixelBufCoord(x, size.y),
+                        0xFF000000);
         }
     }
     for (int y = 0; y < size.y; y++) {
         if ((pos.y + y) % 10 == 0) {
-            ClippedLine(dest, size,
-                        MapPixelCoordInt(0, y),
-                        MapPixelCoordInt(size.x, y), 0xFF000000);
+            result.Line(PixelBufCoord(0, y), PixelBufCoord(size.x, y),
+                        0xFF000000);
         }
     }
     return result;
@@ -114,8 +112,8 @@ PixelBuf Gridlines::GetRegionDirect(
         MapPixelCoord map_start, map_end;
         if (!LatLonToScreen(ll_start, base, base_tl, scaling, &map_start) ||
             !LatLonToScreen(ll_end, base, base_tl, scaling, &map_end) ||
-            !BisectLine(result.GetRawData(), output_size, map_start, map_end,
-                        ll_start, ll_end, base, base_tl, scaling))
+            !BisectLine(result, map_start, map_end, ll_start, ll_end,
+                        base, base_tl, scaling))
         {
             return PixelBuf();
         }
@@ -126,8 +124,8 @@ PixelBuf Gridlines::GetRegionDirect(
         MapPixelCoord map_start, map_end;
         if (!LatLonToScreen(ll_start, base, base_tl, scaling, &map_start) ||
             !LatLonToScreen(ll_end, base, base_tl, scaling, &map_end) ||
-            !BisectLine(result.GetRawData(), output_size, map_start, map_end,
-                        ll_start, ll_end, base, base_tl, scaling))
+            !BisectLine(result, map_start, map_end, ll_start, ll_end,
+                        base, base_tl, scaling))
         {
             return PixelBuf();
         }
@@ -152,8 +150,7 @@ bool Gridlines::LatLonToScreen(const LatLon &latlon,
     return true;
 }
 
-bool Gridlines::BisectLine(unsigned int *dest,
-                           const MapPixelDeltaInt &output_size,
+bool Gridlines::BisectLine(PixelBuf& buf,
                            const MapPixelCoord &map_start,
                            const MapPixelCoord &map_end,
                            const LatLon &ll_start,
@@ -176,16 +173,19 @@ bool Gridlines::BisectLine(unsigned int *dest,
             midpoint_distance.x * midpoint_distance.x +
             midpoint_distance.y * midpoint_distance.y);
     if (midpoint_distance_abs < 2.0) {
-        ClippedLine(dest, output_size, MapPixelCoordInt(map_start),
-                    MapPixelCoordInt(map_mid_ll), 0xFF000000);
-        ClippedLine(dest, output_size, MapPixelCoordInt(map_mid_ll),
-                    MapPixelCoordInt(map_end), 0xFF000000);
+        auto map_start_int = MapPixelCoordInt(map_start);
+        auto map_mid_int = MapPixelCoordInt(map_mid_ll);
+        auto map_end_int = MapPixelCoordInt(map_end);
+        buf.Line(PixelBufCoord(map_start_int.x, map_start_int.y),
+                 PixelBufCoord(map_mid_int.x, map_mid_int.y), 0xFF000000);
+        buf.Line(PixelBufCoord(map_mid_int.x, map_mid_int.y),
+                    PixelBufCoord(map_end_int.x, map_end_int.y), 0xFF000000);
         return true;
     } else {
-        return BisectLine(dest, output_size, map_start, map_mid_ll,
-                          ll_start, ll_mid, base, base_tl, scale_factor) &&
-               BisectLine(dest, output_size, map_mid_ll, map_end,
-                          ll_mid, ll_end, base, base_tl, scale_factor);
+        return BisectLine(buf, map_start, map_mid_ll, ll_start, ll_mid,
+                          base, base_tl, scale_factor) &&
+               BisectLine(buf, map_mid_ll, map_end, ll_mid, ll_end,
+                          base, base_tl, scale_factor);
     }
 }
 

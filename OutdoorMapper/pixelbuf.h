@@ -33,7 +33,15 @@ class EXPORT PixelBuf {
         inline unsigned int GetPixel(int x, int y) const {
             return m_data.get()[x + y*m_width];
         }
-        void Insert(int x, int y, const PixelBuf &source);
+
+        void Insert(const class PixelBufCoord &pos, const PixelBuf &source);
+        void SetPixel(const class PixelBufCoord &pos, unsigned int val);
+        void Line(const class PixelBufCoord &start,
+                  const class PixelBufCoord &end,
+                  const unsigned int color);
+        void Rect(const class PixelBufCoord &start,
+                  const class PixelBufCoord &end,
+                  const unsigned int color);
     private:
         std::shared_ptr<unsigned int> m_data;
         unsigned int m_width;

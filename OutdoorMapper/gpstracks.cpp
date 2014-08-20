@@ -7,8 +7,6 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "drawing.h"
-
 
 // Estimate m/degree to set a sane rendering resolution for GetRegion().
 static const int EARTH_RADIUS_METERS = 6371000;
@@ -75,7 +73,7 @@ GPSSegment::GetRegion(const MapPixelCoordInt &pos,
         int y = round_to_int(point_rel.y);
         for (int j = y - 1; j < y + 1; j++)
             for (int i = x - 1; i < x+1; i++)
-                ClippedSetPixel(dest, size, i, j, 0xFF0000FF);
+                result.SetPixel(PixelBufCoord(i, j), 0xFF0000FF);
     }
     return result;
 }
@@ -149,26 +147,25 @@ PixelBuf GPSSegment::GetRegionDirect(
         return PixelBuf(output_size.x, output_size.y);
     }
     PixelBuf result(output_size.x, output_size.y);
-    unsigned int *dest = result.GetRawData();
     double base_scale_factor = output_size.x / (base_br.x - base_tl.x);
-    MapPixelCoordInt old_point(0, 0);
+    PixelBufCoord old_point(0, 0);
     for (auto it = m_points.cbegin(); it != m_points.cend(); ++it) {
         MapPixelCoord point_abs;
         if (!base.LatLonToPixel(*it, &point_abs)) {
             assert(false);
         }
-        MapPixelCoordInt point_disp(  // Really a DisplayCoordInt
+        PixelBufCoord point_disp(
                 round_to_int((point_abs.x - base_tl.x) * base_scale_factor),
                 round_to_int((point_abs.y - base_tl.y) * base_scale_factor));
         int x = point_disp.x;
         int y = point_disp.y;
         for (int j = y - 2; j < y + 2; j++)
             for (int i = x - 2; i < x+2; i++)
-                ClippedSetPixel(dest, output_size, i, j, 0xFF0000FF);
+                result.SetPixel(PixelBufCoord(i, j), 0xFF0000FF);
 
         if (it != m_points.cbegin()) {
             // Not the first point -> old_point is valid
-            ClippedLine(dest, output_size, old_point, point_disp, 0xFF0000FF);
+            result.Line(old_point, point_disp, 0xFF0000FF);
         }
         old_point = point_disp;
 

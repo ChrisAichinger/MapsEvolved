@@ -54,8 +54,7 @@ class EXPORT Gridlines : public GeoDrawable {
         bool PixelToPCS(double *x, double *y) const;
         bool PCSToPixel(double *x, double *y) const;
         double GetLineSpacing(double lat_degrees, double lon_degrees) const;
-        bool BisectLine(unsigned int *dest,
-                        const MapPixelDeltaInt &output_size,
+        bool BisectLine(PixelBuf& buf,
                         const MapPixelCoord &map_start,
                         const MapPixelCoord &map_end,
                         const LatLon &ll_start,

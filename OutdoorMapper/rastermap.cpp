@@ -25,7 +25,7 @@
 #include "map_composite.h"
 #include "bezier.h"
 #include "projection.h"
-#include "drawing.h"
+
 
 GeoPixels::~GeoPixels() {};
 GeoDrawable::~GeoDrawable() {};
@@ -342,8 +342,8 @@ CalcPanorama(const std::shared_ptr<GeoDrawable> &map, const LatLon &pos) {
     MapPixelDeltaInt output_size(360*20, 180*20);
     PixelBuf result(output_size.x, output_size.y);
     unsigned int *dest = result.GetRawData();
-    ClippedRect(dest, output_size, MapPixelCoordInt(0, 0),
-                MapPixelCoordInt(output_size.x - 1, output_size.y - 1),
+    result.Rect(PixelBufCoord(0, 0),
+                PixelBufCoord(output_size.x, output_size.y),
                 0xFFDDDDFF);
 
     PanoramaList pano_init;
@@ -374,13 +374,12 @@ CalcPanorama(const std::shared_ptr<GeoDrawable> &map, const LatLon &pos) {
                 continue;
             cur_hi = yit->y;
             unsigned char color = round_to_int(yit->distance / 100000.0 * 255);
-            ClippedSetPixel(dest, output_size, pixel_x, yit->y,
+            result.SetPixel(PixelBufCoord(pixel_x, yit->y),
                             makeRGB(color, color, color, 1));
         }
     }
-    ClippedLine(dest, output_size,
-                MapPixelCoordInt(0, output_size.y/2),
-                MapPixelCoordInt(output_size.x, output_size.y / 2),
+    result.Line(PixelBufCoord(0, output_size.y/2),
+                PixelBufCoord(output_size.x, output_size.y / 2),
                 0xFFFF0000);
     SaveBufferAsBMP(L"test_panorama.bmp", dest, output_size.x, output_size.y, 32);
     return result;

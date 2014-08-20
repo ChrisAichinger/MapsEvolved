@@ -167,7 +167,7 @@ PixelBuf CompositeMap::GetRegion(
             subregion_sz = MapPixelDeltaInt(x_end - x_start, y_end - y_start);
             PixelBuf subregion = map->GetRegion(subregion_pos, subregion_sz);
             // BitBlt subregion into our result region at [xy]_offset.
-            result.Insert(x_offset, y_offset, subregion);
+            result.Insert(PixelBufCoord(x_offset, y_offset), subregion);
 
             y_offset += subregion_sz.y;
         }

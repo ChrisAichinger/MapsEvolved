@@ -12,6 +12,29 @@ class EXPORT BezierCoord {
         double x, y;
 };
 
+class EXPORT PixelBufCoord {
+    public:
+        PixelBufCoord() : x(0), y(0) {};
+        PixelBufCoord(int x_, int y_) : x(x_), y(y_) {};
+
+        PixelBufCoord& operator+=(const class PixelBufDelta &rhs);
+        PixelBufCoord& operator-=(const class PixelBufDelta &rhs);
+
+        int x, y;
+};
+
+class EXPORT PixelBufDelta {
+    public:
+        PixelBufDelta() : x(0), y(0) {};
+        PixelBufDelta(int x_, int y_) : x(x_), y(y_) {};
+
+        PixelBufDelta& operator+=(const class PixelBufDelta &rhs);
+        PixelBufDelta& operator-=(const class PixelBufDelta &rhs);
+
+        int x, y;
+};
+
+
 class EXPORT DisplayCoord {
     public:
         DisplayCoord() : x(0), y(0) {};
@@ -252,6 +275,8 @@ class EXPORT MapBezierGradient {
         return lhs;                                                           \
     }
 
+OPERATORS_EQ_STREAM(PixelBufCoord)
+OPERATORS_EQ_STREAM(PixelBufDelta)
 OPERATORS_EQ_STREAM(DisplayCoord)
 OPERATORS_EQ_STREAM(DisplayCoordCentered)
 OPERATORS_EQ_STREAM(DisplayDelta)
@@ -270,12 +295,14 @@ OPERATORS_MULDIV(BaseMapDelta, double)
 OPERATORS_MULDIV(MapPixelDeltaInt, int)
 OPERATORS_MULDIV(MapBezierGradient, double)
 
+OPERATORS_ADDSUB(PixelBufCoord, PixelBufDelta)
 OPERATORS_ADDSUB(DisplayCoord, DisplayDelta)
 OPERATORS_ADDSUB(DisplayCoordCentered, DisplayDelta)
 OPERATORS_ADDSUB(MapPixelCoord, MapPixelDelta)
 OPERATORS_ADDSUB(MapPixelCoordInt, MapPixelDeltaInt)
 OPERATORS_ADDSUB(BaseMapCoord, BaseMapDelta)
 
+OPERATORS_ADDSUB1(PixelBufDelta)
 OPERATORS_ADDSUB1(DisplayDelta)
 OPERATORS_ADDSUB1(MapPixelDelta)
 OPERATORS_ADDSUB1(MapPixelDeltaInt)

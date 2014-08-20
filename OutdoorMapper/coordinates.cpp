@@ -57,6 +57,12 @@
          return *this;                                                        \
      }
 
+// PixelBufCoord
+OPERATORS_COORD_ADDSUB(PixelBufCoord, PixelBufDelta, x, y);
+
+// PixelBufDelta
+OPERATORS_DELTA_ADDSUB(PixelBufDelta, x, y)
+
 
 // DisplayCoord
 OPERATORS_COORD_ADDSUB(DisplayCoord, DisplayDelta, x, y);
