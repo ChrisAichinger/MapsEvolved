@@ -46,6 +46,48 @@ class BezierCoord {
         %End
 };
 
+class PixelBufCoord {
+%TypeHeaderCode
+#include "coordinates.h"
+%End
+    public:
+        PixelBufCoord();
+        PixelBufCoord(int x_, int y_);
+
+        PixelBufCoord& operator+=(const PixelBufDelta &rhs);
+        PixelBufCoord& operator-=(const PixelBufDelta &rhs);
+        int x;
+        int y;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = PyUnicode_FromFormat("<%s(%d, %d)>",
+                                          sipSelf->ob_type->tp_name,
+                                          sipCpp->x, sipCpp->y);
+        %End
+};
+
+class PixelBufDelta {
+%TypeHeaderCode
+#include "coordinates.h"
+%End
+    public:
+        PixelBufDelta();
+        PixelBufDelta(int x_, int y_);
+        PixelBufDelta& operator+=(const PixelBufDelta &rhs);
+        PixelBufDelta& operator-=(const PixelBufDelta &rhs);
+
+        int x;
+        int y;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = PyUnicode_FromFormat("<%s(%d, %d)>",
+                                          sipSelf->ob_type->tp_name,
+                                          sipCpp->x, sipCpp->y);
+        %End
+};
+
 class DisplayCoord {
 %TypeHeaderCode
 #include "coordinates.h"
@@ -369,55 +411,36 @@ class MapBezierGradient {
 };
 
 
+bool operator==(const PixelBufCoord& lhs, const PixelBufCoord& rhs);
+bool operator!=(const PixelBufCoord& lhs, const PixelBufCoord& rhs);
+bool operator==(const PixelBufDelta& lhs, const PixelBufDelta& rhs);
+bool operator!=(const PixelBufDelta& lhs, const PixelBufDelta& rhs);
+
 bool operator==(const DisplayCoord& lhs, const DisplayCoord& rhs);
 bool operator!=(const DisplayCoord& lhs, const DisplayCoord& rhs);
-//std::ostream& operator<<(std::ostream& os, const DisplayCoord& obj);
-//std::wostream& operator<<(std::wostream& os, const DisplayCoord& obj);
-
 bool operator==(const DisplayCoordCentered& lhs, const DisplayCoordCentered& rhs);
 bool operator!=(const DisplayCoordCentered& lhs, const DisplayCoordCentered& rhs);
-//std::ostream& operator<<(std::ostream& os, const DisplayCoordCentered& obj);
-//std::wostream& operator<<(std::wostream& os, const DisplayCoordCentered& obj);
-
 bool operator==(const DisplayDelta& lhs, const DisplayDelta& rhs);
 bool operator!=(const DisplayDelta& lhs, const DisplayDelta& rhs);
-//std::ostream& operator<<(std::ostream& os, const DisplayDelta& obj);
-//std::wostream& operator<<(std::wostream& os, const DisplayDelta& obj);
 
 bool operator==(const MapPixelCoord& lhs, const MapPixelCoord& rhs);
 bool operator!=(const MapPixelCoord& lhs, const MapPixelCoord& rhs);
-//std::ostream& operator<<(std::ostream& os, const MapPixelCoord& obj);
-//std::wostream& operator<<(std::wostream& os, const MapPixelCoord& obj);
-
 bool operator==(const MapPixelDelta& lhs, const MapPixelDelta& rhs);
 bool operator!=(const MapPixelDelta& lhs, const MapPixelDelta& rhs);
-//std::ostream& operator<<(std::ostream& os, const MapPixelDelta& obj);
-//std::wostream& operator<<(std::wostream& os, const MapPixelDelta& obj);
 
 bool operator==(const MapPixelCoordInt& lhs, const MapPixelCoordInt& rhs);
 bool operator!=(const MapPixelCoordInt& lhs, const MapPixelCoordInt& rhs);
-//std::ostream& operator<<(std::ostream& os, const MapPixelCoordInt& obj);
-//std::wostream& operator<<(std::wostream& os, const MapPixelCoordInt& obj);
-
 bool operator==(const MapPixelDeltaInt& lhs, const MapPixelDeltaInt& rhs);
 bool operator!=(const MapPixelDeltaInt& lhs, const MapPixelDeltaInt& rhs);
-//std::ostream& operator<<(std::ostream& os, const MapPixelDeltaInt& obj);
-//std::wostream& operator<<(std::wostream& os, const MapPixelDeltaInt& obj);
 
 bool operator==(const MapBezierGradient& lhs, const MapBezierGradient& rhs);
 bool operator!=(const MapBezierGradient& lhs, const MapBezierGradient& rhs);
-//std::ostream& operator<<(std::ostream& os, const MapBezierGradient& obj);
-//std::wostream& operator<<(std::wostream& os, const MapBezierGradient& obj);
 
 bool operator==(const BaseMapCoord& lhs, const BaseMapCoord& rhs);
 bool operator!=(const BaseMapCoord& lhs, const BaseMapCoord& rhs);
-//std::ostream& operator<<(std::ostream& os, const BaseMapCoord& obj);
-//std::wostream& operator<<(std::wostream& os, const BaseMapCoord& obj);
 
 bool operator==(const BaseMapDelta& lhs, const BaseMapDelta& rhs);
 bool operator!=(const BaseMapDelta& lhs, const BaseMapDelta& rhs);
-//std::ostream& operator<<(std::ostream& os, const BaseMapDelta& obj);
-//std::wostream& operator<<(std::wostream& os, const BaseMapDelta& obj);
 
 
 DisplayDelta operator*(DisplayDelta lhs, double rhs);
@@ -439,6 +462,9 @@ MapBezierGradient operator*(MapBezierGradient lhs, double rhs);
 MapBezierGradient operator*(double lhs, MapBezierGradient rhs);
 MapBezierGradient operator/(MapBezierGradient lhs, double rhs);
 
+PixelBufCoord operator+(PixelBufCoord lhs, const PixelBufDelta &rhs);
+PixelBufCoord operator+(const PixelBufDelta &lhs, PixelBufCoord rhs);
+PixelBufCoord operator-(PixelBufCoord lhs, const PixelBufDelta &rhs);
 DisplayCoord operator+(DisplayCoord lhs, const DisplayDelta &rhs);
 DisplayCoord operator+(const DisplayDelta &lhs, DisplayCoord rhs);
 DisplayCoord operator-(DisplayCoord lhs, const DisplayDelta &rhs);
@@ -455,6 +481,8 @@ BaseMapCoord operator+(BaseMapCoord lhs, const BaseMapDelta &rhs);
 BaseMapCoord operator+(const BaseMapDelta &lhs, BaseMapCoord rhs);
 BaseMapCoord operator-(BaseMapCoord lhs, const BaseMapDelta &rhs);
 
+PixelBufDelta operator+(PixelBufDelta lhs, const PixelBufDelta &rhs);
+PixelBufDelta operator-(PixelBufDelta lhs, const PixelBufDelta &rhs);
 
 DisplayDelta operator+(DisplayDelta lhs, const DisplayDelta &rhs);
 DisplayDelta operator-(DisplayDelta lhs, const DisplayDelta &rhs);

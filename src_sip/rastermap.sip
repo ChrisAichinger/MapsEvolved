@@ -1,11 +1,15 @@
 typedef unsigned int size_t;
 
-class PixelBuf
-{
+class PixelBuf {
 %TypeHeaderCode
-#include "rastermap.h"
+#include "pixelbuf.h"
+#include "coordinates.h"
 %End
     public:
+        PixelBuf();
+        PixelBuf(int width, int height);
+        PixelBuf(int width, int height, unsigned int value);
+
         unsigned int GetWidth() const;
         unsigned int GetHeight() const;
         unsigned int GetPixel(int x, int y) const;
@@ -16,10 +20,19 @@ class PixelBuf
             sipRes = sipConvertFromConstVoidPtrAndSize(sipCpp->GetRawData(),
                                                        size);
         %End
+
+        void Insert(const PixelBufCoord &pos, const PixelBuf &source);
+        void SetPixel(const PixelBufCoord &pos, unsigned int val);
+        void Line(const PixelBufCoord &start,
+                  const PixelBufCoord &end,
+                  const unsigned int color);
+        void Rect(const PixelBufCoord &start,
+                  const PixelBufCoord &end,
+                  const unsigned int color);
 };
 
 
-class GeoPixels /Abstract/ {
+class GeoPixels {
 %TypeHeaderCode
 #include "rastermap.h"
 %End
@@ -32,7 +45,7 @@ class GeoPixels /Abstract/ {
 };
 
 
-class GeoDrawable : public GeoPixels /Abstract/ {
+class GeoDrawable : public GeoPixels {
 %TypeHeaderCode
 #include "rastermap.h"
 %End
@@ -56,9 +69,9 @@ class GeoDrawable : public GeoPixels /Abstract/ {
         virtual unsigned int GetWidth() const = 0;
         virtual unsigned int GetHeight() const = 0;
         virtual MapPixelDeltaInt GetSize() const = 0;
-        PixelBuf
+        virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
-                      const MapPixelDeltaInt &size) const;
+                      const MapPixelDeltaInt &size) const = 0;
 
         virtual Projection GetProj() const = 0;
 
@@ -71,6 +84,7 @@ class GeoDrawable : public GeoPixels /Abstract/ {
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
                         const MapPixelCoord &base_br) const;
+        virtual ODMPixelFormat GetPixelFormat() const = 0;
 };
 
 class GeoDrawableShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
@@ -85,7 +99,7 @@ typedef std::shared_ptr<GeoDrawable> GeoDrawableShPtr;
         GeoDrawable *get();
 };
 
-class RasterMap : public GeoDrawable /Abstract/ {
+class RasterMap : public GeoDrawable {
     public:
         virtual ~RasterMap();
 };

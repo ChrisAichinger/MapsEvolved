@@ -11,6 +11,7 @@ from .errors import *
 
 from . import filelist
 from .filelist import FileList, FileListEntry
+from .gpstracks import *
 
 def _(s): return s
 

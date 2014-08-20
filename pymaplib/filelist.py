@@ -7,6 +7,7 @@ import gpxpy.gpx
 
 from . import maplib_sip as maplib_sip
 from .errors import MapLibError, FileLoadError, FileOpenError, FileParseError
+from .gpstracks import GPSTrack
 
 def _(s): return s
 
@@ -105,29 +106,8 @@ class GPXFile(FileListEntry):
         super().__init__()
         self._fname = fname
         self._type = FileListEntry.TYPE_GPSTRACK
-        try:
-            with open(fname, 'r') as f:
-                gpx = gpxpy.parse(f)
-        except FileNotFoundError as e:
-            raise FileOpenError("Could not find file '%s':\n%s",
-                                 fname, str(e)) from None
-        except gpxpy.gpx.GPXException as e:
-            raise FileParseError("Invalid GPX file '%s':\n%s",
-                                 fname, str(e)) from None
-
-        segments = []
-        all_points = []
-        for track_idx, track in enumerate(gpx.tracks):
-            for segment_idx, segment in enumerate(track.segments):
-                points = [maplib_sip.LatLon(p.latitude, p.longitude)
-                          for p in segment.points]
-                all_points.extend(points)
-                segment_name = "%s:%d:%d" % (fname, track_idx, segment_idx)
-                gpx_segment = maplib_sip.GPSSegmentShPtr(segment_name, points)
-                segments.append(gpx_segment)
-
-        self.drawable = maplib_sip.GPSSegmentShPtr(fname, all_points)
-        self.alternate_views = segments
+        self.drawable = maplib_sip.GeoDrawableShPtr(GPSTrack(fname))
+        self.alternate_views = []
 
 
 class POI_Entry:

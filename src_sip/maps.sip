@@ -28,7 +28,7 @@ class Projection {
 #include "util.h"
 %End
     public:
-        explicit Projection(const std::string &proj_str);
+        explicit Projection(const char *proj_str /Encoding="ASCII"/);
 
         bool PCSToLatLong(double &x, double &y) const;
         bool LatLongToPCS(double &x, double &y) const;
