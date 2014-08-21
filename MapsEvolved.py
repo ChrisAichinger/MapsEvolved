@@ -11,7 +11,15 @@ from mapsevolved import frmMain
 
 
 def main():
-    app = wx.App(redirect=False)   # Do not redirect errors to popup window.
+    # Do not redirect errors to popup window.
+    app = wx.App(redirect=False)
+
+    # TODO: Make Windows not fiddle with our toolbar buttons.
+    # Need to rework our images to have proper alpha channels before, though.
+    # Cf. http://wxpython.org/Phoenix/docs/html/ToolBar.html
+    #if wx.GetApp().GetComCtl32Version() >= 600 and wx.DisplayDepth() >= 32:
+    #    wx.SystemOptions.SetOption("msw.remap", 2)
+
     top = frmMain.MainFrame()
     app.SetTopWindow(top)
     top.Show()
