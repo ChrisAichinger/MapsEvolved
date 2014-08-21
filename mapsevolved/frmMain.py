@@ -429,9 +429,9 @@ class MainFrame(wx.Frame):
         data.Transparency = 1 - evt.Position / 100
         self.update_map_from_layerlist()
 
-    @util.EVENT(wx.EVT_TOOL,  id=xrc.XRCID('GotoCoordTBButton'))
-    @util.EVENT(wx.EVT_TOOL,  id=xrc.XRCID('GotoCoordMenuItem'))
-    @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('NewCoordMenuItem'))
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('GotoCoordTBButton'))
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('GotoCoordMenuItem'))
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('NewCoordMenuItem'))
     def on_goto_coord_button(self, evt):
         # Suppress dragging for this function, otherwise we get spurious drag
         # events when the dialog is closed. The exact cause is unknown.
@@ -482,19 +482,15 @@ class MainFrame(wx.Frame):
     @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('DDDCoordFmtMenuItem'))
     def on_coord_fmt_ddd(self, evt):
         self.coord_fmt = 'DDD'
-        self.update_statusbar()
     @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('DMMCoordFmtMenuItem'))
     def on_coord_fmt_dmm(self, evt):
         self.coord_fmt = 'DMM'
-        self.update_statusbar()
     @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('DMSCoordFmtMenuItem'))
     def on_coord_fmt_dms(self, evt):
         self.coord_fmt = 'DMS'
-        self.update_statusbar()
     @util.EVENT(wx.EVT_MENU,  id=xrc.XRCID('UTMCoordFmtMenuItem'))
     def on_coord_fmt_utm(self, evt):
         self.coord_fmt = 'UTM'
-        self.update_statusbar()
 
     @property
     def coord_fmt(self):
@@ -510,6 +506,7 @@ class MainFrame(wx.Frame):
         self._coord_fmt = fmt
         with config.Config.write() as conf:
              conf.set_string('coord_fmt', self._coord_fmt)
+        self.update_statusbar()
 
     def format_latlon(self, latlon):
         return pymaplib.format_coordinate(self.coord_fmt, latlon)
