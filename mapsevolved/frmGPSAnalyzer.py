@@ -487,9 +487,16 @@ class GPSTrackAnalyzerFrame(wx.Frame):
                 ]
         self.stat_texts = {st: st.LabelText for st in self.stat_texts}
 
-        self.load_gpx()
+        fname = self.track.GetFname()
+        self.gpx_basename = os.path.basename(fname).split(':', 1)[0]
+        self.gpx_fname = os.path.join(os.path.dirname(fname),
+                                      self.gpx_basename)
+
+        self.gpx = self.track.data.gpx
         if not self.gpx:
-            self.Close()
+            # We take the GPX data from an already loaded track.
+            # This really shouldn't happen.
+            raise RuntimeError("GPS Analyzer couldn't get gpx from track.")
         self.augment_gpx_data()
 
         self.active_segments = []
@@ -568,20 +575,6 @@ class GPSTrackAnalyzerFrame(wx.Frame):
         else:
             # Contribution of the other dimension is larger.
             return total_hours - (one_dimension_hours / 2)
-
-    def load_gpx(self):
-        fname = self.track.GetFname()
-        self.gpx_basename = os.path.basename(fname).split(':', 1)[0]
-        self.gpx_fname = os.path.join(os.path.dirname(fname),
-                                      self.gpx_basename)
-
-        self.gpx = None
-        try:
-            with open(self.gpx_fname, 'r') as f:
-                self.gpx = gpxpy.parse(f)
-        except (gpxpy.gpx.GPXException, FileNotFoundError):
-            util.Warn(self, _("Could not reopen GPX file."))
-            self.gpx = None
 
     def augment_gpx_data(self):
         first_point = self.gpx.tracks[0].segments[0].points[0]

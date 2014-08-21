@@ -128,6 +128,11 @@
         <bitmap>..\images\famfamfam_silk_icons\gpstrack-analyze.png</bitmap>
         <tooltip>Show GPS Track Analyzer</tooltip>
       </object>
+      <object class="tool" name="GPSTrackCreatorTBButton">
+        <bitmap>..\images\famfamfam_silk_icons\gpstrack-create.png</bitmap>
+        <toggle>1</toggle>
+        <tooltip>Create GPS Track</tooltip>
+      </object>
     </object>
     <object class="wxBoxSizer">
       <object class="sizeritem">

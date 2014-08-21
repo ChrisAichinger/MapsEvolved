@@ -1,11 +1,13 @@
 import sys
 import os
+import datetime
 
 import wx
 import wx.xrc as xrc
 import wx.adv
 from wx.lib.wordwrap import wordwrap
 import gpxpy
+import gpxpy.gpx
 
 import pymaplib
 from mapsevolved import frmMapManager, frmPanorama, frmGPSAnalyzer
@@ -114,6 +116,7 @@ class MainFrame(wx.Frame):
         self.gpstrackanalyzer_window = None
         self.have_shown_layermgr_once = False
         self.special_layers = []
+        self.gps_creator_drawable = None
 
         self.update_layerlist_from_map()
         self.expand_to_fit_sizer()
@@ -283,6 +286,24 @@ class MainFrame(wx.Frame):
         if self.drag_enabled:
             self.panel.ReleaseMouse()
             self.on_capture_changed(evt)
+        elif self.gps_creator_drawable:
+            disp_coord = pymaplib.DisplayCoord(evt.x, evt.y)
+            base_coord = self.mapdisplay.BaseCoordFromDisplay(disp_coord)
+            ok, ll = self.mapdisplay.GetBaseMap().PixelToLatLon(base_coord)
+            if not ok:
+                return
+            ok, ti = self.heightfinder.CalcTerrain(ll)
+            if not ok:
+                return
+
+            gpx = self.gps_creator_drawable.data.gpx
+            points = gpx.tracks[0].segments[0].points
+            # One minute per waypoint, starting Jan 1, 1970, midnight. :-)
+            time = datetime.datetime.utcfromtimestamp(60 * len(points))
+            pt = gpxpy.gpx.GPXTrackPoint(ll.lat, ll.lon, ti.height_m, time)
+            segment = points.append(pt)
+            self.gps_creator_drawable.data.update_points()
+            self.panel.Refresh(eraseBackground=False)
 
     @util.EVENT(wx.EVT_MOTION, id=xrc.XRCID('MapPanel'))
     def on_mouse_motion(self, evt):
@@ -451,6 +472,53 @@ class MainFrame(wx.Frame):
                 self.panel.Refresh(eraseBackground=False)
         finally:
             self.drag_suppress = False
+
+    def save_new_gpstrack(self):
+        saveFileDialog = wx.FileDialog(
+                self, "Save GPS Track", "", "",
+                "GPS Exchange Files (*.gpx)|*.gpx",
+                wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        if saveFileDialog.ShowModal() == wx.ID_CANCEL:
+            return False
+
+        # UTF-8 is hardcoded in gpxpy.
+        with open(saveFileDialog.GetPath(), 'w', encoding="UTF-8") as f:
+            f.write(self.gps_creator_drawable.data.gpx.to_xml())
+        return True
+
+    @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('GPSTrackCreatorTBButton'))
+    def on_create_new_gpstrack(self, evt):
+        if evt.IsChecked():
+            gpx = gpxpy.gpx.GPX()
+            gpx.tracks.append(gpxpy.gpx.GPXTrack())
+            gpx.tracks[0].segments.append(gpxpy.gpx.GPXTrackSegment())
+            data = pymaplib.gpstracks.GPSData(gpx)
+            drawable = pymaplib.gpstracks.GPSTrack("", data)
+            self.gps_creator_drawable = pymaplib.GeoDrawableShPtr(drawable)
+            o = pymaplib.OverlaySpec(self.gps_creator_drawable, True, 1.0)
+            self.special_layers.append(o)
+        else:
+            # Only ask to save if the user actually created a track.
+            if self.gps_creator_drawable.data.all_points:
+                dlg = wx.MessageDialog(
+                        self,
+                        _("Do you want to save the newly created GPS track?"),
+                        _("Save GPS Track?"),
+                        wx.YES_NO | wx.CANCEL | wx.CANCEL_DEFAULT)
+                res = dlg.ShowModal()
+                if res == wx.ID_CANCEL:
+                    self.toolbar.ToggleTool(evt.Id, True)
+                    return
+                if res == wx.ID_YES:
+                    if not self.save_new_gpstrack():
+                        # The user aborted the save file dialog.
+                        self.toolbar.ToggleTool(evt.Id, True)
+                        return
+
+            self.special_layers = [o for o in self.special_layers
+                                   if o.Map != self.gps_creator_drawable]
+            self.gps_creator_drawable = None
+        self.update_map_from_layerlist()
 
     @util.EVENT(wx.EVT_RIGHT_UP, id=xrc.XRCID('MainStatusBar'))
     def on_statusbar_rclick(self, evt):

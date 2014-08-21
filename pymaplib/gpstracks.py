@@ -7,21 +7,31 @@ from . import maplib_sip as maplib_sip
 from .errors import MapLibError, FileLoadError, FileOpenError, FileParseError
 
 class GPSData:
-    def __init__(self, fname):
-        self._fname = fname
-        try:
-            with open(fname, 'r') as f:
-                gpx = gpxpy.parse(f)
-        except FileNotFoundError as e:
-            raise FileOpenError("Could not find file '%s':\n%s",
-                                 fname, str(e)) from None
-        except gpxpy.gpx.GPXException as e:
-            raise FileParseError("Invalid GPX file '%s':\n%s",
-                                 fname, str(e)) from None
+    """GPS data backend"""
 
+    def __init__(self, fname):
+        """Load GPS data from a file or pass a GPX object directly"""
+
+        self._fname = fname
+        if isinstance(fname, str):
+            try:
+                with open(fname, 'r') as f:
+                    self.gpx = gpxpy.parse(f)
+            except FileNotFoundError as e:
+                raise FileOpenError("Could not find file '%s':\n%s",
+                                     fname, str(e)) from None
+            except gpxpy.gpx.GPXException as e:
+                raise FileParseError("Invalid GPX file '%s':\n%s",
+                                     fname, str(e)) from None
+        else:
+            self.gpx = fname
+
+        self.update_points()
+
+    def update_points(self):
         self.all_points = []
         self.all_segments = []
-        for track_idx, track in enumerate(gpx.tracks):
+        for track_idx, track in enumerate(self.gpx.tracks):
             self.all_segments.extend(track.segments)
             for segment_idx, segment in enumerate(track.segments):
                 self.all_points.extend(segment.points)
@@ -33,14 +43,23 @@ class GPSTrack(maplib_sip.GeoDrawable):
     METERS_PER_DEGREE = EARTH_RADIUS_METERS * math.pi / 180
     METERS_PER_PIXEL = 10
 
-    def __init__(self, fname):
+    def __init__(self, fname, data=None):
         super().__init__()
         self._fname = fname
-        self.data = GPSData(fname)
-        self._lat_min = min(p.latitude for p in self.data.all_points)
-        self._lat_max = max(p.latitude for p in self.data.all_points)
-        self._lon_min = min(p.longitude for p in self.data.all_points)
-        self._lon_max = max(p.longitude for p in self.data.all_points)
+        self.data = data
+        if self.data is None:
+            self.data = GPSData(fname)
+
+        if self.data.all_points:
+            self._lat_min = min(p.latitude for p in self.data.all_points)
+            self._lat_max = max(p.latitude for p in self.data.all_points)
+            self._lon_min = min(p.longitude for p in self.data.all_points)
+            self._lon_max = max(p.longitude for p in self.data.all_points)
+        else:
+            self._lat_min = 0
+            self._lat_max = 90
+            self._lon_min = 0
+            self._lon_max = 90
 
         height = self._lat_max - self._lat_min
         width = self._lon_max - self._lon_min
