@@ -216,6 +216,15 @@
     <title>Maps Evolved</title>
     <style>wxDEFAULT_FRAME_STYLE|wxCAPTION|wxSYSTEM_MENU</style>
   </object>
+  <object class="wxMenu" name="GPSDrawPopup">
+    <object class="wxMenuItem" name="UndoLastPointMenuItem">
+      <label>&amp;Undo Last Point</label>
+    </object>
+    <object class="separator"/>
+    <object class="wxMenuItem" name="ExitGPSDrawMenuItem">
+      <label>E&amp;xit GPS Draw Mode</label>
+    </object>
+  </object>
   <object class="wxMenu" name="SBCoordPopup">
     <object class="wxMenuItem" name="NewCoordMenuItem">
       <label>&amp;Enter new coordinates</label>

@@ -45,18 +45,21 @@ def EVENT(event, id=wx.ID_ANY, id2=wx.ID_ANY, bind_on_parent=False):
         return f
     return func
 
-def bind_decorator_events(eventhandler):
+def bind_decorator_events(eventhandler, wxcontainer=None):
+    if wxcontainer is None:
+        wxcontainer = eventhandler
+
     for funcname in dir(eventhandler):
         func = getattr(eventhandler, funcname)
         if hasattr(func, 'wxevent'):
             for event, id, id2, bind_on_parent in func.wxevent:
-                source = eventhandler.FindWindowById(id)
+                source = wxcontainer.FindWindowById(id)
                 if bind_on_parent or not source:
                     # Allow binding on parents only if the event is a
                     # CommandEvent, since normal Events do not propagate
                     # upwards!
                     assert(event in _command_events)
-                    eventhandler.Bind(event, func, id=id, id2=id2)
+                    wxcontainer.Bind(event, func, id=id, id2=id2)
                 else:
                     source.Bind(event, func, id=id, id2=id2)
 

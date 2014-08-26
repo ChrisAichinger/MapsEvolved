@@ -6,12 +6,10 @@ import wx
 import wx.xrc as xrc
 import wx.adv
 from wx.lib.wordwrap import wordwrap
-import gpxpy
-import gpxpy.gpx
 
 import pymaplib
 from mapsevolved import frmMapManager, frmPanorama, frmGPSAnalyzer
-from mapsevolved import dlgGotoCoord, util, config
+from mapsevolved import dlgGotoCoord, util, config, uimodes
 
 def _(s): return s
 
@@ -56,17 +54,17 @@ class MainFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self)
         # 3-argument LoadFrame() calls self.Create(), so skip 2-phase creation.
-        res = util.get_resources("main")
-        if not res.LoadFrame(self, None, "MainFrame"):
+        self.xrc_res = util.get_resources("main")
+        if not self.xrc_res.LoadFrame(self, None, "MainFrame"):
             raise RuntimeError("Could not load main frame from XRC file.")
 
-        self.sb_coord_popup = res.LoadMenu("SBCoordPopup")
+        self.sb_coord_popup = self.xrc_res.LoadMenu("SBCoordPopup")
         if not self.sb_coord_popup:
             raise RuntimeError("Could not load statusbar coordinates " +
                                "popup menu from XRC.")
 
         ctrl = CustomRearrangeList(self, id=xrc.XRCID('LayerListBox'))
-        res.AttachUnknownControl('LayerListBox', ctrl, self)
+        self.xrc_res.AttachUnknownControl('LayerListBox', ctrl, self)
 
         # Install filetype handlers for wx.Image.
         wx.InitAllImageHandlers()
@@ -116,10 +114,12 @@ class MainFrame(wx.Frame):
         self.gpstrackanalyzer_window = None
         self.have_shown_layermgr_once = False
         self.special_layers = []
-        self.gps_creator_drawable = None
 
         self.update_layerlist_from_map()
         self.expand_to_fit_sizer()
+
+        self.uimode = uimodes.BaseUIMode(frame=self,
+                                         mapdisplay=self.mapdisplay)
 
     @util.EVENT(wx.EVT_CLOSE, id=xrc.XRCID('MainFrame'))
     def on_close_window(self, evt):
@@ -253,18 +253,13 @@ class MainFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_MOUSEWHEEL, id=xrc.XRCID('MapPanel'))
     def on_mousewheel(self, evt):
-        if evt.GetWheelAxis() != wx.MOUSE_WHEEL_VERTICAL:
-            evt.Skip()
-            return
-        pos = evt.GetPosition()
-        self.mapdisplay.StepZoom(evt.GetWheelRotation() / evt.GetWheelDelta(),
-                                 pymaplib.DisplayCoord(pos.x, pos.y))
-        self.update_statusbar()
+        evt.Skip()
+        if evt.GetWheelAxis() == wx.MOUSE_WHEEL_VERTICAL:
+            self.uimode.on_mouse_vert_wheel(evt)
 
     @util.EVENT(wx.EVT_LEFT_DCLICK, id=xrc.XRCID('MapPanel'))
     def on_left_doubleclick(self, evt):
-        pos = pymaplib.DisplayCoord(evt.x, evt.y)
-        self.mapdisplay.CenterToDisplayCoord(pos)
+        self.uimode.on_mouse_l_dblclick(evt)
 
     @util.EVENT(wx.EVT_CHAR, id=xrc.XRCID('MapPanel'))
     def on_char(self, evt):
@@ -286,44 +281,33 @@ class MainFrame(wx.Frame):
         if self.drag_enabled:
             self.panel.ReleaseMouse()
             self.on_capture_changed(evt)
-        elif self.gps_creator_drawable:
-            disp_coord = pymaplib.DisplayCoord(evt.x, evt.y)
-            base_coord = self.mapdisplay.BaseCoordFromDisplay(disp_coord)
-            ok, ll = self.mapdisplay.GetBaseMap().PixelToLatLon(base_coord)
-            if not ok:
-                return
-            ok, ti = self.heightfinder.CalcTerrain(ll)
-            if not ok:
-                return
+        else:
+            self.uimode.on_mouse_l_up(evt)
 
-            gpx = self.gps_creator_drawable.data.gpx
-            points = gpx.tracks[0].segments[0].points
-            # One minute per waypoint, starting Jan 1, 1970, midnight. :-)
-            time = datetime.datetime.utcfromtimestamp(60 * len(points))
-            pt = gpxpy.gpx.GPXTrackPoint(ll.lat, ll.lon, ti.height_m, time)
-            segment = points.append(pt)
-            self.gps_creator_drawable.data.update_points()
-            self.panel.Refresh(eraseBackground=False)
+    @util.EVENT(wx.EVT_RIGHT_UP, id=xrc.XRCID('MapPanel'))
+    def on_right_up(self, evt):
+        evt.Skip()
+        self.uimode.on_mouse_r_up(evt)
 
     @util.EVENT(wx.EVT_MOTION, id=xrc.XRCID('MapPanel'))
     def on_mouse_motion(self, evt):
         # Ignore mouse movement if we're not dragging.
         if evt.Dragging() and evt.LeftIsDown():
-            if not self.drag_suppress and not self.drag_enabled:
+            pos = evt.GetPosition()
+            drag_x_threshold = wx.SystemSettings.GetMetric(wx.SYS_DRAG_X)
+            drag_y_threshold = wx.SystemSettings.GetMetric(wx.SYS_DRAG_Y)
+            if not self.drag_suppress and not self.drag_enabled and \
+               (abs(pos.x - self.drag_last_pos.x) > drag_x_threshold or
+                abs(pos.y - self.drag_last_pos.y) > drag_y_threshold):
+
                 # Begin the drag operation
                 self.drag_enabled = True
                 self.panel.CaptureMouse()
-                self.Cursor = wx.Cursor(wx.CURSOR_HAND)
+                self.uimode.on_drag_begin(evt)
 
-            if not self.drag_enabled:
-                return
-
-            pos = evt.GetPosition()
-            delta = pos - self.drag_last_pos
-            self.drag_last_pos = pos
-            self.mapdisplay.DragMap(
-                    pymaplib.DisplayDelta(delta.x,delta.y))
-            self.panel.Refresh(eraseBackground=False)
+            if self.drag_enabled:
+                self.uimode.on_drag(evt, self.drag_last_pos)
+                self.drag_last_pos = evt.GetPosition()
 
         else:
             self.update_statusbar()
@@ -343,7 +327,7 @@ class MainFrame(wx.Frame):
     def on_capture_changed(self, evt):
         self.drag_enabled = False
         self.drag_suppress = True
-        self.Cursor = wx.Cursor()
+        self.uimode.on_drag_end(evt)
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ZoomInTBButton'))
     def on_zoom_in(self, evt):
@@ -473,52 +457,24 @@ class MainFrame(wx.Frame):
         finally:
             self.drag_suppress = False
 
-    def save_new_gpstrack(self):
-        saveFileDialog = wx.FileDialog(
-                self, "Save GPS Track", "", "",
-                "GPS Exchange Files (*.gpx)|*.gpx",
-                wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
-        if saveFileDialog.ShowModal() == wx.ID_CANCEL:
-            return False
-
-        # UTF-8 is hardcoded in gpxpy.
-        with open(saveFileDialog.GetPath(), 'w', encoding="UTF-8") as f:
-            f.write(self.gps_creator_drawable.data.gpx.to_xml())
-        return True
-
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('GPSTrackCreatorTBButton'))
     def on_create_new_gpstrack(self, evt):
         if evt.IsChecked():
-            gpx = gpxpy.gpx.GPX()
-            gpx.tracks.append(gpxpy.gpx.GPXTrack())
-            gpx.tracks[0].segments.append(gpxpy.gpx.GPXTrackSegment())
-            data = pymaplib.gpstracks.GPSData(gpx)
-            drawable = pymaplib.gpstracks.GPSTrack("", data)
-            self.gps_creator_drawable = pymaplib.GeoDrawableShPtr(drawable)
-            o = pymaplib.OverlaySpec(self.gps_creator_drawable, True, 1.0)
-            self.special_layers.append(o)
+            self.uimode = uimodes.GPSDrawUIMode(
+                    frame=self, mapdisplay=self.mapdisplay,
+                    heightfinder=self.heightfinder)
         else:
-            # Only ask to save if the user actually created a track.
-            if self.gps_creator_drawable.data.all_points:
-                dlg = wx.MessageDialog(
-                        self,
-                        _("Do you want to save the newly created GPS track?"),
-                        _("Save GPS Track?"),
-                        wx.YES_NO | wx.CANCEL | wx.CANCEL_DEFAULT)
-                res = dlg.ShowModal()
-                if res == wx.ID_CANCEL:
-                    self.toolbar.ToggleTool(evt.Id, True)
-                    return
-                if res == wx.ID_YES:
-                    if not self.save_new_gpstrack():
-                        # The user aborted the save file dialog.
-                        self.toolbar.ToggleTool(evt.Id, True)
-                        return
+            if self.uimode.try_exit_mode():
+                self.uimode = uimodes.BaseUIMode(frame=self,
+                                                 mapdisplay=self.mapdisplay)
+            else:
+                self.toolbar.ToggleTool(evt.Id, True)
 
-            self.special_layers = [o for o in self.special_layers
-                                   if o.Map != self.gps_creator_drawable]
-            self.gps_creator_drawable = None
-        self.update_map_from_layerlist()
+    @util.EVENT(uimodes.EVT_EXIT_MODE, id=xrc.XRCID('MainFrame'))
+    def on_uimode_wants_exit(self, evt):
+        if self.uimode.try_exit_mode():
+            self.uimode = uimodes.BaseUIMode(frame=self,
+                                             mapdisplay=self.mapdisplay)
 
     @util.EVENT(wx.EVT_RIGHT_UP, id=xrc.XRCID('MainStatusBar'))
     def on_statusbar_rclick(self, evt):
