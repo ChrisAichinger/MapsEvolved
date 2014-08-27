@@ -5,6 +5,7 @@ import textwrap
 
 import wx
 import wx.xrc as xrc
+from wx.lib.pubsub import pub
 
 import gpxpy
 import gpxpy.gpx
@@ -538,6 +539,10 @@ class GPSTrackAnalyzerFrame(wx.Frame):
     @util.EVENT(wx.EVT_LIST_ITEM_DESELECTED, id=xrc.XRCID('PointList'))
     def on_pointlist_selection_change(self, evt):
         self.update_display()
+        point = self.point_list[evt.Index]
+        point.highlight = self.pointlistbox.IsSelected(evt.Index)
+        pub.sendMessage('gpsanalyzer.gps_point_hl_update',
+                        track=self.track, gpx=self.gpx)
 
     @util.EVENT(wx.EVT_PAINT, id=xrc.XRCID('GraphBitmap'))
     def on_graph_paint(self, evt):
@@ -583,6 +588,14 @@ class GPSTrackAnalyzerFrame(wx.Frame):
         h_km_per_hour = h_total_km / h_time_hours
         self.hdist_per_hour_text.Value = "{:.0f}".format(h_km_per_hour)
 
+    @util.EVENT(wx.EVT_CLOSE, id=xrc.XRCID('MainFrame'))
+    def on_close_window(self, evt):
+        evt.Skip()
+        for point in self.walk_all_points():
+            point.highlight = False
+        pub.sendMessage('gpsanalyzer.gps_point_hl_update',
+                        track=self.track, gpx=self.gpx)
+
     def waytime_calc(self, one_dimension_hours, other_dimension_hours):
         return max(one_dimension_hours, other_dimension_hours) + \
                min(one_dimension_hours, other_dimension_hours) / 2
@@ -619,7 +632,7 @@ class GPSTrackAnalyzerFrame(wx.Frame):
         self.pointlistbox.AppendColumn(_("GPS Delta Ele"))
         self.pointlistbox.AppendColumn(_("Map Delta Ele"))
 
-        self.point_list_map = dict()
+        self.point_list = list()
         last_gps_ele = last_dhm_ele = None
         for point in self.walk_all_points():
             if last_gps_ele is None:
@@ -637,7 +650,8 @@ class GPSTrackAnalyzerFrame(wx.Frame):
                       "{:1.01f}".format(point.elevation - last_gps_ele),
                       "{:1.01f}".format(point.dhm_elevation - last_dhm_ele),
                       ])
-            self.point_list_map[point] = self.pointlistbox.GetItemCount() - 1
+            index = self.pointlistbox.GetItemCount() - 1
+            self.point_list.append(point)
             last_gps_ele = point.elevation
             last_dhm_ele = point.dhm_elevation
 
@@ -655,9 +669,7 @@ class GPSTrackAnalyzerFrame(wx.Frame):
         if self.pointlistbox.GetSelectedItemCount() == 0:
             yield from self.walk_all_points()
 
-        for seg in self.active_segments:
-            for point in seg.walk(only_points=True):
-                list_index = self.point_list_map[point]
-                if self.pointlistbox.IsSelected(list_index):
-                    yield point
+        for i, point in enumerate(self.point_list):
+            if self.pointlistbox.IsSelected(i):
+                yield point
 

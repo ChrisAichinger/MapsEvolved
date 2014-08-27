@@ -75,6 +75,10 @@ class GPSTrack(maplib_sip.GeoDrawable):
         self._size = maplib_sip.MapPixelDeltaInt(lon_delta_pixels,
                                                  lat_delta_pixels)
 
+        self.bg_color = 0xFF000000
+        self.color = 0xFF0000FF
+        self.hl_color = 0xFF00CC00
+
     def GetType(self):
         return maplib_sip.GeoDrawable.TYPE_GPSTRACK
     def GetWidth(self):
@@ -133,25 +137,39 @@ class GPSTrack(maplib_sip.GeoDrawable):
             return maplib_sip.PixelBuf(output_size.x, output_size.y)
 
         result = maplib_sip.PixelBuf(output_size.x, output_size.y)
-        base_scale_factor = output_size.x / (base_br.x - base_tl.x);
-        for segment in self.data.all_segments:
-            old_point = None
-            for point in segment.points:
+        base_scale_factor = output_size.x / (base_br.x - base_tl.x)
+
+        def coord_iter(points):
+            prev_coord = None
+            for point in points:
                 point_ll = maplib_sip.LatLon(point.latitude, point.longitude)
                 success, point_abs = base.LatLonToPixel(point_ll)
                 if not success:
                     raise RuntimeError("Could not draw GPS track on a "
                                        "non-georeferenced basemap.")
-                point_disp = maplib_sip.PixelBufCoord(
+                cur_coord = maplib_sip.PixelBufCoord(
                     int(round((point_abs.x - base_tl.x) * base_scale_factor)),
-                    int(round((point_abs.y - base_tl.y) * base_scale_factor)));
+                    int(round((point_abs.y - base_tl.y) * base_scale_factor)))
+                yield cur_coord, prev_coord, point
+                prev_coord = cur_coord
 
-                result.Rect(point_disp - maplib_sip.PixelBufDelta(1, 1),
-                            point_disp + maplib_sip.PixelBufDelta(2, 2),
-                            0xFF0000FF)
-                if old_point is not None:
-                    result.Line(old_point, point_disp, 0xFF0000FF);
-                old_point = point_disp;
+        for segment in self.data.all_segments:
+            old_highlight = False
+            for cur_coord, prev_coord, point in coord_iter(segment.points):
+                point_color = self.color
+                line_color = self.color
+                highlight_this = getattr(point, 'highlight', False)
+                if highlight_this:
+                    point_color = self.hl_color
+                    if old_highlight:
+                        line_color = self.hl_color
+                old_highlight = highlight_this
+
+                result.Rect(cur_coord - maplib_sip.PixelBufDelta(1, 1),
+                            cur_coord + maplib_sip.PixelBufDelta(2, 2),
+                            point_color)
+                if prev_coord is not None:
+                    result.Line(prev_coord, cur_coord, line_color)
 
         return result
 

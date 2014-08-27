@@ -98,6 +98,7 @@ class MainFrame(wx.Frame):
                 self._coord_fmt = "DDD"
 
         util.bind_decorator_events(self)
+        util.bind_decorator_pubsubs(self)
 
         self.ogldisplay = pymaplib.CreateOGLDisplay(self.panel.GetHandle())
 
@@ -369,6 +370,11 @@ class MainFrame(wx.Frame):
             return
 
         self.show_gpstrackanalyzer(gpstrack)
+
+    @util.PUBSUB('gpsanalyzer.gps_point_hl_update')
+    def on_track_hl_update(self, track, gpx):
+        # Force redrawing all GPS tracks.
+        self.panel.Refresh(eraseBackground=False)
 
     def show_gpstrackanalyzer(self, gpstrack):
         if self.gpstrackanalyzer_window:

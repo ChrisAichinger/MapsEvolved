@@ -4,6 +4,7 @@ import contextlib
 
 import wx
 import wx.xrc as xrc
+import wx.lib.pubsub
 
 from mapsevolved import xh_gizmos
 
@@ -62,6 +63,22 @@ def bind_decorator_events(eventhandler, wxcontainer=None):
                     wxcontainer.Bind(event, func, id=id, id2=id2)
                 else:
                     source.Bind(event, func, id=id, id2=id2)
+
+
+def PUBSUB(topicName):
+    def func(f):
+        if not hasattr(f, 'wxpubsub'):
+            f.wxpubsub = []
+        f.wxpubsub.append(topicName)
+        return f
+    return func
+
+def bind_decorator_pubsubs(eventhandler):
+    for funcname in dir(eventhandler):
+        func = getattr(eventhandler, funcname)
+        if hasattr(func, 'wxpubsub'):
+            for topic_name in func.wxpubsub:
+                wx.lib.pubsub.pub.subscribe(func, topic_name)
 
 
 def YesNo(parent, question, caption='Maps Evolved'):
