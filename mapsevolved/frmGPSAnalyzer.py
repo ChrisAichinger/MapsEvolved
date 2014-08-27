@@ -170,6 +170,7 @@ class XAxis_Distance:
 
 class YAxis_GPSElevation:
     axis_name = 'Ele [m]'
+    legend_name = 'GPS Ele'
     def __init__(self, points, point_stats, val_min=None, val_max=None):
         if val_min is None:
             self.val_min = point_stats.ele_gps_min
@@ -197,6 +198,7 @@ class YAxis_GPSElevation:
 
 class YAxis_DHMElevation:
     axis_name = 'Ele [m]'
+    legend_name = 'DHM Ele'
     def __init__(self, points, point_stats, val_min=None, val_max=None):
         if val_min is None:
             self.val_min = point_stats.ele_gps_min
@@ -230,6 +232,7 @@ class GPSTrackGrapher:
         self.gridline_color = wx.Colour(230, 230, 230)
         self.border_px = 10
         self.tick_px = 3
+        self.colors = [wx.BLUE, wx.RED, wx.Colour(79, 47, 79)]
 
         self.draw_gps_ele = True
         self.draw_dhm_ele = True
@@ -305,9 +308,8 @@ class GPSTrackGrapher:
 
     def draw_all_functions(self, dc, coosys_tl, coosys_br, point_stats,
                            x_axis, y_axes):
-        colors = iter([wx.BLUE, wx.RED, wx.Colour(79, 47, 79)])
-        for y_axis in y_axes:
-            dc.Pen = wx.Pen(next(colors), 1)
+        for i, y_axis in enumerate(y_axes):
+            dc.Pen = wx.Pen(self.colors[i], 1)
             self.draw_one_function(dc, coosys_tl, coosys_br, x_axis, y_axis)
 
     def vertical_tick(self, dc, text, pos, tickmark=True):
@@ -336,6 +338,19 @@ class GPSTrackGrapher:
                               pos.y + self.tick_px)
         util.draw_text(dc, text, base_point,
                        alignment=wx.ALIGN_RIGHT|wx.ALIGN_TOP)
+
+    def legend_label(self, dc, text, pos, color):
+        base_point = wx.Point(pos.x, self.border_px)
+        util.draw_text(dc, text, base_point,
+                       alignment=wx.ALIGN_RIGHT|wx.ALIGN_TOP)
+        label_width, label_height, label_descent, label_external_lead = \
+                                                     dc.GetFullTextExtent(text)
+        new_x = pos.x - label_width - 15
+        new_y = self.border_px + label_height // 2
+        dc.Pen = wx.Pen(color, 1)
+        dc.DrawLine(new_x, new_y, new_x + 10, new_y)
+
+        return wx.Point(new_x - self.border_px, pos.y)
 
     def draw_coordinate_system(self, dc, coosys_tl, coosys_br):
         dc.Pen = wx.TRANSPARENT_PEN
@@ -442,6 +457,11 @@ class GPSTrackGrapher:
 
         self.horizontal_label(dc, x_axis.axis_name, coosys_br)
         self.vertical_label(dc, y_axis.axis_name, coosys_tl)
+
+        legend_pos = wx.Point(coosys_br.x, self.border_px)
+        for i, axis in enumerate(y_axes):
+            legend_pos = self.legend_label(dc, axis.legend_name, legend_pos,
+                                           self.colors[i])
 
         self.draw_tickmarks_gridlines(
                 dc, coosys_tl, coosys_bl, coosys_br,
@@ -592,26 +612,34 @@ class GPSTrackAnalyzerFrame(wx.Frame):
 
     def populate_pointlistbox(self):
         self.pointlistbox.AppendColumn(_("Time"))
-        self.pointlistbox.AppendColumn(_("Name"))
         self.pointlistbox.AppendColumn(_("Lat"))
         self.pointlistbox.AppendColumn(_("Lon"))
         self.pointlistbox.AppendColumn(_("GPS Ele"))
         self.pointlistbox.AppendColumn(_("Map Ele"))
-        self.pointlistbox.AppendColumn(_("Delta Ele"))
+        self.pointlistbox.AppendColumn(_("GPS Delta Ele"))
+        self.pointlistbox.AppendColumn(_("Map Delta Ele"))
 
         self.point_list_map = dict()
+        last_gps_ele = last_dhm_ele = None
         for point in self.walk_all_points():
+            if last_gps_ele is None:
+                last_gps_ele = point.elevation
+            if last_dhm_ele is None:
+                last_dhm_ele = point.dhm_elevation
+
             tm_struct = time.gmtime(point.secs_after_start)
             self.pointlistbox.Append([
                       time.strftime("%H:%M:%S", tm_struct),
-                      point.abs_name,
                       "{:1.06f}".format(point.latitude),
                       "{:1.06f}".format(point.longitude),
                       "{:1.01f}".format(point.elevation),
                       "{:1.01f}".format(point.dhm_elevation),
-                      "{:1.01f}".format(point.dhm_elevation - point.elevation),
+                      "{:1.01f}".format(point.elevation - last_gps_ele),
+                      "{:1.01f}".format(point.dhm_elevation - last_dhm_ele),
                       ])
             self.point_list_map[point] = self.pointlistbox.GetItemCount() - 1
+            last_gps_ele = point.elevation
+            last_dhm_ele = point.dhm_elevation
 
     def update_display(self):
         self.graphbitmap.Refresh()
