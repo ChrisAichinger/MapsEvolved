@@ -22,6 +22,8 @@ class TiffMap : public RasterMap {
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result /Out/) const;
 
         virtual const std::wstring &GetFname() const;
+        virtual const std::wstring &GetTitle() const;
+        virtual const std::wstring &GetDescription() const;
         virtual bool SupportsDirectDrawing() const;
         virtual PixelBuf
         GetRegionDirect(const MapPixelDeltaInt &output_size,
@@ -53,6 +55,8 @@ class GVGMap : public RasterMap {
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result /Out/) const;
 
         virtual const std::wstring &GetFname() const;
+        virtual const std::wstring &GetTitle() const;
+        virtual const std::wstring &GetDescription() const;
         virtual bool SupportsDirectDrawing() const;
         virtual PixelBuf
         GetRegionDirect(const MapPixelDeltaInt &output_size,
@@ -84,6 +88,8 @@ class GradientMap : public RasterMap {
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result /Out/) const;
 
         virtual const std::wstring &GetFname() const;
+        virtual const std::wstring &GetTitle() const;
+        virtual const std::wstring &GetDescription() const;
         virtual bool SupportsDirectDrawing() const;
         virtual PixelBuf
         GetRegionDirect(const MapPixelDeltaInt &output_size,
@@ -115,6 +121,8 @@ class SteepnessMap : public RasterMap {
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result /Out/) const;
 
         virtual const std::wstring &GetFname() const;
+        virtual const std::wstring &GetTitle() const;
+        virtual const std::wstring &GetDescription() const;
         virtual bool SupportsDirectDrawing() const;
         virtual PixelBuf
         GetRegionDirect(const MapPixelDeltaInt &output_size,
@@ -145,6 +153,8 @@ class Gridlines : public GeoDrawable {
         virtual bool
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const;
         virtual const std::wstring &GetFname() const;
+        virtual const std::wstring &GetTitle() const;
+        virtual const std::wstring &GetDescription() const;
 
         virtual bool SupportsDirectDrawing() const;
         virtual PixelBuf

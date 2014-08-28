@@ -89,6 +89,10 @@ class GPSTrack(maplib_sip.GeoDrawable):
         return self._size
     def GetFname(self):
         return self._fname
+    def GetTitle(self):
+        return self.data.gpx.name or ""
+    def GetDescription(self):
+        return self.data.gpx.description or ""
     def GetRegion(self, pos, size):
         # Not implemented for now, we want direct drawing anyway.
         return maplib_sip.PixelBuf()

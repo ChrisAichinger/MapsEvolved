@@ -54,21 +54,20 @@ class MapManagerFrame(wx.Frame):
         maptype_names = {
             pymaplib.GeoDrawable.TYPE_MAP: _("Map"),
             pymaplib.GeoDrawable.TYPE_DHM: _("DHM"),
-            pymaplib.GeoDrawable.TYPE_GRADIENT_MAP: _("Gradient height map"),
-            pymaplib.GeoDrawable.TYPE_STEEPNESS_MAP: _("Steepness height map"),
+            pymaplib.GeoDrawable.TYPE_GRADIENT_MAP: _("DHM Gradient"),
+            pymaplib.GeoDrawable.TYPE_STEEPNESS_MAP: _("DHM Steepness"),
             pymaplib.GeoDrawable.TYPE_LEGEND: _("Legend"),
             pymaplib.GeoDrawable.TYPE_OVERVIEW: _("Overview"),
             pymaplib.GeoDrawable.TYPE_IMAGE: _("Plain image"),
             pymaplib.GeoDrawable.TYPE_GPSTRACK: _("GPS track"),
             pymaplib.GeoDrawable.TYPE_POI_DB: _("POI database"),
-            pymaplib.GeoDrawable.TYPE_ERROR: _("Error loading map"),
+            pymaplib.GeoDrawable.TYPE_ERROR: _("Error"),
         }
         if drawable:
             maptype = maptype_names[drawable.GetType()]
         else:
             maptype = maptype_names[container.entry_type]
 
-        # TODO: Fix item name for GPX file segments.
         item = self.maptreectrl.AppendItem(parent, container.basename,
                                            data=(container, drawable))
         self.maptreectrl.SetItemText(item, 1, maptype)
@@ -110,8 +109,15 @@ class MapManagerFrame(wx.Frame):
             self.projstring_tb.Value = ""
             return
 
-        proj_bytes = drawable.GetProj().GetProjString()
-        self.projstring_tb.Value = proj_bytes.decode('utf-8', errors='replace')
+        description = drawable.GetDescription().strip()
+        description = '  ' + description.replace('\n', '\n  ')
+        proj = drawable.GetProj().GetProjString().decode('ascii', 'replace')
+
+        self.projstring_tb.Value = '\n'.join([
+                "Title: %s" % drawable.GetTitle(),
+                "Description:",
+                description,
+                "Projection: %s" % proj])
 
     @util.EVENT(wx.dataview.EVT_TREELIST_ITEM_ACTIVATED,
                 id=xrc.XRCID('MapTreeList'))
