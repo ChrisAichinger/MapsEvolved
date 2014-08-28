@@ -51,9 +51,6 @@
     <ClCompile Include="coordinates.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gpstracks.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="map_gridlines.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -111,9 +108,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="coordinates.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gpstracks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="map_gridlines.h">
