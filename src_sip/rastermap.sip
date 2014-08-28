@@ -26,8 +26,15 @@ class PixelBuf {
         void Line(const PixelBufCoord &start,
                   const PixelBufCoord &end,
                   const unsigned int color);
+        void Line(const PixelBufCoord &start,
+                  const PixelBufCoord &end,
+                  const unsigned int width,
+                  const unsigned int color);
         void Rect(const PixelBufCoord &start,
                   const PixelBufCoord &end,
+                  const unsigned int color);
+        void Rect(const PixelBufCoord &center,
+                  const unsigned int side_length,
                   const unsigned int color);
 };
 
