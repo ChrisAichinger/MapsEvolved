@@ -76,6 +76,14 @@ void PixelBuf::Line(const PixelBufCoord &start,
                     const PixelBufCoord &end,
                     const unsigned int color)
 {
+    Line(start, end, 1, color);
+}
+
+void PixelBuf::Line(const PixelBufCoord &start,
+                    const PixelBufCoord &end,
+                    const unsigned int width,
+                    const unsigned int color)
+{
     int x1 = start.x;
     int x2 = end.x;
     int y1 = start.y;
@@ -101,9 +109,9 @@ void PixelBuf::Line(const PixelBufCoord &start,
 
     for (int x = x1; x < x2; x++) {
         if (is_steep) {
-            SetPixel(PixelBufCoord(y, x), color);
+            Rect(PixelBufCoord(y, x), width, color);
         } else {
-            SetPixel(PixelBufCoord(x, y), color);
+            Rect(PixelBufCoord(x, y), width, color);
         }
 
         error -= 2 * dy;
@@ -123,4 +131,18 @@ void PixelBuf::Rect(const PixelBufCoord &start,
             SetPixel(PixelBufCoord(x, y), color);
         }
     }
+}
+
+void PixelBuf::Rect(const class PixelBufCoord &center,
+                    const unsigned int side_length,
+                    const unsigned int color)
+{
+    if (side_length == 0) {
+        return;
+    }
+    unsigned int size = (side_length - 1) / 2;
+    unsigned int offset = (side_length - 1) % 2;
+    Rect(center - PixelBufDelta(size, size),
+         center + PixelBufDelta(size + offset + 1, size + offset + 1),
+         color);
 }

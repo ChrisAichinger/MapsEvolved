@@ -39,8 +39,15 @@ class EXPORT PixelBuf {
         void Line(const class PixelBufCoord &start,
                   const class PixelBufCoord &end,
                   const unsigned int color);
+        void Line(const class PixelBufCoord &start,
+                  const class PixelBufCoord &end,
+                  const unsigned int width,
+                  const unsigned int color);
         void Rect(const class PixelBufCoord &start,
                   const class PixelBufCoord &end,
+                  const unsigned int color);
+        void Rect(const class PixelBufCoord &center,
+                  const unsigned int side_length,
                   const unsigned int color);
     private:
         std::shared_ptr<unsigned int> m_data;
