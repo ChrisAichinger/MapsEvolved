@@ -236,6 +236,8 @@ class EXPORT GVGMap : public RasterMap {
 
         virtual Projection GetProj() const;
         virtual const std::wstring &GetFname() const;
+        virtual const std::wstring &GetTitle() const;
+        virtual const std::wstring &GetDescription() const;
 
         virtual bool IsViewable() const {
             return GetType() != TYPE_DHM && GetType() != TYPE_ERROR;

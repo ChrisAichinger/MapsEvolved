@@ -23,12 +23,15 @@ class EXPORT TiffMap : public RasterMap {
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const;
 
         virtual const std::wstring &GetFname() const;
+        virtual const std::wstring &GetTitle() const;
+        virtual const std::wstring &GetDescription() const;
         virtual ODMPixelFormat GetPixelFormat() const {
             return ODM_PIX_RGBX4;
         }
     private:
         const std::shared_ptr<class GeoTiff> m_geotiff;
         Projection m_proj;
+        const std::wstring m_description;
 
         virtual bool PixelToPCS(double *x, double *y) const;
         virtual bool PCSToPixel(double *x, double *y) const;

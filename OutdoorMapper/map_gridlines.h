@@ -37,6 +37,8 @@ class EXPORT Gridlines : public GeoDrawable {
         virtual bool
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const;
         virtual const std::wstring &GetFname() const { return fname; }
+        virtual const std::wstring &GetTitle() const { return fname; }
+        virtual const std::wstring &GetDescription() const { return fname; }
 
         virtual bool SupportsDirectDrawing() const { return true; };
         virtual PixelBuf

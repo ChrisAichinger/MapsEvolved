@@ -21,6 +21,8 @@ class EXPORT GradientMap : public RasterMap {
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const;
 
         virtual const std::wstring &GetFname() const;
+        virtual const std::wstring &GetTitle() const;
+        virtual const std::wstring &GetDescription() const;
         virtual ODMPixelFormat GetPixelFormat() const {
             return ODM_PIX_RGBX4;
         }
@@ -46,6 +48,8 @@ class EXPORT SteepnessMap : public RasterMap {
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const;
 
         virtual const std::wstring &GetFname() const;
+        virtual const std::wstring &GetTitle() const;
+        virtual const std::wstring &GetDescription() const;
         virtual ODMPixelFormat GetPixelFormat() const {
             return ODM_PIX_RGBX4;
         }

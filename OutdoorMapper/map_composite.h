@@ -29,6 +29,8 @@ class EXPORT CompositeMap : public RasterMap {
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const;
 
         virtual const std::wstring &GetFname() const;
+        virtual const std::wstring &GetTitle() const;
+        virtual const std::wstring &GetDescription() const;
         virtual ODMPixelFormat GetPixelFormat() const {
             return ODM_PIX_RGBX4;
         }
@@ -61,6 +63,8 @@ class EXPORT CompositeMap : public RasterMap {
         unsigned int m_width, m_height;
 
         std::wstring m_fname;
+        std::wstring m_title;
+        std::wstring m_description;
 };
 
 #endif

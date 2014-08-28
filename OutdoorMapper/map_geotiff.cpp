@@ -20,6 +20,8 @@
 #include "projection.h"
 #include "util.h"
 
+const char * const DEFAULT_ENCODING = "UTF-8";
+
 class TiffHandle {
     public:
         explicit TiffHandle(const std::wstring &fname)
@@ -78,10 +80,11 @@ class Tiff {
         std::tuple<unsigned int, const T*>
         GetField(ttag_t field) const;
 
-
         const std::wstring &GetFilename() const { return m_fname; };
+        const std::wstring &GetTitle() const { return m_title; };
     protected:
         const std::wstring m_fname;
+        std::wstring m_title;
         TiffHandle m_tiffhandle;
         TIFF *m_rawtiff;
 
@@ -158,7 +161,7 @@ static void put16bitbw_DHM(
 
 
 Tiff::Tiff(const std::wstring &fname)
-    : m_fname(fname), m_tiffhandle(fname),
+    : m_fname(fname), m_title(), m_tiffhandle(fname),
       m_rawtiff(m_tiffhandle.GetTIFF())
 {
     if (!TIFFGetField(m_rawtiff, TIFFTAG_IMAGEWIDTH, &m_width) ||
@@ -170,6 +173,10 @@ Tiff::Tiff(const std::wstring &fname)
         !TIFFGetField(m_rawtiff, TIFFTAG_SAMPLESPERPIXEL, &m_samplesperpixel))
     {
         throw std::runtime_error("Failed getting TIF pixel format.");
+    }
+    char *title;
+    if (TIFFGetField(m_rawtiff, TIFFTAG_DOCUMENTNAME, &title)) {
+        m_title = WStringFromString(title, DEFAULT_ENCODING);
     }
 };
 
@@ -412,7 +419,8 @@ void GeoTiff::Hook_TIFFRGBAImageGet(TIFFRGBAImage &img) const {
 }
 
 TiffMap::TiffMap(const wchar_t *fname)
-    : m_geotiff(new GeoTiff(fname)), m_proj(m_geotiff->GetProj4String())
+    : m_geotiff(new GeoTiff(fname)), m_proj(m_geotiff->GetProj4String()),
+      m_description()
 {}
 
 GeoDrawable::DrawableType TiffMap::GetType() const {
@@ -434,6 +442,10 @@ bool TiffMap::PCSToPixel(double *x, double *y) const
     { return m_geotiff->PCSToPixel(x, y); }
 const std::wstring &TiffMap::GetFname() const
     { return m_geotiff->GetFilename(); }
+const std::wstring &TiffMap::GetTitle() const
+    { return m_geotiff->GetTitle(); }
+const std::wstring &TiffMap::GetDescription() const
+    { return m_description; }
 Projection TiffMap::GetProj() const
     { return m_proj; }
 

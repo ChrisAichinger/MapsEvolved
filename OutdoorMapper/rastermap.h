@@ -66,6 +66,8 @@ class EXPORT GeoDrawable : public GeoPixels {
 
         virtual Projection GetProj() const = 0;
         virtual const std::wstring &GetFname() const = 0;
+        virtual const std::wstring &GetTitle() const = 0;
+        virtual const std::wstring &GetDescription() const = 0;
 
         virtual bool IsViewable() const {
             return GetType() != TYPE_DHM && GetType() != TYPE_ERROR;

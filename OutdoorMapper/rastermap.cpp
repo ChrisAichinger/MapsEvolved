@@ -66,8 +66,9 @@ class RasterMapError : public RasterMap {
             return false;
         }
         virtual const std::wstring &GetFname() const { return m_fname; }
+        virtual const std::wstring &GetTitle() const { return m_fname; }
         virtual const std::wstring &GetDescription() const {
-            return m_fname;
+            return m_desc;
         }
         virtual ODMPixelFormat GetPixelFormat() const { return ODM_PIX_RGBX4; }
 

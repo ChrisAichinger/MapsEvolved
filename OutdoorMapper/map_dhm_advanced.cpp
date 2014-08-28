@@ -40,6 +40,12 @@ bool GradientMap::LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const
 const std::wstring &GradientMap::GetFname() const {
     return m_orig_map->GetFname();
 }
+const std::wstring &GradientMap::GetTitle() const {
+    return m_orig_map->GetTitle();
+}
+const std::wstring &GradientMap::GetDescription() const {
+    return m_orig_map->GetDescription();
+}
 
 
 static TimeCounter time_counter;
@@ -113,6 +119,12 @@ bool SteepnessMap::LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const
 }
 const std::wstring &SteepnessMap::GetFname() const {
     return m_orig_map->GetFname();
+}
+const std::wstring &SteepnessMap::GetTitle() const {
+    return m_orig_map->GetTitle();
+}
+const std::wstring &SteepnessMap::GetDescription() const {
+    return m_orig_map->GetDescription();
 }
 
 static unsigned int steepness_colors[] = {

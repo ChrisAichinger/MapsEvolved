@@ -813,6 +813,14 @@ const std::wstring &GVGMap::GetFname() const {
     return m_gvgfile.Filename();
 }
 
+const std::wstring &GVGMap::GetTitle() const {
+    return m_gvgfile.Header().Title;
+}
+
+const std::wstring &GVGMap::GetDescription() const {
+    return m_gvgfile.Header().Description;
+}
+
 ODMPixelFormat GVGMap::GetPixelFormat() const {
     return ODM_PIX_RGBX4;
 }

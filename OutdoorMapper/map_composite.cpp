@@ -11,14 +11,14 @@ CompositeMap::CompositeMap(
        unsigned int num_y,
        const std::vector<std::shared_ptr<RasterMap> > &submaps)
     : m_num_x(num_x), m_num_y(num_y), m_submaps(submaps),
-      m_width(0), m_height(0), m_fname(L"")
+      m_width(0), m_height(0), m_fname(), m_title(), m_description()
 {
     init();
 }
 
 CompositeMap::CompositeMap(const std::wstring &fname_token)
     : m_num_x(0), m_num_y(0), m_submaps(),
-      m_width(0), m_height(0), m_fname(L"")
+      m_width(0), m_height(0), m_fname(), m_title(), m_description()
 {
     m_submaps = LoadFnameMaps(fname_token, &m_num_x, &m_num_y);
     init();
@@ -38,6 +38,14 @@ void CompositeMap::init() {
         m_height += m_submaps[index(0, y)]->GetHeight();
     }
     m_fname = FormatFname(*this);
+    m_title = L"Composite map";
+
+    std::wostringstream ss;
+    ss << L"Submaps:\n";
+    for (auto it = m_submaps.cbegin(); it != m_submaps.cend(); ++it) {
+        ss << (*it)->GetTitle() << L"\n";
+    }
+    m_description = ss.str();
 }
 
 template <typename T>
@@ -124,6 +132,14 @@ CompositeMap::LatLonToPixel(const LatLon &pos, MapPixelCoord *output) const {
 
 const std::wstring &CompositeMap::GetFname() const {
     return m_fname;
+}
+
+const std::wstring &CompositeMap::GetTitle() const {
+    return m_title;
+}
+
+const std::wstring &CompositeMap::GetDescription() const {
+    return m_description;
 }
 
 PixelBuf CompositeMap::GetRegion(
