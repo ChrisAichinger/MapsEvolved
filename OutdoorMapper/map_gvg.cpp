@@ -669,7 +669,12 @@ std::string GMPImage::LoadCompressedTile(long tx, long ty) const {
     if (tx < 0 || ty < 0 || tx >= (int)m_tiles_x || ty >= (int)m_tiles_y) {
         return std::string();
     }
-    unsigned int idx = tx + m_tiles_x * (m_tiles_y - ty - 1);
+    unsigned int idx;
+    if (m_topdown) {
+        idx = tx + m_tiles_x * ty;
+    } else {
+        idx = tx + m_tiles_x * (m_tiles_y - ty - 1);
+    }
     if (m_tile_index[idx].offset == -1 && m_tile_index[idx].length == 0)
         return std::string();
     if (m_tile_index[idx].length > std::numeric_limits<size_t>::max()) {
