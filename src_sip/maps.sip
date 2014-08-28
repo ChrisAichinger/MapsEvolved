@@ -107,6 +107,8 @@ class OverlaySpec {
         OverlaySpec();
         OverlaySpec(const GeoDrawableShPtr &map, bool enabled = true,
                     float opacity = 0.5f);
+        OverlaySpec(const RasterMapShPtr &map, bool enabled = true,
+                    float opacity = 0.5f);
         GeoDrawableShPtr GetMap() const;
         bool GetEnabled() const;
         float GetTransparency() const;
@@ -151,10 +153,6 @@ class MapDisplayManager /NoDefaultCtors/ {
                        bool try_preserve_pos=true);
         void ChangeMap(const RasterMapShPtr &new_map,
                        bool try_preserve_pos=true);
-        void AddOverlayMap(const GeoDrawableShPtr new_map);
-        void AddOverlayMap(const RasterMapShPtr new_map);
-        const OverlayList &GetOverlayList() const;
-        void SetOverlayList(OverlayList overlaylist);
 
         void Resize(unsigned int width, unsigned int height);
         void StepZoom(double steps);
@@ -164,8 +162,12 @@ class MapDisplayManager /NoDefaultCtors/ {
         void DragMap(const DisplayDelta &delta);
         void CenterToDisplayCoord(const DisplayCoord &center);
         void Paint();
+        void Paint(const OverlayList &overlays);
         PixelBuf PaintToBuffer(ODMPixelFormat format,
-                                unsigned int width, unsigned int height);
+                               unsigned int width, unsigned int height);
+        PixelBuf PaintToBuffer(ODMPixelFormat format,
+                               unsigned int width, unsigned int height,
+                               const OverlayList &overlays);
 
         BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp) const;
         BaseMapCoord

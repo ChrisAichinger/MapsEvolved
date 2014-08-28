@@ -115,6 +115,7 @@ class MainFrame(wx.Frame):
         self.gpstrackanalyzer_window = None
         self.have_shown_layermgr_once = False
         self.special_layers = []
+        self.overlays = []
 
         self.update_layerlist_from_map()
         self.expand_to_fit_sizer()
@@ -136,7 +137,7 @@ class MainFrame(wx.Frame):
     @util.EVENT(wx.EVT_PAINT, id=xrc.XRCID('MapPanel'))
     def on_repaint_mappanel(self, evt):
         dc = wx.PaintDC(self.panel)
-        self.mapdisplay.Paint()
+        self.mapdisplay.Paint(self.overlays)
 
     @util.EVENT(wx.EVT_SIZE, id=xrc.XRCID('MapPanel'))
     def on_size_mappanel(self, evt):
@@ -179,7 +180,8 @@ class MainFrame(wx.Frame):
         zoom = self.mapdisplay.GetZoom()
         w = int(self.ogldisplay.GetDisplayWidth() / zoom)
         h = int(self.ogldisplay.GetDisplayHeight() / zoom)
-        mr = self.mapdisplay.PaintToBuffer(pymaplib.ODM_PIX_RGBA4, w, h)
+        mr = self.mapdisplay.PaintToBuffer(pymaplib.ODM_PIX_RGBA4, w, h,
+                                           self.overlays)
         # Copy the image data to a modifyable buffer and set the alpha
         # values to 255. wx.Bitmap multiplies R,G,B by alpha on Win32, leading
         # to an all-black bitmap otherwise.
@@ -360,7 +362,7 @@ class MainFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('GPSTrackAnalyzerTBButton'))
     def on_show_gpstrackanalyzer(self, evt):
-        for overlay in self.mapdisplay.GetOverlayList():
+        for overlay in self.overlays:
             maptype = overlay.GetMap().GetType()
             if maptype == pymaplib.GeoDrawable.TYPE_GPSTRACK:
                 gpstrack = overlay.GetMap()
@@ -619,7 +621,12 @@ class MainFrame(wx.Frame):
         self.update_layerlist_from_map()
 
     def add_overlay(self, rastermap):
-        self.mapdisplay.AddOverlayMap(rastermap)
+        for i, overlay in enumerate(self.overlays):
+            if overlay.GetMap() == rastermap:
+                del self.overlays[i]
+                break
+        self.overlays.append(pymaplib.OverlaySpec(rastermap))
+        self.panel.Refresh(eraseBackground=False)
         if not self.have_shown_layermgr_once:
             # Show the layer manager the first time the user adds an overlay.
             # Demonstrate the functionality without bothering the user again if
@@ -674,8 +681,7 @@ class MainFrame(wx.Frame):
         self.layerlistbox.Clear()
         # We want the top map to be on top (index 0), but ODM draws the layers
         # from 0 to len() - 1. Thus, we reverse the layer list here.
-        overlays = reversed(self.mapdisplay.GetOverlayList())
-        for overlayspec in overlays:
+        for overlayspec in reversed(self.overlays):
             if overlayspec.Map in [o.Map for o in self.special_layers]:
                 # Do not show our special layers in the overlay list.
                 continue
@@ -700,7 +706,8 @@ class MainFrame(wx.Frame):
         # Count - 1: We disregard the basemap entirely.
         size = self.layerlistbox.Count - 1
         layers.extend(self.layerlistbox.GetClientData(i) for i in range(size))
-        self.mapdisplay.SetOverlayList(reversed(layers))
+        self.overlays = list(reversed(layers))
+        self.panel.Refresh(eraseBackground=False)
 
     def set_initial_size(self):
         disp = wx.Display(wx.Display.GetFromWindow(self))
