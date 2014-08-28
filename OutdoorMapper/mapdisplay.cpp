@@ -22,7 +22,7 @@ MapDisplayManager::MapDisplayManager(
         const std::shared_ptr<class GeoDrawable> &initial_map)
     : m_display(display), m_base_map(initial_map),
       m_center(BaseMapCoord(BaseMapDelta(m_base_map->GetSize() * 0.5))),
-      m_zoom(1.0), m_overlays()
+      m_zoom(1.0)
 { }
 
 void MapDisplayManager::Resize(unsigned int width, unsigned int height) {
@@ -79,33 +79,13 @@ void MapDisplayManager::ChangeMap(
     }
 
     m_base_map = new_map;
-    m_overlays.clear();
     m_display->ForceRepaint();
 }
-
-void MapDisplayManager::AddOverlayMap(
-        const std::shared_ptr<class GeoDrawable> &new_map)
-{
-    // Add new overlay or move existing overlay to last (topmost) position
-    auto it = m_overlays.begin();
-    for (; it != m_overlays.end(); ++it) {
-        if (it->GetMap() == new_map)
-            break;
-    }
-    if (it != m_overlays.end()) {
-        m_overlays.erase(it);
-    }
-    m_overlays.push_back(OverlaySpec(new_map));
-    m_display->ForceRepaint();
-}
-
-void MapDisplayManager::SetOverlayList(OverlayList overlaylist) {
-     m_overlays.swap(overlaylist);
-     m_display->ForceRepaint();
-};
 
 std::list<std::shared_ptr<class DisplayOrder>>
-MapDisplayManager::GenerateDisplayOrders(const DisplayDelta &disp_size_d) {
+MapDisplayManager::GenerateDisplayOrders(const DisplayDelta &disp_size_d,
+                                         const OverlayList &overlays)
+{
     std::list<std::shared_ptr<DisplayOrder>> orders;
     MapPixelDeltaInt tile_size(TILE_SIZE, TILE_SIZE);
     DisplayDelta half_disp_size_d(disp_size_d / 2.0);
@@ -119,7 +99,7 @@ MapDisplayManager::GenerateDisplayOrders(const DisplayDelta &disp_size_d) {
     // only use Direct for overlays (e.g. GPS tracks).
     PaintLayerTiled(&orders, m_base_map, base_pixel_tl, base_pixel_br,
                     tile_size, 0.0);
-    for (auto ci = m_overlays.cbegin(); ci != m_overlays.cend(); ++ci) {
+    for (auto ci = overlays.cbegin(); ci != overlays.cend(); ++ci) {
         if (!ci->GetEnabled()) {
             continue;
         }
@@ -135,18 +115,19 @@ MapDisplayManager::GenerateDisplayOrders(const DisplayDelta &disp_size_d) {
     return orders;
 }
 
-void MapDisplayManager::Paint() {
-    auto orders = GenerateDisplayOrders(m_display->GetDisplaySize());
+void MapDisplayManager::Paint(const OverlayList &overlays) {
+    auto orders = GenerateDisplayOrders(m_display->GetDisplaySize(), overlays);
     m_display->Render(orders);
 }
 
 PixelBuf MapDisplayManager::PaintToBuffer(ODMPixelFormat format,
                                            unsigned int width,
-                                           unsigned int height)
+                                           unsigned int height,
+                                           const OverlayList &overlays)
 {
     TemporaryValue temp_zoom(&m_zoom, 1.0);
     DisplayDelta display_size(width, height);
-    auto orders = GenerateDisplayOrders(display_size);
+    auto orders = GenerateDisplayOrders(display_size, overlays);
     return m_display->RenderToBuffer(format, width, height, orders);
 }
 

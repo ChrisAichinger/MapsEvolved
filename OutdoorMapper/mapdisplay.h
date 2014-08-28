@@ -50,9 +50,6 @@ class EXPORT MapDisplayManager {
         void ChangeMap(const std::shared_ptr<class GeoDrawable> &new_map,
                        bool try_preserve_pos=true);
 
-        void AddOverlayMap(const std::shared_ptr<class GeoDrawable> &new_map);
-        const OverlayList &GetOverlayList() const { return m_overlays; };
-        void SetOverlayList(OverlayList overlaylist);
         void Resize(unsigned int width, unsigned int height);
         void StepZoom(double steps);
         // The map location under the mouse is held constant
@@ -60,9 +57,16 @@ class EXPORT MapDisplayManager {
         void SetZoomOneToOne();
         void DragMap(const DisplayDelta &delta);
         void CenterToDisplayCoord(const DisplayCoord &center);
-        void Paint();
+        void Paint(const OverlayList &overlays);
+        void Paint() { Paint(OverlayList()); };
         PixelBuf PaintToBuffer(ODMPixelFormat format,
-                                unsigned int width, unsigned int height);
+                               unsigned int width, unsigned int height,
+                               const OverlayList &overlays);
+        PixelBuf PaintToBuffer(ODMPixelFormat format,
+                               unsigned int width, unsigned int height)
+        {
+            return PaintToBuffer(format, width, height, OverlayList());
+        };
 
         BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp) const;
         BaseMapCoord
@@ -84,7 +88,8 @@ class EXPORT MapDisplayManager {
         // Generate a list of DisplayOrders for the current position and zoom
         // level. This encompasses the basemap as well as all overlays.
         std::list<std::shared_ptr<class DisplayOrder>>
-        GenerateDisplayOrders(const DisplayDelta &disp_size_d);
+        GenerateDisplayOrders(const DisplayDelta &disp_size_d,
+                              const OverlayList &overlays);
 
         // Calculate the map tiles required for filligng the display region,
         // and add display orders to show those tiles.
@@ -127,7 +132,6 @@ class EXPORT MapDisplayManager {
 
         const std::shared_ptr<class DispOpenGL> m_display;
         std::shared_ptr<class GeoDrawable> m_base_map;
-        OverlayList m_overlays;
 
         // The base map pixel currently shown at the center of the display.
         BaseMapCoord m_center;
