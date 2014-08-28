@@ -147,29 +147,39 @@ class GPSTrack(maplib_sip.GeoDrawable):
                 if not success:
                     raise RuntimeError("Could not draw GPS track on a "
                                        "non-georeferenced basemap.")
-                cur_coord = maplib_sip.PixelBufCoord(
+                curr_coord = maplib_sip.PixelBufCoord(
                     int(round((point_abs.x - base_tl.x) * base_scale_factor)),
                     int(round((point_abs.y - base_tl.y) * base_scale_factor)))
-                yield cur_coord, prev_coord, point
-                prev_coord = cur_coord
+                yield curr_coord, prev_coord, point
+                prev_coord = curr_coord
 
         for segment in self.data.all_segments:
-            old_highlight = False
-            for cur_coord, prev_coord, point in coord_iter(segment.points):
-                point_color = self.color
-                line_color = self.color
-                highlight_this = getattr(point, 'highlight', False)
-                if highlight_this:
-                    point_color = self.hl_color
-                    if old_highlight:
-                        line_color = self.hl_color
-                old_highlight = highlight_this
-
-                result.Rect(cur_coord - maplib_sip.PixelBufDelta(1, 1),
-                            cur_coord + maplib_sip.PixelBufDelta(2, 2),
-                            point_color)
+            for curr_coord, prev_coord, point in coord_iter(segment.points):
+                result.Rect(curr_coord - maplib_sip.PixelBufDelta(2, 2),
+                            curr_coord + maplib_sip.PixelBufDelta(3, 3),
+                            self.bg_color)
                 if prev_coord is not None:
-                    result.Line(prev_coord, cur_coord, line_color)
+                    result.Line(prev_coord, curr_coord, 3, self.bg_color)
+
+        for segment in self.data.all_segments:
+            prev_highlight = False
+            for curr_coord, prev_coord, point in coord_iter(segment.points):
+                curr_highlight = getattr(point, 'highlight', False)
+                curr_pt_color = self.hl_color if curr_highlight else self.color
+                prev_pt_color = self.hl_color if prev_highlight else self.color
+                line_color = self.color
+                if curr_highlight and prev_highlight:
+                    line_color = self.hl_color
+                prev_highlight = curr_highlight
+
+                if prev_coord is not None:
+                    result.Line(prev_coord, curr_coord, line_color)
+                    result.Rect(prev_coord - maplib_sip.PixelBufDelta(1, 1),
+                                prev_coord + maplib_sip.PixelBufDelta(2, 2),
+                                prev_pt_color)
+                result.Rect(curr_coord - maplib_sip.PixelBufDelta(1, 1),
+                            curr_coord + maplib_sip.PixelBufDelta(2, 2),
+                            curr_pt_color)
 
         return result
 
