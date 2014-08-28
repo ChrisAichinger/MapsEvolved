@@ -344,6 +344,14 @@ static unsigned long int hextoul(const std::wstring &s) {
     return std::stoul(s, 0, 16);
 }
 
+// Pass by value because we need to modify s.
+static std::wstring unescape_str(std::wstring s) {
+    replace_all(s, L"\\r\\n", L"\n");
+    replace_all(s, L"\\n", L"\n");
+    replace_all(s, L"\\t", L"\t");
+    return s;
+}
+
 #define try_set_field(field, expr) \
     if (key == L#field) {          \
         field = (expr);            \
@@ -354,11 +362,11 @@ bool GVGHeader::set_field(const std::wstring &key, const std::wstring &value) {
     try_set_field(FileVersion, std::stof(value));
     try_set_field(VendorCode, hextoul(value));
     try_set_field(ProductCode, hextoul(value));
-    try_set_field(CopyrightInfo, value);
-    try_set_field(LicenseInfo, value);
-    try_set_field(MapInfo, value);
-    try_set_field(Title, value);
-    try_set_field(Description, value);
+    try_set_field(CopyrightInfo, unescape_str(value));
+    try_set_field(LicenseInfo, unescape_str(value));
+    try_set_field(MapInfo, unescape_str(value));
+    try_set_field(Title, unescape_str(value));
+    try_set_field(Description, unescape_str(value));
     try_set_field(AutoLayer, value);
     try_set_field(HideLayer, value);
     try_set_field(AutoSwitch, stobool(value));
