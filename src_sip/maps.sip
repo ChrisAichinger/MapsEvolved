@@ -153,7 +153,6 @@ class MapDisplayManager /NoDefaultCtors/ {
                        bool try_preserve_pos=true);
         void AddOverlayMap(const GeoDrawableShPtr new_map);
         void AddOverlayMap(const RasterMapShPtr new_map);
-        void AddOverlayMap(const GPSSegmentShPtr new_map);
         const OverlayList &GetOverlayList() const;
         void SetOverlayList(OverlayList overlaylist);
 

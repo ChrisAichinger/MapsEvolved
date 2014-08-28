@@ -167,29 +167,3 @@ bool MetersPerPixel(const GeoDrawableShPtr &map, const MapPixelCoord &pos,
                     double *mpp /Out/);
 bool MetersPerPixel(const GeoDrawableShPtr &map, const MapPixelCoordInt &pos,
                     double *mpp /Out/);
-
-
-class GPSSegment : public GeoDrawable {
-%TypeHeaderCode
-#include "gpstracks.h"
-%End
-    public:
-        GPSSegment(const std::wstring &fname,
-                   const std::vector<LatLon> &points);
-        virtual const std::vector<LatLon> &GetPoints() const;
-};
-
-class GPSSegmentShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
-%TypeHeaderCode
-#include <memory>
-#include "gpstracks.h"
-typedef std::shared_ptr<GPSSegment> GPSSegmentShPtr;
-%End
-    public:
-        GPSSegmentShPtr(const std::wstring &fname,
-                        const std::vector<LatLon> &points);
-        %MethodCode
-            sipCpp = new std::shared_ptr<GPSSegment>(new GPSSegment(*a0, *a1));
-        %End
-        GPSSegment *get();
-};
