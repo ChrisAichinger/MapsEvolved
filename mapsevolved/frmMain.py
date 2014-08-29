@@ -13,6 +13,9 @@ from mapsevolved import dlgGotoCoord, util, config, uimodes
 
 def _(s): return s
 
+DEFAULT_MAP = os.path.join(os.path.dirname(sys.argv[0]),
+                           'images', 'land_shallow_topo_8192.tif')
+DEFAULT_MAP_ZOOM = -12
 
 class CustomRearrangeList(wx.CheckListBox):
     def __init__(self, *args, **kwargs):
@@ -97,15 +100,24 @@ class MainFrame(wx.Frame):
                 # No data in config yet.
                 self._coord_fmt = "DDD"
 
+        if not self.filelist.maplist:
+            self.filelist.add_file(DEFAULT_MAP, ftype='MAP',
+                                   title=_("Default World Map"))
+
         util.bind_decorator_events(self)
         util.bind_decorator_pubsubs(self)
 
         self.ogldisplay = pymaplib.CreateOGLDisplay(self.panel.GetHandle())
 
-        # FIXME: Do something sensible if we don't have any maps available.
         self.mapdisplay = pymaplib.MapDisplayManager(
                 self.ogldisplay, self.filelist.maplist[0].drawable)
         self.heightfinder = pymaplib.HeightFinder(self.filelist.maplist)
+
+        # If initializing with our pre-supplied default map, zoom out to
+        # show the whole map. Otherwise only a blue blotch (a small part of the
+        # Atlantic) is shown.
+        if self.filelist.maplist[0].basename == os.path.basename(DEFAULT_MAP):
+            self.mapdisplay.StepZoom(DEFAULT_MAP_ZOOM)
 
         self.drag_enabled = False
         self.drag_suppress = False

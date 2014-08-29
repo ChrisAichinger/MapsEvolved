@@ -1,4 +1,4 @@
-Copyright (c) 2013-2014, Christian Aichinger <Greek0@gmx.net>
+Copyright (c) 2012-2014, Christian Aichinger <Greek0@gmx.net>
 All rights reserved.
 
 No definitive license has been chosen for Maps Evolved.
@@ -43,3 +43,24 @@ Custom additions to this library (e.g. map_dhm.png) are also available under
 both of those licenses. Furthermore, they can be used under the license
 governing Maps Evolved as a whole (see above, as soon as that is decided).
 
+
+images/land_shallow_topo_* and images/world.topo.* are images from the
+"Blue Marble" collection of NASA Visible Earth, partially augmented with
+geospatial information.
+
+The original data is freely available in the public domain (no copyright),
+and can be obtained from:
+    http://visibleearth.nasa.gov/view.php?id=57752 and
+    http://visibleearth.nasa.gov/view.php?id=74368
+
+Credit for the land_shallow_topo images:
+NASA Goddard Space Flight Center Image by Reto Stöckli (land surface, shallow
+water, clouds). Enhancements by Robert Simmon (ocean color, compositing, 3D
+globes, animation). Data and technical support: MODIS Land Group; MODIS Science
+Data Support Team; MODIS Atmosphere Group; MODIS Ocean Group Additional data:
+USGS EROS Data Center (topography); USGS Terrestrial Remote Sensing Flagstaff
+Field Center (Antarctica); Defense Meteorological Satellite Program (city
+lights).
+
+Credit for the world.topo images:
+Reto Stöckli, NASA Earth Observatory
