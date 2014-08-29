@@ -221,11 +221,11 @@ class FileList:
     def delete(self, item):
         # Raise ValueError if we can't find item.
         if item.ftype == 'DB':
-            del self.dblist[self.dblist.index(item)]
+            self.dblist.remove(item)
         elif item.ftype == 'GPX':
-            del self.gpxlist[self.gpxlist.index(item)]
+            self.gpxlist.remove(item)
         elif item.ftype == 'MAP':
-            del self.gpxlist[self.gpxlist.index(item)]
+            self.maplist.remove(item)
         else:
             raise NotImplementedError("Couldn't detect file type")
 
