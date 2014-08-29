@@ -1,7 +1,7 @@
 
 import contextlib
 
-WINREG_KEY = "Software\\OutdoorMapper"
+WINREG_KEY = "Software\\MapsEvolved"
 
 winreg = None
 try:
@@ -17,8 +17,15 @@ if winreg:
             if mode not in mode_map:
                 raise ValueError("Invalid mode %r", mode)
             mode = mode_map[mode]
-            self.key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                      WINREG_KEY, access=mode)
+            try:
+                self.key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                          WINREG_KEY, access=mode)
+            except OSError as e:
+                # Failed to open key - try to create it and then re-open.
+                winreg.CreateKey(winreg.HKEY_CURRENT_USER, WINREG_KEY).Close()
+                self.key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                          WINREG_KEY, access=mode)
+
         def close(self):
             self.key.Close()
 
