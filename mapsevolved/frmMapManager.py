@@ -41,14 +41,26 @@ class MapManagerFrame(wx.Frame):
         self.mapdisplay = mapdisplay
         self.maptreectrl = xrc.XRCCTRL(self, 'MapTreeList')
         self.projstring_tb = xrc.XRCCTRL(self, 'ProjStringTextBox')
-        self.filetype_filter = xrc.XRCCTRL(self, 'FiletypeFilter')
-        for i in range(self.filetype_filter.GetCount()):
-            self.filetype_filter.SetSelection(i)
+        self.type_filter = xrc.XRCCTRL(self, 'TypeFilterTree')
+
         self.popup_item = None
 
         # For some funky reason XRCed chokes on width -1 columns. Set it here.
         self.maptreectrl.SetColumnWidth(0, -1)
+
+        filter_root = self.type_filter.AddRoot(_("All Items"), data=None)
+        self.type_filter.AppendItem(filter_root, _("Maps"),
+                                    data=self.filelist.maplist)
+        self.type_filter.AppendItem(filter_root, _("GPS Tracks"),
+                                    data=self.filelist.gpxlist)
+        self.type_filter.AppendItem(filter_root, _("POI Databases"),
+                                    data=self.filelist.dblist)
+        self.type_filter.ExpandAll()
+        self.type_filter.SelectItem(filter_root)
+        self.type_filter.QuickBestSize = True
+
         self.insert_drawables()
+        self.Layout()
 
     def insert_row(self, container, drawable, parent=None):
         if parent is None:
@@ -80,21 +92,20 @@ class MapManagerFrame(wx.Frame):
         return item
 
     def insert_drawables(self):
-        INDEX_MAPS = 0
-        INDEX_GPSTRACKS = 1
-        INDEX_POI_DB = 2
-        work_list = [(INDEX_MAPS, self.filelist.maplist),
-                     (INDEX_GPSTRACKS, self.filelist.gpxlist),
-                     (INDEX_POI_DB, self.filelist.dblist),
-                    ]
-        for filter_idx, lst in work_list:
-            if not self.filetype_filter.IsSelected(filter_idx):
-                continue
-            for container in lst:
-                item = self.insert_row(container, container.drawable)
-                for view in container.alternate_views:
-                    self.insert_row(container, view, item)
-                self.maptreectrl.Expand(item)
+        self.maptreectrl.DeleteAllItems()
+
+        type_item = self.type_filter.GetFocusedItem()
+        work_list = self.type_filter.GetItemData(type_item)
+        if work_list is None:
+            # The root item is selected.
+            work_list = self.filelist.maplist + \
+                        self.filelist.gpxlist + \
+                        self.filelist.dblist
+        for container in work_list:
+            item = self.insert_row(container, container.drawable)
+            for view in container.alternate_views:
+                self.insert_row(container, view, item)
+            self.maptreectrl.Expand(item)
 
     @util.EVENT(wx.dataview.EVT_TREELIST_SELECTION_CHANGED,
                 id=xrc.XRCID('MapTreeList'))
@@ -209,9 +220,8 @@ class MapManagerFrame(wx.Frame):
             return
         self.overlay_map(self.maptreectrl.GetSelection())
 
-    @util.EVENT(wx.EVT_LISTBOX, id=xrc.XRCID('FiletypeFilter'))
-    def on_filetype_filter_select(self, evt):
-        self.maptreectrl.DeleteAllItems()
+    @util.EVENT(wx.EVT_TREE_SEL_CHANGED, id=xrc.XRCID('TypeFilterTree'))
+    def on_type_filter_select(self, evt):
         self.insert_drawables()
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('CreateCompositeTBButton'))
@@ -345,6 +355,5 @@ class MapManagerFrame(wx.Frame):
                             "Maps Evolved will continue to work, but the " +
                             "map database changes will be lost on exit."))
 
-        self.maptreectrl.DeleteAllItems()
         self.insert_drawables()
 

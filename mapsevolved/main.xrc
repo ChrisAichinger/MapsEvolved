@@ -288,17 +288,12 @@
     <object class="wxBoxSizer">
       <orient>wxHORIZONTAL</orient>
       <object class="sizeritem">
-        <object class="wxListBox" name="FiletypeFilter">
-          <content>
-            <item>Maps</item>
-            <item>GPS Tracks</item>
-            <item>POI Databases</item>
-          </content>
-          <selection>0</selection>
-          <style>wxLB_MULTIPLE</style>
+        <object class="wxTreeCtrl" name="TypeFilterTree">
+          <style>wxTR_TWIST_BUTTONS|wxTR_SINGLE|wxTR_DEFAULT_STYLE</style>
         </object>
         <option>0</option>
         <flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
+        <minsize>150,100</minsize>
       </object>
       <object class="sizeritem">
         <object class="wxBoxSizer">
