@@ -147,12 +147,18 @@ class HeightFinder(maplib_sip.HeightFinder):
     def __init__(self, maps):
         super().__init__()
         self.maps = maps
+        self.active_dhm = None
 
     def FindBestMap(self, pos, map_type):
         for container in self.maps:
             if container.drawable.GetType() == map_type:
+                self.active_dhm = container.drawable
                 return container.drawable
-        return None
+        self.active_dhm = None
+        return maplib_sip.RasterMapShPtr()
+
+    def LatLonWithinActiveDHM(self, ll):
+        return self.active_dhm and is_within_map(ll, self.active_dhm)
 
 
 def is_within_map(latlon, drawable):

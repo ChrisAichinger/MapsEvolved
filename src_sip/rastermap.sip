@@ -151,7 +151,7 @@ class HeightFinder {
         virtual bool CalcTerrain(const LatLon &pos, TerrainInfo *result /Out/);
         RasterMapShPtr GetActiveMap() const;
     protected:
-        virtual bool LatLongWithinActiveDHM(const LatLon &pos) const;
+        virtual bool LatLonWithinActiveDHM(const LatLon &pos) const;
         virtual RasterMapShPtr FindBestMap(
                       const LatLon &pos,
                       GeoDrawable::DrawableType type) const;
