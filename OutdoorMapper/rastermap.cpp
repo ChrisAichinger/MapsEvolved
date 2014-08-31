@@ -130,7 +130,7 @@ HeightFinder::HeightFinder() : m_active_dhm(nullptr) { }
 bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
     assert(result);
 
-    if (!LatLongWithinActiveDHM(pos)) {
+    if (!LatLonWithinActiveDHM(pos)) {
         m_active_dhm = FindBestMap(pos, RasterMap::TYPE_DHM);
         if (!m_active_dhm)
             return false;
@@ -174,14 +174,9 @@ bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
     return true;
 }
 
-bool HeightFinder::LatLongWithinActiveDHM(const LatLon &pos) const {
-    if (!m_active_dhm)
-        return false;
-    MapPixelCoord map_pos;
-    if (!m_active_dhm->LatLonToPixel(pos, &map_pos))
-        return false;
-    return map_pos.IsInRect(MapPixelCoord(0, 0),
-                            MapPixelDelta(m_active_dhm->GetSize()));
+bool HeightFinder::LatLonWithinActiveDHM(const LatLon &pos) const {
+    // To be reimplemented on the Python side.
+    return false;
 }
 
 std::shared_ptr<class RasterMap>

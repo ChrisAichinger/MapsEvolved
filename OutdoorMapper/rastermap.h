@@ -117,7 +117,7 @@ class EXPORT HeightFinder {
     protected:
         std::shared_ptr<class RasterMap> m_active_dhm;
 
-        virtual bool LatLongWithinActiveDHM(const LatLon &pos) const;
+        virtual bool LatLonWithinActiveDHM(const LatLon &pos) const;
         virtual std::shared_ptr<class RasterMap> FindBestMap(
                 const LatLon &pos, GeoDrawable::DrawableType type) const;
 };
