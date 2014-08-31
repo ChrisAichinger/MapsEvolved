@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import unicodedata
+import json
 
 import gpxpy
 import gpxpy.gpx
@@ -29,6 +30,8 @@ class FileListEntry:
         super().__init__()
         self.drawable = None
         self.alternate_views = []
+        self.title = ""
+        self.group = None
 
     @property
     def basename(self):
@@ -64,6 +67,7 @@ class MapFile(FileListEntry):
         super().__init__()
         self.drawable = maplib_sip.LoadMap(fname)
         self.alternate_views = maplib_sip.AlternateMapViews(self.drawable)
+        self.title = self.drawable.GetTitle()
         self._storagename = fname
         self._type = self.drawable.GetType()
 
@@ -108,6 +112,7 @@ class GPXFile(FileListEntry):
         self._type = FileListEntry.TYPE_GPSTRACK
         self.drawable = maplib_sip.GeoDrawableShPtr(GPSTrack(fname))
         self.alternate_views = []
+        self.title = self.drawable.GetTitle()
 
 
 class POI_Entry:
@@ -120,6 +125,7 @@ class POI_Database(FileListEntry):
         super().__init__()
         self._fname = fname
         self._type = FileListEntry.TYPE_POI_DB
+        self.title = self.basename
 
         # Check if the file exists before calling connect(), as that will
         # happily create a new, empty db.
@@ -151,6 +157,7 @@ class ErrorEntry(FileListEntry):
         self._fname = fname
         self._type = FileListEntry.TYPE_ERROR
         self.exception = e
+        self.title = self.basename
 
 
 class FileList:
@@ -159,7 +166,7 @@ class FileList:
         self.gpxlist = []
         self.dblist = []
 
-    def add_file(self, fname, ftype=None):
+    def add_file(self, fname, ftype=None, title=None, group=None):
         if ftype is None:
             if fname.starts_with('composite_map:'):
                 ftype = 'MAP'
@@ -192,27 +199,44 @@ class FileList:
         # Take care to store the original ftype for ErrorEntry as well,
         # so we know which list to delete off!
         entry.ftype = ftype
+        if title is not None:
+            entry.title = title
+        if group is not None:
+            entry.group = group
         targetlist.append(entry)
+        return entry
+
+    def _serialize(self, obj):
+        return json.dumps({
+            "url": obj.storagename,
+            "title": obj.title,
+            "group": obj.group})
+
+    def _deserialize(self, obj_str, ftype):
+        json_obj = json.loads(obj_str)
+        obj = self.add_file(json_obj["url"], ftype=ftype,
+                            title=json_obj["title"], group=json_obj["group"])
+        return obj
 
     def store_to(self, store):
         store.set_stringlist('maps',
-                [map_entry.storagename for map_entry in self.maplist])
+                [self._serialize(map_entry) for map_entry in self.maplist])
         store.set_stringlist('gpxlist',
-                [gpx_entry.storagename for gpx_entry in self.gpxlist])
+                [self._serialize(gpx_entry) for gpx_entry in self.gpxlist])
         store.set_stringlist('dblist',
-                [db_entry.storagename for db_entry in self.dblist])
+                [self._serialize(db_entry) for db_entry in self.dblist])
 
     def retrieve_from(self, store):
         def do_retrieve(ps, name, ftype):
             # Exceptions reading from the persistentstore are likely
             # from running the first time - ignore them.
             try:
-                files = ps.get_stringlist(name)
+                lst = ps.get_stringlist(name)
             except KeyError:
                 pass
             else:
-                for fname in files:
-                    self.add_file(fname, ftype=ftype)
+                for obj_str in lst:
+                    self._deserialize(obj_str, ftype)
 
         do_retrieve(store, 'maps', 'MAP')
         do_retrieve(store, 'gpxlist', 'GPX')
