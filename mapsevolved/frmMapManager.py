@@ -1,4 +1,6 @@
 import os
+import re
+import glob
 
 import wx
 import wx.dataview
@@ -265,7 +267,27 @@ class MapManagerFrame(wx.Frame):
         if openFileDialog.ShowModal() == wx.ID_CANCEL:
             return
 
-        self.filelist.add_file(openFileDialog.GetPath(), ftype='MAP')
+        fname = openFileDialog.GetPath()
+        if fname.lower().endswith('.gvg'):
+            dirname = os.path.dirname(fname)
+            fnames = glob.glob(os.path.join(dirname, '*.gvg'))
+            if len(fnames) > 1:
+                go_ahead = util.YesNo(
+                        self,
+                        _("Add related GVG files too?\n\n" +
+                          "More gvg files have been found along with the " +
+                          "selected file.\n\n" +
+                          "Do you want to add all of them?"))
+                if go_ahead:
+                    for fname in sorted(fnames):
+                        # Only add numbered GVG files, ignore DHMs, overviews,
+                        # ortho-photos and so on.
+                        if re.match(r'\d+\.gvg', os.path.basename(fname)):
+                            # TODO: Provide feedback in the UI / use threads.
+                            self.filelist.add_file(fname, ftype='MAP',
+                                                   group="AV Maps")
+                    self.finish_list_change()
+        self.filelist.add_file(fname, ftype='MAP')
         self.finish_list_change()
 
     def add_gpx(self):
