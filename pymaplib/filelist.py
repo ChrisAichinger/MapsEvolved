@@ -160,6 +160,28 @@ class ErrorEntry(FileListEntry):
         self.title = self.basename
 
 
+class GroupFilterIter:
+    """Yield entries from a list having a specific group
+
+    Implement this as a class instead of a generator function to enable
+    multiple successive iterations. With the function approach, the generator
+    would be exhausted once the first loop finishes.
+    """
+
+    def __init__(self, lst, group):
+        self.lst = lst
+        self.group = group
+
+    def __iter__(self):
+        for entry in self.lst:
+            if entry.group == self.group:
+                yield entry
+
+    def __eq__(self, other):
+        return type(self) == type(other) and \
+               self.lst == other.lst and \
+               self.group == other.group
+
 class FileList:
     def __init__(self):
         self.maplist = []

@@ -262,3 +262,15 @@ class CustomTextDataObject(wx.DataObjectSimple):
 
     def SetText(self, txt):
         self.value = bytes(txt + ' ', 'utf8')
+
+def walk_treectrl_items(tree, root_item=None):
+    if root_item is None:
+        root_item = tree.RootItem
+    if not root_item.IsOk():
+        return
+    yield root_item
+
+    item, cookie = tree.GetFirstChild(root_item)
+    while item.IsOk():
+        yield from walk_treectrl_items(tree, item)
+        item, cookie = tree.GetNextChild(root_item, cookie)

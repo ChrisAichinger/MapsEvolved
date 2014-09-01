@@ -48,19 +48,40 @@ class MapManagerFrame(wx.Frame):
         # For some funky reason XRCed chokes on width -1 columns. Set it here.
         self.maptreectrl.SetColumnWidth(0, -1)
 
-        filter_root = self.type_filter.AddRoot(_("All Items"), data=None)
-        self.type_filter.AppendItem(filter_root, _("Maps"),
-                                    data=self.filelist.maplist)
-        self.type_filter.AppendItem(filter_root, _("GPS Tracks"),
-                                    data=self.filelist.gpxlist)
-        self.type_filter.AppendItem(filter_root, _("POI Databases"),
-                                    data=self.filelist.dblist)
-        self.type_filter.ExpandAll()
-        self.type_filter.SelectItem(filter_root)
-        self.type_filter.QuickBestSize = True
-
+        self.repopulate_filtertree()
         self.insert_drawables()
-        self.Layout()
+
+    def _add_filter(self, parent_item, name, lst):
+        item = self.type_filter.AppendItem(parent_item, name, data=lst)
+        groups = set(entry.group for entry in lst)
+        if None in groups:
+            groups.remove(None)
+            groups = [None] + sorted(groups)
+        else:
+            groups = sorted(groups)
+        for group in groups:
+            group_name = group if group is not None else _("Uncategorized")
+            iterobj = pymaplib.filelist.GroupFilterIter(lst, group)
+            self.type_filter.AppendItem(item, group_name, data=iterobj)
+
+    def repopulate_filtertree(self):
+        focused_list = None
+        focused_item = self.type_filter.GetFocusedItem()
+        if focused_item.IsOk():
+            focused_list = self.type_filter.GetItemData(focused_item)
+
+        self.type_filter.DeleteAllItems()
+        filter_root = self.type_filter.AddRoot(_("All Items"), data=None)
+        self._add_filter(filter_root, _("Maps"), self.filelist.maplist)
+        self._add_filter(filter_root, _("GPS Tracks"), self.filelist.gpxlist)
+        self._add_filter(filter_root, _("POI Databases"), self.filelist.dblist)
+        self.type_filter.ExpandAll()
+        for item in util.walk_treectrl_items(self.type_filter):
+            if self.type_filter.GetItemData(item) == focused_list:
+                self.type_filter.SelectItem(item)
+                break
+        else:
+            self.type_filter.SelectItem(filter_root)
 
     def insert_row(self, container, drawable, parent=None):
         if parent is None:
@@ -222,6 +243,7 @@ class MapManagerFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_TREE_SEL_CHANGED, id=xrc.XRCID('TypeFilterTree'))
     def on_type_filter_select(self, evt):
+        # Don't repopulate the filtertree here, else we get infinite recursion.
         self.insert_drawables()
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('CreateCompositeTBButton'))
@@ -355,5 +377,6 @@ class MapManagerFrame(wx.Frame):
                             "Maps Evolved will continue to work, but the " +
                             "map database changes will be lost on exit."))
 
+        self.repopulate_filtertree()
         self.insert_drawables()
 
