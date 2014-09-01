@@ -300,16 +300,16 @@
           <object class="sizeritem">
             <object class="TreeListCtrl" name="MapTreeList">
               <content>
-                <item>Filename</item>
+                <item>Title</item>
                 <item>Map Type</item>
-                <item>Directory</item>
+                <item>Filename</item>
               </content>
-              <widths>200,150,250</widths>
+              <widths>200,150,300</widths>
               <style>wxTR_SINGLE</style>
             </object>
             <option>3</option>
             <flag>wxALL|wxEXPAND</flag>
-            <minsize>600,300</minsize>
+            <minsize>650,300</minsize>
           </object>
           <object class="sizeritem">
             <object class="wxPanel" name="ItemInfoPanel">

@@ -174,10 +174,11 @@ class MapManagerFrame(wx.Frame):
         else:
             maptype = maptype_names[container.entry_type]
 
-        item = self.maptreectrl.AppendItem(parent, container.basename,
+        item = self.maptreectrl.AppendItem(parent, container.title,
                                            data=(container, drawable))
         self.maptreectrl.SetItemText(item, 1, maptype)
-        self.maptreectrl.SetItemText(item, 2, container.dirname)
+        fname = os.path.join(container.dirname, container.basename)
+        self.maptreectrl.SetItemText(item, 2, fname)
         if container.entry_type == container.TYPE_ERROR:
             #lvrow.SetColor(makeRGB(0xdd, 0, 0));
             pass
