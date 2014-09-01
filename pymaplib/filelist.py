@@ -31,7 +31,7 @@ class FileListEntry:
         self.drawable = None
         self.alternate_views = []
         self.title = ""
-        self.group = None
+        self.group = ""
 
     @property
     def basename(self):

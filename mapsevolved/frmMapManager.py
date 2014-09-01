@@ -46,8 +46,7 @@ class ItemInfoPanel:
             return
 
         self.title_tb.Value = container.title
-        # Group may be None (Uncategorized)
-        self.group_tb.Value = container.group or ""
+        self.group_tb.Value = container.group
         if drawable:
             self.desc_tb.Value = drawable.GetDescription().strip()
             proj_bytes = drawable.GetProj().GetProjString()
@@ -99,13 +98,9 @@ class MapManagerFrame(wx.Frame):
     def _add_filter(self, parent_item, name, lst):
         item = self.type_filter.AppendItem(parent_item, name, data=lst)
         groups = set(entry.group for entry in lst)
-        if None in groups:
-            groups.remove(None)
-            groups = [None] + sorted(groups)
-        else:
-            groups = sorted(groups)
-        for group in groups:
-            group_name = group if group is not None else _("Uncategorized")
+        # The empty string "" means Uncategorized, it also always sorts first.
+        for group in sorted(groups):
+            group_name = group if group else _("Uncategorized")
             iterobj = pymaplib.filelist.GroupFilterIter(lst, group)
             self.type_filter.AppendItem(item, group_name, data=iterobj)
 
