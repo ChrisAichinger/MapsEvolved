@@ -87,6 +87,23 @@ class ItemInfoPanel:
         wx.PostEvent(self.panel, event)
 
 
+FileDropEvent, EVT_FILE_DROP = wx.lib.newevent.NewCommandEvent()
+class FileDropTargetEventPoster(wx.FileDropTarget):
+    """Accept file drag&drop operations with the maplist as target
+
+    Produce a EVT_FILE_DROP (class FileDropEvent) in case files are dropped.
+    """
+
+    def __init__(self, target):
+        wx.FileDropTarget.__init__(self)
+        self.target = target
+
+    def OnDropFiles(self, x, y, filenames):
+        event = FileDropEvent(self.target.Id, x=x, y=y, filenames=filenames)
+        wx.PostEvent(self.target, event)
+        return True
+
+
 class MapManagerFrame(wx.Frame):
     def __init__(self, parent, filelist, mapdisplay):
         wx.Frame.__init__(self)
@@ -117,6 +134,9 @@ class MapManagerFrame(wx.Frame):
         self.type_filter = xrc.XRCCTRL(self, 'TypeFilterTree')
         self.iteminfo_panel = xrc.XRCCTRL(self, 'ItemInfoPanel')
         self.iteminfo = ItemInfoPanel(self.iteminfo_panel)
+
+        file_drop_target = FileDropTargetEventPoster(self.maptreectrl)
+        self.maptreectrl.SetDropTarget(file_drop_target)
 
         self.popup_item = None
 
@@ -337,6 +357,12 @@ class MapManagerFrame(wx.Frame):
 
     @util.EVENT(EVT_METADATA_CHANGED, id=xrc.XRCID('ItemInfoPanel'))
     def on_metadata_change(self, evt):
+        self.finish_list_change()
+
+    @util.EVENT(EVT_FILE_DROP, id=xrc.XRCID('MapTreeList'))
+    def on_maptreelist_file_drop(self, evt):
+        for fname in evt.filenames:
+            self.filelist.add_file(fname)
         self.finish_list_change()
 
     def display_map(self, item):

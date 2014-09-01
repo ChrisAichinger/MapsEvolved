@@ -190,7 +190,7 @@ class FileList:
 
     def add_file(self, fname, ftype=None, title=None, group=None):
         if ftype is None:
-            if fname.starts_with('composite_map:'):
+            if fname.startswith('composite_map:'):
                 ftype = 'MAP'
         if ftype is None:
             ftypes = {'gpx': 'GPX',
