@@ -20,9 +20,7 @@ GEOGRAPHICLIB_URL="http://switch.dl.sourceforge.net/project/geographiclib/distri
 
 COPY_TARGET1="../Debug"
 COPY_TARGET2="../Release"
-COPY_TARGET3="../Debug-DLL"
-COPY_TARGET4="../Release-DLL"
-COPY_TARGET5="../tests"
+COPY_TARGET3="../tests"
 
 DO_MAKE="cscript.exe ..\\tools\\run_make.js"
 
@@ -198,8 +196,7 @@ while [ -n "$1" ]; do
         shift
 
     elif [ "x$1" = "xcopydll" ]; then
-        for target in "$COPY_TARGET1" "$COPY_TARGET2" "$COPY_TARGET3" \
-                      "$COPY_TARGET4" "$COPY_TARGET5"
+        for target in "$COPY_TARGET1" "$COPY_TARGET2" "$COPY_TARGET3"
         do
             if [ ! -e "$target" ]; then mkdir -p "$target"; fi
             cp "$JPEG_DIR/libjpeg.dll" "$target"
