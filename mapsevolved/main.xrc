@@ -312,15 +312,78 @@
             <minsize>600,300</minsize>
           </object>
           <object class="sizeritem">
-            <object class="wxPanel">
+            <object class="wxPanel" name="ItemInfoPanel">
               <object class="wxBoxSizer">
                 <orient>wxVERTICAL</orient>
                 <object class="sizeritem">
-                  <object class="wxTextCtrl" name="ProjStringTextBox">
-                    <style>wxTE_MULTILINE|wxTE_READONLY</style>
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxStaticText">
+                        <label> Title  </label>
+                      </object>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                      <minsize>70,15</minsize>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="ItemTitleTextCtrl"/>
+                      <option>3</option>
+                      <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText">
+                        <label>    Group </label>
+                      </object>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="ItemGroupTextCtrl"/>
+                      <option>1</option>
+                      <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+                    </object>
+                  </object>
+                  <option>0</option>
+                  <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <object class="sizeritem">
+                      <object class="wxStaticText">
+                        <label> Description  </label>
+                      </object>
+                      <minsize>70,15</minsize>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="ItemDescTextCtrl">
+                        <style>wxTE_MULTILINE|wxTE_READONLY</style>
+                      </object>
+                      <option>1</option>
+                      <flag>wxTOP|wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+                    </object>
+                    <orient>wxHORIZONTAL</orient>
                   </object>
                   <option>1</option>
                   <flag>wxALL|wxEXPAND</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxStaticText">
+                        <label> Projection  </label>
+                      </object>
+                      <option>0</option>
+                      <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+                      <minsize>70,15</minsize>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="ItemProjTextCtrl"/>
+                      <option>1</option>
+                      <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+                    </object>
+                  </object>
+                  <option>0</option>
+                  <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
                 </object>
               </object>
             </object>

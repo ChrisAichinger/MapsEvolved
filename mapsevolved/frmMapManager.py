@@ -12,6 +12,50 @@ from mapsevolved import util, config
 
 def _(s): return s
 
+class ItemInfoPanel:
+    """Display map/GPS track/POI DB metadata"""
+
+    # Due to a bug in wxPython, we can't subclass wx.Panel directly, while
+    # having XRC handle the object creation. Do it like this, for now.
+    # Cf. https://groups.google.com/forum/#!topic/wxpython-dev/9a1deun21gc
+    def __init__(self, panel):
+        self.panel = panel
+        self.title_tb = xrc.XRCCTRL(panel, 'ItemTitleTextCtrl')
+        self.group_tb = xrc.XRCCTRL(panel, 'ItemGroupTextCtrl')
+        self.desc_tb = xrc.XRCCTRL(panel, 'ItemDescTextCtrl')
+        self.proj_tb = xrc.XRCCTRL(panel, 'ItemProjTextCtrl')
+
+    def set_info(self, container, drawable=None):
+        """Display metadata of container/drawable
+
+        If container is None, all displayed data is cleared.
+        """
+
+        if not container:
+            self.title_tb.Value = ""
+            self.group_tb.Value = ""
+            self.desc_tb.Value = ""
+            self.proj_tb.Value = ""
+            return
+
+        if container.entry_type == container.TYPE_ERROR:
+            self.title_tb.Value = _("Failed to open the map.")
+            self.group_tb.Value = ""
+            self.desc_tb.Value = ""
+            self.proj_tb.Value = ""
+            return
+
+        self.title_tb.Value = container.title
+        # Group may be None (Uncategorized)
+        self.group_tb.Value = container.group or ""
+        if drawable:
+            self.desc_tb.Value = drawable.GetDescription().strip()
+            proj_bytes = drawable.GetProj().GetProjString()
+            self.proj_tb.Value = proj_bytes.decode('ascii', 'replace')
+        else:
+            self.desc_tb.Value = ""
+            self.proj_tb.Value = ""
+
 
 class MapManagerFrame(wx.Frame):
     def __init__(self, parent, filelist, mapdisplay):
@@ -40,8 +84,9 @@ class MapManagerFrame(wx.Frame):
         self.filelist = filelist
         self.mapdisplay = mapdisplay
         self.maptreectrl = xrc.XRCCTRL(self, 'MapTreeList')
-        self.projstring_tb = xrc.XRCCTRL(self, 'ProjStringTextBox')
         self.type_filter = xrc.XRCCTRL(self, 'TypeFilterTree')
+        self.iteminfo_panel = xrc.XRCCTRL(self, 'ItemInfoPanel')
+        self.iteminfo = ItemInfoPanel(self.iteminfo_panel)
 
         self.popup_item = None
 
@@ -132,26 +177,11 @@ class MapManagerFrame(wx.Frame):
                 id=xrc.XRCID('MapTreeList'))
     def on_selection_changed(self, evt):
         if not self.maptreectrl.GetSelection().IsOk():
-            self.projstring_tb.Value = ""
+            self.iteminfo.set_info(None)
             return
 
         container, drawable = self.maptreectrl.GetItemData(evt.Item)
-        if container.entry_type == container.TYPE_ERROR:
-            self.projstring_tb.Value = "Failed to open the map."
-            return
-        if not drawable:
-            self.projstring_tb.Value = ""
-            return
-
-        description = drawable.GetDescription().strip()
-        description = '  ' + description.replace('\n', '\n  ')
-        proj = drawable.GetProj().GetProjString().decode('ascii', 'replace')
-
-        self.projstring_tb.Value = '\n'.join([
-                "Title: %s" % drawable.GetTitle(),
-                "Description:",
-                description,
-                "Projection: %s" % proj])
+        self.iteminfo.set_info(container, drawable)
 
     @util.EVENT(wx.dataview.EVT_TREELIST_ITEM_ACTIVATED,
                 id=xrc.XRCID('MapTreeList'))
@@ -377,6 +407,7 @@ class MapManagerFrame(wx.Frame):
                             "Maps Evolved will continue to work, but the " +
                             "map database changes will be lost on exit."))
 
+        self.iteminfo.set_info(None)
         self.repopulate_filtertree()
         self.insert_drawables()
 
