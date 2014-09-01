@@ -5,6 +5,7 @@ import glob
 import wx
 import wx.dataview
 import wx.xrc as xrc
+import wx.lib.newevent
 
 import pymaplib
 import pymaplib.composite_maps
@@ -12,6 +13,8 @@ from mapsevolved import util, config
 
 def _(s): return s
 
+
+ItemMetadataChanged, EVT_METADATA_CHANGED = wx.lib.newevent.NewCommandEvent()
 class ItemInfoPanel:
     """Display map/GPS track/POI DB metadata"""
 
@@ -25,11 +28,17 @@ class ItemInfoPanel:
         self.desc_tb = xrc.XRCCTRL(panel, 'ItemDescTextCtrl')
         self.proj_tb = xrc.XRCCTRL(panel, 'ItemProjTextCtrl')
 
+        util.bind_decorator_events(self, wxcontainer=panel)
+        self.set_info(None)
+
     def set_info(self, container, drawable=None):
         """Display metadata of container/drawable
 
         If container is None, all displayed data is cleared.
         """
+
+        self.container = container
+        self.drawable = drawable
 
         if not container:
             self.title_tb.Value = ""
@@ -54,6 +63,28 @@ class ItemInfoPanel:
         else:
             self.desc_tb.Value = ""
             self.proj_tb.Value = ""
+
+    @util.EVENT(wx.EVT_TEXT_ENTER, id=xrc.XRCID('ItemTitleTextCtrl'))
+    def _on_title_enter(self, evt):
+        evt.Skip()
+        if not self.container:
+            return
+        self.container.title = self.title_tb.Value.strip()
+        event = ItemMetadataChanged(self.panel.Id,
+                                    container=self.container,
+                                    drawable=self.drawable)
+        wx.PostEvent(self.panel, event)
+
+    @util.EVENT(wx.EVT_TEXT_ENTER, id=xrc.XRCID('ItemGroupTextCtrl'))
+    def _on_group_enter(self, evt):
+        evt.Skip()
+        if not self.container:
+            return
+        self.container.group = self.group_tb.Value.strip()
+        event = ItemMetadataChanged(self.panel.Id,
+                                    container=self.container,
+                                    drawable=self.drawable)
+        wx.PostEvent(self.panel, event)
 
 
 class MapManagerFrame(wx.Frame):
@@ -301,6 +332,10 @@ class MapManagerFrame(wx.Frame):
                         "'Create composite maps'."))
 
 
+        self.finish_list_change()
+
+    @util.EVENT(EVT_METADATA_CHANGED, id=xrc.XRCID('ItemInfoPanel'))
+    def on_metadata_change(self, evt):
         self.finish_list_change()
 
     def display_map(self, item):

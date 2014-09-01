@@ -326,7 +326,9 @@
                       <minsize>70,15</minsize>
                     </object>
                     <object class="sizeritem">
-                      <object class="wxTextCtrl" name="ItemTitleTextCtrl"/>
+                      <object class="wxTextCtrl" name="ItemTitleTextCtrl">
+                        <style>wxTE_PROCESS_ENTER</style>
+                      </object>
                       <option>3</option>
                       <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
                     </object>
@@ -337,7 +339,9 @@
                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
                     </object>
                     <object class="sizeritem">
-                      <object class="wxTextCtrl" name="ItemGroupTextCtrl"/>
+                      <object class="wxTextCtrl" name="ItemGroupTextCtrl">
+                        <style>wxTE_PROCESS_ENTER</style>
+                      </object>
                       <option>1</option>
                       <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
                     </object>
@@ -377,7 +381,9 @@
                       <minsize>70,15</minsize>
                     </object>
                     <object class="sizeritem">
-                      <object class="wxTextCtrl" name="ItemProjTextCtrl"/>
+                      <object class="wxTextCtrl" name="ItemProjTextCtrl">
+                        <style>wxTE_READONLY</style>
+                      </object>
                       <option>1</option>
                       <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
                     </object>
