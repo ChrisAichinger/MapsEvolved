@@ -260,6 +260,10 @@ class EXPORT GVGMap : public RasterMap {
         virtual bool
         LatLonToPixel(const LatLon &pos, MapPixelCoord *result) const;
 
+        const GVGFile &GetGVGFile() const { return m_gvgfile; };
+        const GMPImage &GetGMPImage() const { return m_image; };
+        const GVGHeader *GetGVGHeader() const { return m_gvgheader; };
+        const GVGMapInfo *GetGVGMapInfo() const { return m_gvgmapinfo; };
     private:
         GVGFile m_gvgfile;
         GMPImage m_image;
