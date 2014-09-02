@@ -372,8 +372,12 @@ bool GeoTiff::PCSToPixel(double *x, double *y) const {
         assert(false);  // Not implemented
     }
     else if (m_ntransform == 16) {
-        // Use matrix for transformation
-        assert(false);  // Not implemented
+        // Use inverse matrix for transformation.
+        const double *mat = m_transform;
+        double x_in = *x, y_in = *y;
+        double denom = (mat[0] * mat[5] - mat[1] * mat[4]);
+        *x = (+(x_in - mat[3]) * mat[5] - (y_in - mat[7]) * mat[1]) / denom;
+        *y = (-(x_in - mat[3]) * mat[4] + (y_in - mat[7]) * mat[0]) / denom;
     }
     else if (m_npixscale >= 3 && m_ntiepoints >= 6) {
         // Use one tiepoint + pixscale
