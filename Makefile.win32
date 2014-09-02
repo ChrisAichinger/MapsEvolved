@@ -24,11 +24,11 @@ CPPDEBUG = -DNDEBUG -MD -O2 -Oy
 # We still want the linker to generate debug information (.pdb's), but enable
 # optimizations.
 LDDEBUG = -DEBUG -PDB:$(TARGET).pdb -OPT:REF
-ODMPATH = ODM/Release-DLL
+ODMPATH = ODM/Release
 else
 CPPDEBUG = -MDd -Od -Oy- -RTC1
 LDDEBUG = -DEBUG -PDB:$(TARGET).pdb
-ODMPATH = ODM/Debug-DLL
+ODMPATH = ODM/Debug
 endif
 
 CPPFLAGS = -I. -IODM/OutdoorMapper -Isrc_sip -Ivenv/Include
