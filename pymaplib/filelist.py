@@ -188,19 +188,22 @@ class FileList:
         self.gpxlist = []
         self.dblist = []
 
+    @staticmethod
+    def guess_filetype(fname):
+        if fname.startswith('composite_map:'):
+            return 'MAP'
+        ftypes = {'gpx': 'GPX',
+                  'db': 'DB',
+                  'tif': 'MAP',
+                  'tiff': 'MAP',
+                  'gvg': 'MAP',
+                 }
+        ext = fname.lower().rsplit('.', 1)[-1]
+        return ftypes.get(ext, None)
+
     def add_file(self, fname, ftype=None, title=None, group=None):
         if ftype is None:
-            if fname.startswith('composite_map:'):
-                ftype = 'MAP'
-        if ftype is None:
-            ftypes = {'gpx': 'GPX',
-                      'db': 'DB',
-                      'tif': 'MAP',
-                      'tiff': 'MAP',
-                      'gvg': 'MAP',
-                     }
-            ext = fname.lower().rsplit('.', 1)[-1]
-            ftype = ftypes.get(ext, None)
+            ftype = self.guess_filetype(fname)
 
         if ftype == "GPX":
             targetlist = self.gpxlist
