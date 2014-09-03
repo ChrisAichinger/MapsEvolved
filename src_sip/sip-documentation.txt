@@ -1,0 +1,23 @@
+Class return values:
+
+    - SIP will create a copy of the returned C++ object (via ``new
+      Class(retval)``), unless
+       * a /NoCopy/ annotation is present, or
+       * the return type is not copyable (no copy c'tor or abstract class), or
+       * the return type is a non-const reference or a pointer.
+
+    - If a new object was created, sipConvertFromNewType() will be called,
+      otherwise sipConvertFromType() is used.
+    - A /Factory/ annotation will force the use of sipConvertFromNewType()
+      instead of sipConvertFromType().
+      Aside from the interaction with /KeepReference/, this is the only effect
+      of /Factory/.
+
+sipConvertFromType and sipConvertFromNewType both do basically the same thing,
+with FromType checking if the instance is already wrapped and FromNewType
+having a bit more elaborate error checking going on.
+
+Annotation summary:
+/Factory/: Only necessary if functions generate a new C++ instance and
+           return it via pointer or non-const reference.
+           The exception is its interaction with /KeepReference/ (see there).
