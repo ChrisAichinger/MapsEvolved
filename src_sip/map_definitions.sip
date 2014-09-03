@@ -12,7 +12,7 @@ class TiffMap : public RasterMap {
         virtual MapPixelDeltaInt GetSize() const;
         virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
-                      const MapPixelDeltaInt &size) const /Factory/;
+                      const MapPixelDeltaInt &size) const;
 
         virtual Projection GetProj() const;
 
@@ -30,6 +30,7 @@ class TiffMap : public RasterMap {
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
                         const MapPixelCoord &base_br) const;
+        virtual ODMPixelFormat GetPixelFormat() const;
 };
 
 class GVGMap : public RasterMap {
@@ -45,7 +46,7 @@ class GVGMap : public RasterMap {
         virtual MapPixelDeltaInt GetSize() const;
         virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
-                      const MapPixelDeltaInt &size) const /Factory/;
+                      const MapPixelDeltaInt &size) const;
 
         virtual Projection GetProj() const;
 
@@ -63,6 +64,12 @@ class GVGMap : public RasterMap {
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
                         const MapPixelCoord &base_br) const;
+        virtual ODMPixelFormat GetPixelFormat() const;
+
+        const GVGFile &GetGVGFile() const;
+        const GMPImage &GetGMPImage() const;
+        const GVGHeader *GetGVGHeader() const;
+        const GVGMapInfo *GetGVGMapInfo() const;
 };
 
 class GradientMap : public RasterMap {
@@ -78,7 +85,7 @@ class GradientMap : public RasterMap {
         virtual MapPixelDeltaInt GetSize() const;
         virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
-                      const MapPixelDeltaInt &size) const /Factory/;
+                      const MapPixelDeltaInt &size) const;
 
         virtual Projection GetProj() const;
 
@@ -96,6 +103,7 @@ class GradientMap : public RasterMap {
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
                         const MapPixelCoord &base_br) const;
+        virtual ODMPixelFormat GetPixelFormat() const;
 };
 
 class SteepnessMap : public RasterMap {
@@ -111,7 +119,7 @@ class SteepnessMap : public RasterMap {
         virtual MapPixelDeltaInt GetSize() const;
         virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
-                      const MapPixelDeltaInt &size) const /Factory/;
+                      const MapPixelDeltaInt &size) const;
 
         virtual Projection GetProj() const;
 
@@ -129,6 +137,7 @@ class SteepnessMap : public RasterMap {
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
                         const MapPixelCoord &base_br) const;
+        virtual ODMPixelFormat GetPixelFormat() const;
 };
 
 class Gridlines : public GeoDrawable {
@@ -162,6 +171,7 @@ class Gridlines : public GeoDrawable {
                         const GeoPixels &base,
                         const MapPixelCoord &base_tl,
                         const MapPixelCoord &base_br) const;
+        virtual ODMPixelFormat GetPixelFormat() const;
 };
 
 class CompositeMap : public RasterMap {
@@ -192,4 +202,30 @@ class CompositeMap : public RasterMap {
                     const std::vector<RasterMapShPtr> &orig_maps);
         static std::wstring
         FormatFname(const CompositeMap &this_map);
+
+        virtual GeoDrawable::DrawableType GetType() const;
+        virtual unsigned int GetWidth() const;
+        virtual unsigned int GetHeight() const;
+        virtual MapPixelDeltaInt GetSize() const;
+        virtual PixelBuf
+            GetRegion(const MapPixelCoordInt &pos,
+                      const MapPixelDeltaInt &size) const;
+
+        virtual Projection GetProj() const;
+
+        virtual bool
+        PixelToLatLon(const MapPixelCoord &pos, LatLon *result /Out/) const;
+        virtual bool
+        LatLonToPixel(const LatLon &pos, MapPixelCoord *result /Out/) const;
+
+        virtual const std::wstring &GetFname() const;
+        virtual const std::wstring &GetTitle() const;
+        virtual const std::wstring &GetDescription() const;
+        virtual bool SupportsDirectDrawing() const;
+        virtual PixelBuf
+        GetRegionDirect(const MapPixelDeltaInt &output_size,
+                        const GeoPixels &base,
+                        const MapPixelCoord &base_tl,
+                        const MapPixelCoord &base_br) const;
+        virtual ODMPixelFormat GetPixelFormat() const;
 };
