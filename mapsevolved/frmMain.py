@@ -630,6 +630,7 @@ class MainFrame(wx.Frame):
 
     def set_basemap(self, rastermap):
         self.mapdisplay.ChangeMap(rastermap)
+        self.overlays = list(reversed(self.special_layers))
         self.update_layerlist_from_map()
 
     def add_overlay(self, rastermap):
