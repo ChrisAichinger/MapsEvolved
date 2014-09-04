@@ -181,24 +181,29 @@ class CompositeMap : public RasterMap {
 %End
     public:
         CompositeMap(unsigned int num_x, unsigned int num_y,
+                     bool has_overlap_pixel,
                      const std::vector<RasterMapShPtr> &orig_maps);
         CompositeMap(const std::wstring &fname_token);
 
         static std::vector<std::wstring>
         ParseFname(const std::wstring &fname,
                    unsigned int *num_maps_x /Out/,
-                   unsigned int *num_maps_y /Out/);
+                   unsigned int *num_maps_y /Out/,
+                   bool *has_overlap_pixel /Out/);
 
         static std::vector<RasterMapShPtr>
         LoadFnameMaps(const std::wstring &fname,
                       unsigned int *num_maps_x /Out/,
-                      unsigned int *num_maps_y /Out/);
+                      unsigned int *num_maps_y /Out/,
+                      bool *has_overlap_pixel /Out/);
 
         static std::wstring
         FormatFname(unsigned int num_maps_x, unsigned int num_maps_y,
+                    bool has_overlap_pixel,
                     const std::vector<std::wstring> &fnames);
         static std::wstring
         FormatFname(unsigned int num_maps_x, unsigned int num_maps_y,
+                    bool has_overlap_pixel,
                     const std::vector<RasterMapShPtr> &orig_maps);
         static std::wstring
         FormatFname(const CompositeMap &this_map);

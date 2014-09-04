@@ -2,7 +2,7 @@ import math
 import itertools
 
 from . import maplib_sip
-from .maplib_sip import MapPixelCoord, MapPixelCoordInt
+from .maplib_sip import MapPixelCoord, MapPixelDeltaInt
 
 
 class CombinableTile:
@@ -13,12 +13,15 @@ class CombinableTile:
     checking whether it matches another map and tracking fitting "neighbors".
     """
 
-    def __init__(self, container):
+    def __init__(self, container, has_overlap_pixel):
         self.container = container
         self.map = container.drawable
-        self.size = size = self.map.GetSize()
-
+        self.has_overlap_pixel = has_overlap_pixel
         self.neighbors = {side: None for side in 'lrtb'}
+
+        size = self.map.GetSize()
+        if has_overlap_pixel:
+            size -= MapPixelDeltaInt(1, 1)
 
         corners = {"tl": MapPixelCoord(0, 0),
                    "tr": MapPixelCoord(size.x, 0),
@@ -94,9 +97,9 @@ class CombinableTile:
             return False
 
         if side in 'lr':
-            return self.size.y == other.size.y
+            return self.map.GetHeight() == other.map.GetHeight()
         else:
-            return self.size.x == other.size.x
+            return self.map.GetWidth() == other.map.GetWidth()
 
     def do_pair_with(self, other, side_self):
         """Pair two maps by making them neighbors of each other
@@ -152,6 +155,7 @@ class CompositableTiles:
         self.num_x = len(raster)
         self.num_y = len(raster[0])
         self.tiles = raster
+        self.has_overlap_pixel = raster[0][0].has_overlap_pixel
 
         self.tile_maps = [None] * self.num_x * self.num_y
         self.tile_containers = [None] * self.num_x * self.num_y
@@ -162,7 +166,7 @@ class CompositableTiles:
 
     def get_composite_map_fname(self):
         return maplib_sip.CompositeMap.FormatFname(
-                self.num_x, self.num_y, self.tile_maps)
+                self.num_x, self.num_y, self.has_overlap_pixel, self.tile_maps)
 
     @classmethod
     def from_tile_graph(cls, topleft_tile):
@@ -230,22 +234,26 @@ def find_composites(maplist):
                container.drawable.GetProj().GetProjString())
         buckets.setdefault(key, []).append(container)
 
-    for containers in buckets.values():
-        if len(containers) < 2:
-            continue
-
-        # Iterate over all pairs of tiles and link the fitting tiles together.
-        tiles = [CombinableTile(c) for c in containers]
-        for tile1, tile2 in itertools.combinations(tiles, 2):
-            tile1.try_pair_with(tile2)
-
-        for tile in tiles:
-            # Find the top-left tiles and place them into a 2D raster.
-            if not (tile.neighbors['b'] or tile.neighbors['r']):
-                continue
-            if tile.neighbors['l'] or tile.neighbors['t']:
+    # Overlap pixel: deal with tiles that overlap adjacent tiles by one pixel.
+    # See the comment in map_composite.h for more information.
+    for has_overlap_pixel in (True, False):
+        for containers in buckets.values():
+            if len(containers) < 2:
                 continue
 
-            ctiles = CompositableTiles.from_tile_graph(tile)
-            if ctiles:
-                yield ctiles
+            # Iterate over all pairs of tiles and link the fitting ones
+            # together.
+            tiles = [CombinableTile(c, has_overlap_pixel) for c in containers]
+            for tile1, tile2 in itertools.combinations(tiles, 2):
+                tile1.try_pair_with(tile2)
+
+            for tile in tiles:
+                # Find the top-left tiles and place them into a 2D raster.
+                if not (tile.neighbors['b'] or tile.neighbors['r']):
+                    continue
+                if tile.neighbors['l'] or tile.neighbors['t']:
+                    continue
+
+                ctiles = CompositableTiles.from_tile_graph(tile)
+                if ctiles:
+                    yield ctiles
