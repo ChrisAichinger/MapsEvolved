@@ -338,8 +338,16 @@ bool GeoTiff::LoadCoordinates() {
     tie(m_npixscale, m_pixscale) = GetField<double>(TIFFTAG_GEOPIXELSCALE);
     tie(m_ntransform, m_transform) = GetField<double>(TIFFTAG_GEOTRANSMATRIX);
 
+    unsigned int sample_fmt = 0;
+    TIFFGetFieldDefaulted(m_rawtiff, TIFFTAG_SAMPLEFORMAT, &sample_fmt);
     if (HasKey(VerticalUnitsGeoKey)) {
-        // Vertical coordinate system defined -> DHM
+        m_type = RasterMap::TYPE_DHM;
+    } else if (GetSamplesPerPixel() == 1 && GetBitsPerSample() == 16 &&
+               sample_fmt == SAMPLEFORMAT_INT)
+    {
+        // Some DHM's don't set VerticalUnitsGeoKey, unfortunately.
+        // Use this heuristic to catch those, SAMPLEFORMAT_INT should be
+        // a pretty good indicator.
         m_type = RasterMap::TYPE_DHM;
     } else {
         m_type = RasterMap::TYPE_MAP;
