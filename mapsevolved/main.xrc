@@ -446,6 +446,11 @@
       <label>&amp;Remove from list</label>
     </object>
   </object>
+  <object class="wxMenu" name="TypeFilterPopup">
+    <object class="wxMenuItem" name="RenameFilterMenuItem">
+      <label>&amp;Rename</label>
+    </object>
+  </object>
   <object class="wxFrame" name="PanoramaFrame">
     <object class="wxBoxSizer">
       <orient>wxHORIZONTAL</orient>

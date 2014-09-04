@@ -124,6 +124,9 @@ class MapManagerFrame(wx.Frame):
         self.noitem_popup = res.LoadMenu("NoItemPopup")
         if not self.noitem_popup:
             raise RuntimeError("Could not load 'no item' popup menu from XRC.")
+        self.filter_popup = res.LoadMenu("TypeFilterPopup")
+        if not self.filter_popup:
+            raise RuntimeError("Could not load fiter popup menu from XRC.")
 
         util.bind_decorator_events(self)
 
@@ -139,6 +142,7 @@ class MapManagerFrame(wx.Frame):
         self.maptreectrl.SetDropTarget(file_drop_target)
 
         self.popup_item = None
+        self.filter_popup_item = None
 
         # For some funky reason XRCed chokes on width -1 columns. Set it here.
         self.maptreectrl.SetColumnWidth(0, -1)
@@ -321,6 +325,40 @@ class MapManagerFrame(wx.Frame):
     @util.EVENT(wx.EVT_TREE_SEL_CHANGED, id=xrc.XRCID('TypeFilterTree'))
     def on_type_filter_select(self, evt):
         # Don't repopulate the filtertree here, else we get infinite recursion.
+        self.insert_drawables()
+
+    @util.EVENT(wx.EVT_TREE_ITEM_MENU, id=xrc.XRCID('TypeFilterTree'))
+    def on_type_filter_item_menu(self, evt):
+        if not evt.Item.IsOk():
+            return
+        self.filter_popup_item = evt.Item
+        itemdata = self.type_filter.GetItemData(evt.Item)
+
+        # Only allow renaming of ".group" fields, not of the "Map" /
+        # "GPS Tracks" / "POI DB" meta-labels.
+        is_metalabel = (itemdata is None or isinstance(itemdata, list))
+        rename_id = xrc.XRCID('RenameFilterMenuItem')
+        rename_menu = self.filter_popup.FindItemById(rename_id)
+        rename_menu.Enable(not is_metalabel)
+
+        self.PopupMenu(self.filter_popup)
+
+    @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('RenameFilterMenuItem'))
+    def on_type_filter_rename_item(self, evt):
+        work_list = self.type_filter.GetItemData(self.filter_popup_item)
+        dlg = wx.TextEntryDialog(self,
+                                 _("Enter new group name:"),
+                                 _("Change group name"),
+                                 "", style=wx.OK|wx.CANCEL)
+        if dlg.ShowModal() != wx.ID_OK:
+            return
+        new_group = dlg.GetValue()
+        dlg.Destroy()
+        for container in work_list:
+            container.group = new_group
+            item = self.insert_row(container, container.drawable)
+            self.maptreectrl.Expand(item)
+        self.repopulate_filtertree()
         self.insert_drawables()
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('CreateCompositeTBButton'))
