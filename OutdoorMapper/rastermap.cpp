@@ -31,6 +31,41 @@ GeoPixels::~GeoPixels() {};
 GeoDrawable::~GeoDrawable() {};
 RasterMap::~RasterMap() {};
 
+PixelBuf EXPORT GetRegion_BoundsHelper(const GeoDrawable &drawable,
+                                       const MapPixelCoordInt &pos,
+                                       const MapPixelDeltaInt &size)
+{
+    MapPixelCoordInt endpos = pos + size;
+    if (endpos.x <= 0 || endpos.y <= 0 ||
+        pos.x >= static_cast<int>(drawable.GetWidth()) ||
+        pos.y >= static_cast<int>(drawable.GetHeight()))
+    {
+        // Requested region fully out of bounds.
+        return PixelBuf(size.x, size.y);
+    }
+    if (pos.x >= 0 && pos.y >= 0 &&
+        endpos.x <= static_cast<int>(drawable.GetWidth()) &&
+        endpos.y <= static_cast<int>(drawable.GetHeight()))
+    {
+        // Requested region fully in-bounds.
+        return PixelBuf();
+    }
+    // Crop the request size and defer to the original GetRegion(), then copy
+    // the result to the appropriate place in the output.
+    auto newpos = MapPixelCoordInt(std::max(pos.x, 0), std::max(pos.y, 0));
+    auto newend = MapPixelCoordInt(
+            std::min(endpos.x, static_cast<int>(drawable.GetWidth())),
+            std::min(endpos.y, static_cast<int>(drawable.GetHeight())));
+    auto newsize = newend - newpos;
+    auto pos_offset = PixelBufCoord(newpos.x - pos.x,
+                                    size.y - newsize.y - (newpos.y - pos.y));
+
+    auto result = PixelBuf(size.x, size.y);
+    auto pixels = drawable.GetRegion(newpos, newsize);
+    result.Insert(pos_offset, pixels);
+    return result;
+}
+
 
 class RasterMapError : public RasterMap {
     public:

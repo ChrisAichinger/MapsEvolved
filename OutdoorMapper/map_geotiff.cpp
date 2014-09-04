@@ -492,7 +492,14 @@ MapPixelDeltaInt TiffMap::GetSize() const {
 PixelBuf TiffMap::GetRegion(
                       const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const
-    { return m_geotiff->GetRegion(pos, size); };
+{
+    auto fixed_bounds_pb = GetRegion_BoundsHelper(*this, pos, size);
+    if (fixed_bounds_pb.GetData())
+        return fixed_bounds_pb;
+
+    return m_geotiff->GetRegion(pos, size);
+}
+
 bool TiffMap::PixelToPCS(double *x, double *y) const
     { return m_geotiff->PixelToPCS(x, y); }
 bool TiffMap::PCSToPixel(double *x, double *y) const

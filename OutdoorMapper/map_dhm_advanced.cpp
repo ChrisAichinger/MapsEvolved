@@ -56,6 +56,10 @@ static TimeCounter time_counter_loaddisc;
 PixelBuf GradientMap::GetRegion(
         const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
 {
+    auto fixed_bounds_pb = GetRegion_BoundsHelper(*this, pos, size);
+    if (fixed_bounds_pb.GetData())
+        return fixed_bounds_pb;
+
     time_counter_loaddisc.Start();
     MapPixelCoordInt req_pos = pos - MapPixelDeltaInt(1, 1);
     MapPixelDeltaInt req_size = size + MapPixelDeltaInt(2, 2);
@@ -140,6 +144,10 @@ static unsigned int steepness_colors[] = {
 PixelBuf SteepnessMap::GetRegion(
         const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
 {
+    auto fixed_bounds_pb = GetRegion_BoundsHelper(*this, pos, size);
+    if (fixed_bounds_pb.GetData())
+        return fixed_bounds_pb;
+
     double mpp;
     if (!MetersPerPixel(m_orig_map, pos + size/2, &mpp)) {
         // Return zero-initialized memory block.

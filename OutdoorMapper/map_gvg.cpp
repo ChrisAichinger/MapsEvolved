@@ -798,6 +798,10 @@ PixelBuf
 GVGMap::GetRegion(const MapPixelCoordInt &pos,
                   const MapPixelDeltaInt &size) const
 {
+    auto fixed_bounds_pb = GetRegion_BoundsHelper(*this, pos, size);
+    if (fixed_bounds_pb.GetData())
+        return fixed_bounds_pb;
+
     PixelBuf result(size.x, size.y);
     MapPixelCoordInt end = pos + size;
 

@@ -85,6 +85,15 @@ class EXPORT GeoDrawable : public GeoPixels {
         virtual ODMPixelFormat GetPixelFormat() const = 0;
 };
 
+// Helper function for GetRegion():
+// Checks if pos and size are within bounds and crops the region if necessary.
+// It may call drawable.GetRegion() again with updated pos and size!
+// If the return value is valid, it can be returned directly from GetRegion().
+PixelBuf EXPORT GetRegion_BoundsHelper(const GeoDrawable &drawable,
+                                       const MapPixelCoordInt &pos,
+                                       const MapPixelDeltaInt &size);
+
+
 
 class EXPORT RasterMap : public GeoDrawable {
     // A GeoDrawable especially for maps. All logic was factored out to the

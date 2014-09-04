@@ -145,6 +145,10 @@ const std::wstring &CompositeMap::GetDescription() const {
 PixelBuf CompositeMap::GetRegion(
         const MapPixelCoordInt &pos, const MapPixelDeltaInt &size) const
 {
+    auto fixed_bounds_pb = GetRegion_BoundsHelper(*this, pos, size);
+    if (fixed_bounds_pb.GetData())
+        return fixed_bounds_pb;
+
     unsigned int tl_x, tl_y, br_x, br_y;
     MapPixelCoordInt tl_pos, br_pos;
 

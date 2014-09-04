@@ -24,6 +24,10 @@ PixelBuf
 Gridlines::GetRegion(const MapPixelCoordInt &pos,
                      const MapPixelDeltaInt &size) const
 {
+    auto fixed_bounds_pb = GetRegion_BoundsHelper(*this, pos, size);
+    if (fixed_bounds_pb.GetData())
+        return fixed_bounds_pb;
+
     // Zero-initialized memory block.
     PixelBuf result(size.x, size.y);
 
