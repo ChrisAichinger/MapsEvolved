@@ -246,6 +246,7 @@ class MapManagerFrame(wx.Frame):
             self.overlay_map(evt.Item)
         else:
             self.display_map(evt.Item)
+        util.force_show_window(self.parent)
 
     @util.EVENT(wx.dataview.EVT_TREELIST_ITEM_CONTEXT_MENU,
                 id=xrc.XRCID('MapTreeList'))
@@ -266,6 +267,7 @@ class MapManagerFrame(wx.Frame):
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('DisplayMenuItem'))
     def on_display_menu(self, evt):
         self.display_map(self.popup_item)
+        util.force_show_window(self.parent)
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('DisplayOverlayMenuItem'))
     def on_overlay_menu(self, evt):
@@ -312,6 +314,7 @@ class MapManagerFrame(wx.Frame):
                         "Please select the map you want to display."))
             return
         self.display_map(self.maptreectrl.GetSelection())
+        util.force_show_window(self.parent)
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('DisplayOverlayTBButton'))
     def on_overlay_tool(self, evt):
