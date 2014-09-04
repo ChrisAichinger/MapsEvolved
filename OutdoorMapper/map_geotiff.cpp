@@ -92,6 +92,10 @@ class Tiff {
     private:
         unsigned int m_width, m_height;
         unsigned short int m_bitspersample, m_samplesperpixel;
+
+        PixelBuf DoGetRegion(
+                const class MapPixelCoordInt &pos,
+                const class MapPixelDeltaInt &size) const;
 };
 
 class GeoTiff : public Tiff {
@@ -181,13 +185,13 @@ Tiff::Tiff(const std::wstring &fname)
 };
 
 PixelBuf
-Tiff::GetRegion(const MapPixelCoordInt &pos,
-                const MapPixelDeltaInt &size) const
+Tiff::DoGetRegion(const MapPixelCoordInt &pos,
+                  const MapPixelDeltaInt &size) const
 {
     MapPixelCoordInt endpos = pos + size;
-    if (endpos.x < 0 || endpos.y < 0 ||
-        pos.x > static_cast<int>(m_width) ||
-        pos.y > static_cast<int>(m_height))
+    if (endpos.x <= 0 || endpos.y <= 0 ||
+        pos.x >= static_cast<int>(m_width) ||
+        pos.y >= static_cast<int>(m_height))
     {
         return PixelBuf(size.x, size.y);
     }
@@ -211,6 +215,47 @@ Tiff::GetRegion(const MapPixelCoordInt &pos,
 
     if (!ok) {
         throw std::runtime_error("Loading TIFF data failed.");
+    }
+    return result;
+}
+
+PixelBuf
+Tiff::GetRegion(const MapPixelCoordInt &pos,
+                const MapPixelDeltaInt &size) const
+{
+    if (TIFFIsTiled(m_rawtiff))
+        return DoGetRegion(pos, size);
+
+    // Handle stripped images:
+    // TIFFRGBAImageGet ignores img.col_offset for stripped images.
+    // It always returns data starting from the first column of the image.
+    //
+    // So, fetch a full-width strip and copy the relevant portion into the
+    // output PixelBuf.
+    auto result = PixelBuf(size.x, size.y);
+    MapPixelCoordInt end = pos + size;
+
+    int strip_size = -1;
+    if (!TIFFGetFieldDefaulted(m_rawtiff, TIFFTAG_ROWSPERSTRIP, &strip_size)) {
+        throw std::runtime_error("Failed getting TIF dimensions.");
+    }
+    if (strip_size < 0) {
+        throw std::runtime_error("Stripped TIF image with strip height < 0?!");
+    }
+
+    int first_ty = pos.y / strip_size;
+    int last_ty = (end.y - 1) / strip_size;
+    for (int ty = pos.y / strip_size; ty*strip_size < end.y; ty++) {
+        PixelBuf tile = DoGetRegion(
+                MapPixelCoordInt(0, ty*strip_size),
+                MapPixelDeltaInt(m_width, strip_size));
+        if (!tile.GetData()) {
+            continue;
+        }
+        auto insert_pos = PixelBufCoord(
+                -pos.x,
+                (last_ty - ty + first_ty) * strip_size - pos.y);
+        result.Insert(insert_pos, tile);
     }
     return result;
 }
