@@ -189,7 +189,7 @@ static inline double FastBezierCalc(const unsigned int *src,
     double Y2 = 2.0 * y[2] - y[1];
 
 // Sample a 3x3 area around pos.x/pos.y, thus the (-1)
-#define SRC(xx,yy) src[(xx + pos.x - 1) + size.x * (yy + pos.y - 1)]
+#define SRC(xx,yy) ((int)src[(xx + pos.x - 1) + size.x * (yy + pos.y - 1)])
     return Y0 / 4 * (SRC(0, 0) * X0 + SRC(2, 0) * X2 + SRC(1, 0) * x[1] * 4) +
            Y2 / 4 * (SRC(0, 2) * X0 + SRC(2, 2) * X2 + SRC(1, 2) * x[1] * 4) +
            y[1] *   (SRC(0, 1) * X0 + SRC(2, 1) * X2 + SRC(1, 1) * 4 * x[1]);
