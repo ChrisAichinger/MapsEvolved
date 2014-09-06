@@ -372,8 +372,16 @@ class MainFrame(wx.Frame):
         if self.panorama_window:
             util.force_show_window(self.panorama_window)
         else:
-            self.panorama_window = frmPanorama.PanoramaFrame(
-                    self, self.heightfinder.GetActiveMap())
+            ok, center_ll = basemap.PixelToLatLon(self.mapdisplay.GetCenter())
+            if not ok:
+                util.Warn(self, _("The current map is not georeferenced."))
+                return
+            dhms = self.heightfinder.find_best_dhms(center_ll)
+            if not dhms:
+                util.Warn(self, _("No digital height information available."))
+                return
+            self.panorama_window = frmPanorama.PanoramaFrame(self,
+                                                             dhms[0].drawable)
             self.panorama_window.Show()
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('GPSTrackAnalyzerTBButton'))
@@ -618,7 +626,7 @@ class MainFrame(wx.Frame):
         self.statusbar.SetStatusText(_("Position: {}").format(
                                                   self.format_latlon(ll)), i=0)
 
-        ok, ti = self.heightfinder.CalcTerrain(ll)
+        ok, ti = self.heightfinder.calc_terrain(ll)
         if not ok:
             self.statusbar.SetStatusText(_("Height unknown"), i=1)
             self.statusbar.SetStatusText(_("Terrain orientation unknown"), i=2)

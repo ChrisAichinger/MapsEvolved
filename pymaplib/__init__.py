@@ -143,22 +143,69 @@ def format_coordinate(coord_fmt, latlon):
         raise NotImplementedError("Unknown coordinate format: '%s'",
                                   coord_fmt)
 
-class HeightFinder(maplib_sip.HeightFinder):
+class HeightFinder:
+    """Provider DHM based services
+
+    Offer two services related to DHMs: finding the best available DHM for a
+    particular spot, and calculating height/slope steepness/slope orientation.
+    """
+
+    # Starting with SRTM, most DHMs use -32768 as invalid pixel value (i.e. no
+    # height information available).
+    # Cf. https://www.google.com/search?q=32768+srtm
+    INVALID_DHM_VALUE = -2**15
+
     def __init__(self, maps):
+        """HeightFinder constructor
+
+        Argument ``maps`` can the full maplist, not only the DHMs to work on.
+        """
+
         super().__init__()
         self.maps = maps
-        self.active_dhm = None
 
-    def FindBestMap(self, pos, map_type):
-        for container in self.maps:
-            if container.drawable.GetType() == map_type:
-                self.active_dhm = container.drawable
-                return container.drawable
-        self.active_dhm = None
-        return maplib_sip.RasterMapShPtr()
+    def _mpp_or_inf(self, dhm, latlon):
+        """Maps/Pixel of a given DHM, or float("inf") on error"""
 
-    def LatLonWithinActiveDHM(self, ll):
-        return self.active_dhm and is_within_map(ll, self.active_dhm)
+        ok, coord = dhm.LatLonToPixel(latlon)
+        if not ok:
+            return float("inf")
+        ok, mpp = MetersPerPixel(dhm, coord)
+        if not ok:
+            return float("inf")
+        return mpp
+
+    def find_best_dhms(self, latlon):
+        """Return a list of available DHMs for a given location
+
+        The list is sorted by decreasing resolution, i.e. the first element
+        is the most preferable.
+        """
+
+        type_dhm = maplib_sip.GeoDrawable.TYPE_DHM
+        dhms = [container for container in self.maps
+                if container.drawable.GetType() == type_dhm]
+        local_dhms = [container for container in dhms
+                      if is_within_map(latlon, container.drawable)]
+        return sorted(local_dhms,
+                      key=lambda cont: self._mpp_or_inf(cont.drawable, latlon))
+
+    def calc_terrain(self, latlon):
+        """Calculate terrain info for a specific location
+
+        Returns a tuple ``(ok, terrain_info)``, where ``terrain_info``
+        is only valid if ``ok`` is True.
+
+        ``terrain_info`` has 3 members:
+            height_m, slope_face_deg, steepness_deg
+        """
+
+        dhms = self.find_best_dhms(latlon)
+        for dhm in dhms:
+            ok, res = maplib_sip.CalcTerrainInfo(dhm.drawable, latlon)
+            if ok and res.height_m != self.INVALID_DHM_VALUE:
+                return ok, res
+        return False, None
 
 
 def is_within_map(latlon, drawable):

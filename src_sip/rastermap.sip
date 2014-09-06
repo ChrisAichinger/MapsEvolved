@@ -143,19 +143,8 @@ struct TerrainInfo {
 RasterMapShPtr LoadMap(const std::wstring &fname);
 std::vector<RasterMapShPtr> AlternateMapViews(const RasterMapShPtr &map);
 
-class HeightFinder {
-%TypeHeaderCode
-#include "rastermap.h"
-%End
-    public:
-        virtual bool CalcTerrain(const LatLon &pos, TerrainInfo *result /Out/);
-        RasterMapShPtr GetActiveMap() const;
-    protected:
-        virtual bool LatLonWithinActiveDHM(const LatLon &pos) const;
-        virtual RasterMapShPtr FindBestMap(
-                      const LatLon &pos,
-                      GeoDrawable::DrawableType type) const;
-};
+bool CalcTerrainInfo(const RasterMapShPtr &map,
+                     const LatLon &pos, TerrainInfo *result /Out/);
 
 bool GetMapDistance(const RasterMapShPtr &map, const MapPixelCoord &pos,
                     double dx, double dy, double *distance /Out/);

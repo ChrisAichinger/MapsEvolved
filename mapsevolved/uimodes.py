@@ -144,7 +144,7 @@ class GPSDrawUIMode(BaseUIMode):
         ok, ll = self.mapdisplay.GetBaseMap().PixelToLatLon(base_coord)
         if not ok:
             return True
-        ok, ti = self.heightfinder.CalcTerrain(ll)
+        ok, ti = self.heightfinder.calc_terrain(ll)
         if not ok:
             return True
 

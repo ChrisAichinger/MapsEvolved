@@ -616,7 +616,7 @@ class GPSTrackAnalyzerFrame(wx.Frame):
                                               seg_idx, point_idx)
 
             latlon = pymaplib.LatLon(point.latitude, point.longitude)
-            ok, terraininfo = self.heightfinder.CalcTerrain(latlon)
+            ok, terraininfo = self.heightfinder.calc_terrain(latlon)
             if not ok:
                 terraininfo.height_m = -1
             point.dhm_elevation = terraininfo.height_m
