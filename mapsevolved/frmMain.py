@@ -308,6 +308,10 @@ class MainFrame(wx.Frame):
     def on_mouse_motion(self, evt):
         # Ignore mouse movement if we're not dragging.
         if evt.Dragging() and evt.LeftIsDown():
+            if not self.drag_last_pos:
+                # This shouldn't happen but sometimes does. Avoid
+                # the exception and just ignore the mouse movement.
+                return
             pos = evt.GetPosition()
             drag_x_threshold = wx.SystemSettings.GetMetric(wx.SYS_DRAG_X)
             drag_y_threshold = wx.SystemSettings.GetMetric(wx.SYS_DRAG_Y)
