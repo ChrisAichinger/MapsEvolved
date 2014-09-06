@@ -159,34 +159,28 @@ AlternateMapViews(const std::shared_ptr<RasterMap> &map)
 }
 
 
-
-HeightFinder::HeightFinder() : m_active_dhm(nullptr) { }
-
-bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
+bool CalcTerrainInfo(const std::shared_ptr<class RasterMap> &map,
+                     const LatLon &pos, TerrainInfo *result)
+{
     assert(result);
 
-    if (!LatLonWithinActiveDHM(pos)) {
-        m_active_dhm = FindBestMap(pos, RasterMap::TYPE_DHM);
-        if (!m_active_dhm)
-            return false;
-    }
     MapPixelCoord map_pos;
-    if (!m_active_dhm->LatLonToPixel(pos, &map_pos)) {
+    if (!map->LatLonToPixel(pos, &map_pos)) {
         return false;
     }
-    MapBezierPositioner bezier_pos(map_pos, m_active_dhm->GetSize());
+    MapBezierPositioner bezier_pos(map_pos, map->GetSize());
     if (!bezier_pos.IsValid()) {
         return false;
     }
     double mpp;
-    if (!MetersPerPixel(m_active_dhm, bezier_pos.GetBezierCenter(), &mpp)) {
+    if (!MetersPerPixel(map, bezier_pos.GetBezierCenter(), &mpp)) {
         return false;
     }
     unsigned int bezier_pixels = Bezier::N_POINTS - 1;
     double bezier_meters = bezier_pixels * mpp;
 
     MapBezierGradient grad;
-    if (!Gradient3x3(*m_active_dhm, bezier_pos.GetBezierCenter(),
+    if (!Gradient3x3(*map, bezier_pos.GetBezierCenter(),
                      bezier_pos.GetBasePoint(), &grad))
     {
         return false;
@@ -198,7 +192,7 @@ bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
     double grad_direction = atan2(-grad.y, grad.x);
     double grad_steepness = atan(grad.Abs());
 
-    if (!Value3x3(*m_active_dhm, bezier_pos.GetBezierCenter(),
+    if (!Value3x3(*map, bezier_pos.GetBezierCenter(),
                   bezier_pos.GetBasePoint(), &result->height_m))
     {
         return false;
@@ -209,18 +203,6 @@ bool HeightFinder::CalcTerrain(const LatLon &pos, TerrainInfo *result) {
     return true;
 }
 
-bool HeightFinder::LatLonWithinActiveDHM(const LatLon &pos) const {
-    // To be reimplemented on the Python side.
-    return false;
-}
-
-std::shared_ptr<class RasterMap>
-HeightFinder::FindBestMap(const LatLon &pos,
-                          GeoDrawable::DrawableType type) const
-{
-    // To be reimplemented on the Python side.
-    return NULL;
-}
 
 bool GetMapDistance(const std::shared_ptr<class GeoDrawable> &map,
                     const MapPixelCoord &pos,

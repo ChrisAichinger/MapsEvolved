@@ -115,21 +115,9 @@ struct EXPORT TerrainInfo {
     double steepness_deg;
 };
 
-class EXPORT HeightFinder {
-    public:
-        explicit HeightFinder();
-        virtual ~HeightFinder() { m_active_dhm = nullptr; }
-        virtual bool CalcTerrain(const LatLon &pos, TerrainInfo *result);
-        std::shared_ptr<class RasterMap> GetActiveMap() const {
-            return m_active_dhm;
-        }
-    protected:
-        std::shared_ptr<class RasterMap> m_active_dhm;
-
-        virtual bool LatLonWithinActiveDHM(const LatLon &pos) const;
-        virtual std::shared_ptr<class RasterMap> FindBestMap(
-                const LatLon &pos, GeoDrawable::DrawableType type) const;
-};
+bool EXPORT
+CalcTerrainInfo(const std::shared_ptr<class RasterMap> &map,
+                const LatLon &pos, TerrainInfo *result);
 
 bool EXPORT
 GetMapDistance(const std::shared_ptr<class GeoDrawable> &map,
