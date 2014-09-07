@@ -76,3 +76,14 @@ diff -Nur libgeotiff-1.4.0/libxtiff/xtiffio.h libgeotiff/libxtiff/xtiffio.h
  extern TIFF CPL_DLL * XTIFFFdOpen(int fd, const char* name, const char* mode);
  extern void CPL_DLL XTIFFClose(TIFF *tif);
  
+--- libgeotiff-1.4.0/bin/geotifcp.c	Sat Sep  6 23:51:20 2014
++++ libgeotiff/bin/geotifcp.c	Sat Sep  6 23:51:29 2014
+@@ -477,7 +477,7 @@
+ 	{ TIFFTAG_DATETIME,		1, TIFF_ASCII },
+ 	{ TIFFTAG_ARTIST,		1, TIFF_ASCII },
+ 	{ TIFFTAG_HOSTCOMPUTER,		1, TIFF_ASCII },
+-	{ TIFFTAG_WHITEPOINT,		1, TIFF_RATIONAL },
++	{ TIFFTAG_WHITEPOINT,		2, TIFF_RATIONAL },
+ 	{ TIFFTAG_PRIMARYCHROMATICITIES,(uint16) -1,TIFF_RATIONAL },
+ 	{ TIFFTAG_HALFTONEHINTS,	2, TIFF_SHORT },
+ 	{ TIFFTAG_BADFAXLINES,		1, TIFF_LONG },
