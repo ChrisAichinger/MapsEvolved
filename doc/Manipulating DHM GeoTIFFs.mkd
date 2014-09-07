@@ -1,0 +1,35 @@
+Transforming GeoTIFF DHM files
+==============================
+
+GeoTIFF DHM (digital height model) files are typically regular images with
+one sample per pixel and 16 bits of signed sample information per pixel. Most
+general image processing applications can not handle 16 bits/sample. This is a
+problem when trying to rescale DHMs down to smaller sizes and for combining
+several .tif files into a single, larger map.
+
+Fortunately, ImageMagick supports 16 bits per sample images.
+
+To resize an image:
+
+    convert "input.tif" -resize 25% "output.tif"
+
+To combine several independent images into a larger image:
+
+    montage "input*.tif" -geometry 100%+0+0 -tile 6x4 -mode Concatenate "combined.tif"
+
+These operations drop the geotiff metadata. To reinstall that use ``geotifcp``.
+First, generate extract the metadata from the source image (or some other
+image) using ``listgeo``:
+
+    listgeo "input.tif" > meta.geo
+
+Then modify the resulting ``meta.geo`` file in a text editor and change
+what needs to be changed (e.g. pixel scale when resizing). Finally, install the
+metadata in a GeoTiff image:
+
+    geotifcp -g meta.geo -t -w 256 -l 256 -c lzw -V resized.tif final-dhm.tif
+
+Here, a the metadata from meta.geo is included in the output file, which is
+produced in tiled format, with a tile size of 256x256 pixels. The pixel data is
+LZW compressed, and the output file is forced to be a DHM file (instead of a
+simple 16 bit black/white map).
