@@ -78,7 +78,60 @@ diff -Nur libgeotiff-1.4.0/libxtiff/xtiffio.h libgeotiff/libxtiff/xtiffio.h
  
 --- libgeotiff-1.4.0/bin/geotifcp.c	Sat Sep  6 23:51:20 2014
 +++ libgeotiff/bin/geotifcp.c	Sat Sep  6 23:51:29 2014
-@@ -477,7 +477,7 @@
+@@ -17,6 +17,7 @@
+ /* GeoTIFF overrides */
+ 
+ #include "geotiff.h"
++#include "geovalues.h"
+ #include "geo_normalize.h"
+ #include "geo_tiffp.h"
+ #include "geo_keyp.h"
+@@ -38,6 +39,7 @@
+ 
+ int getopt();
+ 
++static  int force_dhm = 0;
+ static  int outtiled = -1;
+ static  uint32 tilewidth;
+ static  uint32 tilelength;
+@@ -81,7 +83,7 @@
+ 	extern int optind;
+ 	extern char* optarg;
+ 
+-	while ((c = getopt(argc, argv, "c:f:l:o:p:r:w:e:g:4:aistd")) != -1)
++	while ((c = getopt(argc, argv, "c:f:l:o:p:r:w:e:g:4:aistdV")) != -1)
+ 		switch (c) {
+ 		case 'a':		/* append to output */
+ 			mode = "a";
+@@ -141,6 +143,9 @@
+ 			outtiled = TRUE;
+ 			deftilewidth = atoi(optarg);
+ 			break;
++		case 'V':		/* force DHM output */
++			force_dhm = TRUE;
++			break;
+ 		case '?':
+ 			usage();
+ 			/*NOTREACHED*/
+@@ -276,6 +281,9 @@
+             exit (-1);
+         }
+     }
++    if (force_dhm) {
++        GTIFKeySet(gtif, VerticalUnitsGeoKey, TYPE_SHORT, 1, Linear_Meter);
++    }
+     GTIFWriteKeys(gtif);
+     GTIFFree(gtif);
+     return;
+@@ -379,6 +387,7 @@
+ " -t		write output in tiles",
+ " -i		ignore read errors",
+ " -d		truncate 8 bitspersample to 4bitspersample",
++" -V		force output of a digital elevation model file",
+ "",
+ " -r #		make each strip have no more than # rows",
+ " -w #		set output tile width (pixels)",
+@@ -477,7 +486,7 @@
  	{ TIFFTAG_DATETIME,		1, TIFF_ASCII },
  	{ TIFFTAG_ARTIST,		1, TIFF_ASCII },
  	{ TIFFTAG_HOSTCOMPUTER,		1, TIFF_ASCII },
@@ -87,3 +140,17 @@ diff -Nur libgeotiff-1.4.0/libxtiff/xtiffio.h libgeotiff/libxtiff/xtiffio.h
  	{ TIFFTAG_PRIMARYCHROMATICITIES,(uint16) -1,TIFF_RATIONAL },
  	{ TIFFTAG_HALFTONEHINTS,	2, TIFF_SHORT },
  	{ TIFFTAG_BADFAXLINES,		1, TIFF_LONG },
+@@ -650,6 +659,13 @@
+ 		break;
+ 	}
+ 	cpOtherTags(in, out);
++
++        if (force_dhm)
++            TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_INT);
++        else {
++            uint16 samplefmt;
++            CopyField(TIFFTAG_SAMPLEFORMAT, samplefmt);
++        }
+ 
+ 	if (geofile || proj4_string )
+             InstallGeoTIFF(out);
