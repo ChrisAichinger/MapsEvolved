@@ -69,6 +69,15 @@ diff -Nur libtiff.orig/nmake.opt libtiff/nmake.opt
  
  #
  # Uncomment and edit following lines to enable ZIP support
+@@ -122,7 +122,7 @@
+ # instead of Windows specific system calls. See notes on top of tif_unix.c
+ # module for details.
+ #
+-USE_WIN_CRT_LIB = 1
++#USE_WIN_CRT_LIB = 1
+ 
+ # Compiler specific options. You may probably want to adjust compilation
+ # parameters in CFLAGS variable. Refer to your compiler documentation
 @@ -132,7 +132,7 @@
  CC	=	cl /nologo
  CXX	=	cl /nologo
