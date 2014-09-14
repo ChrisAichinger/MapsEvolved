@@ -99,7 +99,7 @@ void set_tiff_keys(GVGMap *map, TIFF *tif, const compression_def *comp) {
     TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, nbands);
     TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, depth);
     TIFFSetField(tif, TIFFTAG_TILEWIDTH, map->GetGMPImage().TileWidth());
-    TIFFSetField(tif, TIFFTAG_TILELENGTH, map->GetGMPImage().TileWidth());
+    TIFFSetField(tif, TIFFTAG_TILELENGTH, map->GetGMPImage().TileHeight());
     TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
     TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, photometric);
     TIFFSetField(tif, TIFFTAG_XRESOLUTION, resolution);
