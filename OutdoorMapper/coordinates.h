@@ -5,10 +5,10 @@
 #include <algorithm>
 #include "odm_config.h"
 
-class EXPORT BezierCoord {
+class EXPORT UnitSquareCoord {
     public:
-        BezierCoord() : x(0), y(0) {};
-        BezierCoord(double x_, double y_) : x(x_), y(y_) {};
+        UnitSquareCoord() : x(0), y(0) {};
+        UnitSquareCoord(double x_, double y_);
         double x, y;
 };
 

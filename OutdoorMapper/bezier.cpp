@@ -167,14 +167,14 @@ MapBezierPositioner::FindCenter(const MapPixelCoord &pos,
     return i_pos;
 }
 
-BezierCoord
+UnitSquareCoord
 MapBezierPositioner::FindCreationPos(const MapPixelCoord &d_pos,
                                      const MapPixelCoordInt &i_pos) const
 {
     const int sampling_overhang = (Bezier::N_POINTS - 1) / 2;
     MapPixelDelta offset = d_pos - MapPixelCoord(i_pos) +
                            MapPixelDelta(sampling_overhang, sampling_overhang);
-    return BezierCoord(0.5 * offset.x, 0.5 * offset.y);
+    return UnitSquareCoord(0.5 * offset.x, 0.5 * offset.y);
 }
 
 
@@ -199,7 +199,7 @@ static inline double FastBezierCalc(const unsigned int *src,
 bool Gradient3x3(const unsigned int *src,
                  const MapPixelDeltaInt &src_size,
                  const MapPixelCoordInt &center,
-                 const BezierCoord &bezier_pos,
+                 const UnitSquareCoord &bezier_pos,
                  MapBezierGradient *gradient)
 {
     if (center.x <= 0 || center.x >= src_size.x - 1 ||
@@ -224,7 +224,7 @@ bool Gradient3x3(const unsigned int *src,
 
 bool Gradient3x3(const RasterMap &map,
                  const MapPixelCoordInt &center,
-                 const BezierCoord &bezier_pos,
+                 const UnitSquareCoord &bezier_pos,
                  MapBezierGradient *gradient)
 {
     MapPixelDeltaInt sampling_overhang((Bezier::N_POINTS - 1) / 2,
@@ -240,7 +240,7 @@ bool Gradient3x3(const RasterMap &map,
 bool Value3x3(const unsigned int *src,
                 const MapPixelDeltaInt &src_size,
                 const MapPixelCoordInt &center,
-                const BezierCoord &bezier_pos,
+                const UnitSquareCoord &bezier_pos,
                 double *value)
 {
     if (center.x <= 0 || center.x >= src_size.x - 1 ||
@@ -261,7 +261,7 @@ bool Value3x3(const unsigned int *src,
 
 bool Value3x3(const RasterMap &map,
                 const MapPixelCoordInt &center,
-                const BezierCoord &bezier_pos, double *value)
+                const UnitSquareCoord &bezier_pos, double *value)
 {
     MapPixelDeltaInt sampling_overhang((Bezier::N_POINTS - 1) / 2,
                                        (Bezier::N_POINTS - 1) / 2);

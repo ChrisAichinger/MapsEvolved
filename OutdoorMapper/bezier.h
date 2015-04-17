@@ -49,16 +49,16 @@ class MapBezierPositioner {
                                      const MapPixelDeltaInt &size);
 
         const MapPixelCoordInt &GetBezierCenter() const { return m_center; }
-        const BezierCoord &GetBasePoint() const { return m_bezier_coord; }
+        const UnitSquareCoord &GetBasePoint() const { return m_bezier_coord; }
         bool IsValid() const { return m_is_valid; }
     private:
         MapPixelCoordInt FindCenter(const MapPixelCoord &pos,
                                     const MapPixelDeltaInt &size) const;
-        BezierCoord FindCreationPos(const MapPixelCoord &d_pos,
+        UnitSquareCoord FindCreationPos(const MapPixelCoord &d_pos,
                                     const MapPixelCoordInt &i_pos) const;
 
         MapPixelCoordInt m_center;
-        BezierCoord m_bezier_coord;
+        UnitSquareCoord m_bezier_coord;
         bool m_is_valid;
 };
 
@@ -85,22 +85,22 @@ Fast3x3CenterGradient(const T *src,
 bool Gradient3x3(const unsigned int *src,
                  const MapPixelDeltaInt &src_size,
                  const MapPixelCoordInt &center,
-                 const BezierCoord &bezier_pos,
+                 const UnitSquareCoord &bezier_pos,
                  MapBezierGradient *gradient);
 
 bool Gradient3x3(const class RasterMap &map,
                  const MapPixelCoordInt &center,
-                 const BezierCoord &bezier_pos,
+                 const UnitSquareCoord &bezier_pos,
                  MapBezierGradient *gradient);
 
 bool Value3x3(const unsigned int *src,
               const MapPixelDeltaInt &src_size,
               const MapPixelCoordInt &center,
-              const BezierCoord &bezier_pos,
+              const UnitSquareCoord &bezier_pos,
               double *value);
 
 bool Value3x3(const class RasterMap &map,
               const MapPixelCoordInt &center,
-              const BezierCoord &bezier_pos,
+              const UnitSquareCoord &bezier_pos,
               double *value);
 #endif
