@@ -25,7 +25,11 @@ const char * const DEFAULT_ENCODING = "UTF-8";
 class TiffHandle {
     public:
         explicit TiffHandle(const std::wstring &fname)
-            : m_tiff(XTIFFOpenW(fname.c_str(), "r"))
+        // Pass "m" flag to disable memory-mapped IO.
+        // Otherwise we fill up the whole virtual address space with mmapped
+        // TIF files and run out of space to load libraries or map other data.
+        // This gives hard-to-diagnose OOM errors (debug with VMMap on Win32).
+        : m_tiff(XTIFFOpenW(fname.c_str(), "rm"))
         {
             if (!m_tiff) {
                 throw std::runtime_error("File not found");
