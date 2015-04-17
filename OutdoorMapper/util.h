@@ -116,6 +116,7 @@ double normalize_direction(double degrees);
 // 0.3 -> N; 114.2 -> ESE; 174.0 -> S; 348 -> NNW; 349 -> N
 std::wstring EXPORT CompassPointFromDirection(double degrees);
 
+std::string string_format(const std::string fmt, ...);
 std::wstring string_format(const std::wstring fmt, ...);
 
 void ShrinkImage(unsigned int *src,

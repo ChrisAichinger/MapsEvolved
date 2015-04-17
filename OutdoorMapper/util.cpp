@@ -207,6 +207,27 @@ std::wstring CompassPointFromDirection(double degree) {
 
 // From: http://stackoverflow.com/a/8098080/25097
 // See the comments for the answer, too
+std::string string_format(const std::string fmt, ...) {
+    int size = 256;
+    va_list ap;
+    while (1) {
+        std::unique_ptr<char[]> buf(new char[size]);
+
+        va_start(ap, fmt);
+        int n = _vsnprintf_s(buf.get(), size, _TRUNCATE, fmt.c_str(), ap);
+        va_end(ap);
+        if (n <= -1) {
+            // Not enough memory available
+            size *= 2;
+        } else if (n < size) {
+            // Complete string written, success
+            return std::string(buf.get());
+        } else {
+            // String written except for final \0; make space for that
+            size = n + 1;
+        }
+    }
+}
 std::wstring string_format(const std::wstring fmt, ...) {
     int size = 256;
     va_list ap;
