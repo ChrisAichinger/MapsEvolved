@@ -3,6 +3,7 @@
 #include <tuple>
 #include <stdexcept>
 #include <algorithm>
+#include <cmath>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,64 @@
 #include "util.h"
 
 const char * const DEFAULT_ENCODING = "UTF-8";
+
+// Map between the unit square (x and y in [0, 1]) and a general
+// quadrilateral using bilinear interpolation.
+// Normalized coordinates are given as UnitSquareCoord.
+// Quadrilateral coordinatese are given as MapPixelDelta.
+class BilinearInterpolator {
+    public:
+        // Initialize with the four corners of the general quadrilateral.
+        // The coordinates are given in clock-wise order.
+        BilinearInterpolator(const MapPixelDelta &P00,
+                             const MapPixelDelta &P10,
+                             const MapPixelDelta &P11,
+                             const MapPixelDelta &P01);
+
+        // Map from input (within the unit square) to the general quad.
+        // Example: forward(UnitSquareCoord(0.25, 0)) -> P00 * 0.75 + P10 * 0.25
+        MapPixelDelta forward(const UnitSquareCoord &input);
+
+        // Map from the general quad back to the unit square.
+        // This is the inverse transformation of forward().
+        UnitSquareCoord inverse(const MapPixelDelta &X);
+    private:
+        template <typename T>
+        T lerp(double f, const T &A, const T &B) {
+            return (1-f)*A + f*B;
+        }
+        const MapPixelDelta A, B, C, D;
+        const MapPixelDelta E, F, G;
+};
+
+BilinearInterpolator::BilinearInterpolator(const MapPixelDelta &P00,
+                                           const MapPixelDelta &P10,
+                                           const MapPixelDelta &P11,
+                                           const MapPixelDelta &P01)
+: A(P00), B(P10), C(P11), D(P01), E(B-A), F(D-A), G(A-B-D+C)
+{}
+
+
+MapPixelDelta BilinearInterpolator::forward(const UnitSquareCoord &input) {
+    // Straight-forward bilinear interpolation.
+    return lerp(input.y, lerp(input.x, A, B), lerp(input.x, D, C));
+}
+
+UnitSquareCoord BilinearInterpolator::inverse(const MapPixelDelta &X) {
+    // Inverse bilinear interpolation involves solving a quadratic equation.
+    // Cf. http://www.iquilezles.org/www/articles/ibilinear/ibilinear.htm
+    MapPixelDelta H = X-A;
+    double k2 = G.x*F.y - G.y*F.x;
+    double k1 = E.x*F.y - E.y*F.x + H.x*G.y - H.y*G.x;
+    double k0 = H.x*E.y - H.y*E.x;
+    double v = (-k1 + sqrt(k1*k1 - 4*k0*k2)) / (2 * k2);
+    if (v < 0 || v > 1) {
+        v = (-k1 - sqrt(k1*k1 - 4*k0*k2)) / (2 * k2);
+    }
+    double u = (H.x - F.x*v)/(E.x + G.x*v);
+    return UnitSquareCoord(u, v);
+}
+
 
 class TiffHandle {
     public:
@@ -401,7 +460,36 @@ bool GeoTiff::PixelToPCS(double *x, double *y) const {
 
     if (m_ntiepoints > 6 && m_npixscale == 0) {
         // Interpolate between multiple tiepoints
-        assert(false);  // Not implemented
+        if (m_ntiepoints != 4*6) {
+            // Currently, we only support 4 tiepoints.
+            return false;
+        };
+
+        unsigned int w = GetWidth();
+        unsigned int h = GetHeight();
+        std::unique_ptr<MapPixelDelta> p00, p10, p01, p11;
+
+        for (unsigned int i=0; i < m_ntiepoints; i += 6) {
+            if (m_tiepoints[i+0] == 0 && m_tiepoints[i+1] == 0)
+                p00.reset(new MapPixelDelta(m_tiepoints[i+3], m_tiepoints[i+4]));
+            else if (m_tiepoints[i+0] == w && m_tiepoints[i+1] == 0)
+                p10.reset(new MapPixelDelta(m_tiepoints[i+3], m_tiepoints[i+4]));
+            else if (m_tiepoints[i+0] == 0 && m_tiepoints[i+1] == h)
+                p01.reset(new MapPixelDelta(m_tiepoints[i+3], m_tiepoints[i+4]));
+            else if (m_tiepoints[i+0] == w && m_tiepoints[i+1] == h)
+                p11.reset(new MapPixelDelta(m_tiepoints[i+3], m_tiepoints[i+4]));
+            else {
+                // For now, we require tie points to be at the image corners.
+                return false;
+            }
+        }
+        if (!p00 || !p10 || !p01 || !p11) {
+            return false;
+        }
+        auto interpolator = BilinearInterpolator(*p00, *p10, *p11, *p01);
+        auto res = interpolator.forward(UnitSquareCoord(*x/w, *y/h));
+        *x = res.x;
+        *y = res.y;
     }
     else if (m_ntransform == 16) {
         // Use matrix for transformation
@@ -426,7 +514,36 @@ bool GeoTiff::PCSToPixel(double *x, double *y) const {
 
     if (m_ntiepoints > 6 && m_npixscale == 0) {
         // Interpolate between multiple tiepoints
-        assert(false);  // Not implemented
+        if (m_ntiepoints != 4*6) {
+            // Currently, we only support 4 tiepoints.
+            return false;
+        }
+
+        unsigned int w = GetWidth();
+        unsigned int h = GetHeight();
+        std::unique_ptr<MapPixelDelta> p00, p10, p01, p11;
+
+        for (unsigned int i=0; i < m_ntiepoints; i += 6) {
+            if (m_tiepoints[i+0] == 0 && m_tiepoints[i+1] == 0)
+                p00.reset(new MapPixelDelta(m_tiepoints[i+3], m_tiepoints[i+4]));
+            else if (m_tiepoints[i+0] == w && m_tiepoints[i+1] == 0)
+                p10.reset(new MapPixelDelta(m_tiepoints[i+3], m_tiepoints[i+4]));
+            else if (m_tiepoints[i+0] == 0 && m_tiepoints[i+1] == h)
+                p01.reset(new MapPixelDelta(m_tiepoints[i+3], m_tiepoints[i+4]));
+            else if (m_tiepoints[i+0] == w && m_tiepoints[i+1] == h)
+                p11.reset(new MapPixelDelta(m_tiepoints[i+3], m_tiepoints[i+4]));
+            else {
+                // For now, we require tie points to be at the image corners.
+                return false;
+            }
+        }
+        if (!p00 || !p10 || !p01 || !p11) {
+            return false;
+        }
+        auto interpolator = BilinearInterpolator(*p00, *p10, *p11, *p01);
+        auto res = interpolator.inverse(MapPixelDelta(*x, *y));
+        *x = res.x * w;
+        *y = res.y * h;
     }
     else if (m_ntransform == 16) {
         // Use inverse matrix for transformation.
