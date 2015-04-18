@@ -67,7 +67,6 @@ class MapFile(FileListEntry):
         super().__init__()
         self.drawable = maplib_sip.LoadMap(fname)
         self.alternate_views = maplib_sip.AlternateMapViews(self.drawable)
-        self.title = self.drawable.GetTitle()
         self._storagename = fname
         self._type = self.drawable.GetType()
 
@@ -77,6 +76,8 @@ class MapFile(FileListEntry):
             self._fname = self.composite_fname(fname)
         else:
             self._fname = fname
+
+        self.title = self.drawable.GetTitle() or self.basename
 
     @property
     def storagename(self):
@@ -112,7 +113,7 @@ class GPXFile(FileListEntry):
         self._type = FileListEntry.TYPE_GPSTRACK
         self.drawable = maplib_sip.GeoDrawableShPtr(GPSTrack(fname))
         self.alternate_views = []
-        self.title = self.drawable.GetTitle()
+        self.title = self.drawable.GetTitle() or self.basename
 
 
 class POI_Entry:
