@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!venv/Scripts/python
 #-------------------------------------------------------------------------------
 #   Maps Evolved
 #   Copyright 2013-2014, Christian Aichinger <Greek0@gmx.net>
