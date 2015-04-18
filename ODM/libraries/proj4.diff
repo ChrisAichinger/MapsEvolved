@@ -1,0 +1,8 @@
+diff -Nur proj4.orig/src/proj.def proj4/src/proj.def
+--- proj4.orig/src/proj.def	Wed May  4 20:50:18 2011
++++ proj4/src/proj.def	Tue Jan 15 15:55:49 2013
+@@ -54,3 +54,4 @@
+ 	pj_ctx_get_app_data       @52
+ 	pj_log 			  @53
+ 	pj_clear_initcache @54
++        pj_get_spheroid_defn      @55

@@ -91,7 +91,6 @@ def main():
     args = parse_args()
 
     mev_git = args.gitpath + '/.git'
-    odm_git = args.gitpath + '/ODM/.git'
     mev_dir = os.path.abspath('mapsevolved')
     odm_dir = os.path.abspath(os.path.join(mev_dir, 'ODM'))
 
@@ -101,7 +100,6 @@ def main():
         sys.exit(2)
 
     subprocess.check_call([git, "clone", mev_git, mev_dir])
-    subprocess.check_call([git, "clone", odm_git, odm_dir])
 
     # Run ODM/build.sh using GIT bash. Spawn a login shell to force sourcing
     # /etc/profile on Windows to set $PATH (add /bin and /usr/bin).

@@ -1,0 +1,146 @@
+diff -Nur libtiff.orig/Makefile.vc libtiff/Makefile.vc
+--- libtiff.orig/Makefile.vc	Fri Mar 28 01:07:32 2008
++++ libtiff/Makefile.vc	Sat Nov 17 00:30:56 2012
+@@ -33,26 +33,26 @@
+ 
+ port::
+ 	cd port
+-	$(MAKE) /f Makefile.vc
++	$(MAKE) /E /f Makefile.vc
+ 	cd..
+ 
+ lib:	port
+ 	cd libtiff
+-	$(MAKE) /f Makefile.vc
++	$(MAKE) /E /f Makefile.vc
+ 	cd..
+ 
+ tools:	lib
+ 	cd tools
+-	$(MAKE) /f Makefile.vc
++	$(MAKE) /E /f Makefile.vc
+ 	cd ..
+ 
+ clean:
+ 	cd port
+-	$(MAKE) /f Makefile.vc clean
++	$(MAKE) /E /f Makefile.vc clean
+ 	cd..
+ 	cd libtiff
+-	$(MAKE) /f Makefile.vc clean
++	$(MAKE) /E /f Makefile.vc clean
+ 	cd..
+ 	cd tools
+-	$(MAKE) /f Makefile.vc clean
++	$(MAKE) /E /f Makefile.vc clean
+ 	cd ..
+diff -Nur libtiff.orig/libtiff/Makefile.vc libtiff/libtiff/Makefile.vc
+--- libtiff.orig/libtiff/Makefile.vc	Wed Jul  8 02:46:29 2009
++++ libtiff/libtiff/Makefile.vc	Fri Nov 16 15:04:36 2012
+@@ -92,7 +92,7 @@
+ $(DLLNAME):	tif_config.h tiffconf.h libtiff.def $(OBJ)
+ 	$(LD) /debug /dll /def:libtiff.def /out:$(DLLNAME) \
+ 	/implib:libtiff_i.lib $(OBJ) $(LIBS)
+-	
++	mt.exe -manifest $(DLLNAME).manifest -outputresource:$(DLLNAME);2
+ clean:
+ 	-del tif_config.h tiffconf.h
+ 	-del *.obj
+@@ -100,3 +100,4 @@
+ 	-del *.dll
+ 	-del *.dll.manifest
+ 	-del *.pdb
++	-del *.manifest
+diff -Nur libtiff.orig/nmake.opt libtiff/nmake.opt
+--- libtiff.orig/nmake.opt	Thu Jun 15 00:12:02 2006
++++ libtiff/nmake.opt	Fri Nov 16 15:41:04 2012
+@@ -54,10 +54,10 @@
+ #
+ # Uncomment and edit following lines to enable JPEG support.
+ #
+-#JPEG_SUPPORT	= 1
+-#JPEGDIR 	= d:/projects/jpeg-6b
+-#JPEG_INCLUDE	= -I$(JPEGDIR)
+-#JPEG_LIB 	= $(JPEGDIR)/Release/jpeg.lib
++JPEG_SUPPORT	= 1
++JPEGDIR 	= ../../libjpeg
++JPEG_INCLUDE	= -I$(JPEGDIR)
++JPEG_LIB 	= $(JPEGDIR)/libjpeg_i.lib
+ 
+ #
+ # Uncomment and edit following lines to enable ZIP support
+@@ -122,7 +122,7 @@
+ # instead of Windows specific system calls. See notes on top of tif_unix.c
+ # module for details.
+ #
+-USE_WIN_CRT_LIB = 1
++#USE_WIN_CRT_LIB = 1
+ 
+ # Compiler specific options. You may probably want to adjust compilation
+ # parameters in CFLAGS variable. Refer to your compiler documentation
+@@ -132,7 +132,7 @@
+ CC	=	cl /nologo
+ CXX	=	cl /nologo
+ AR	=	lib /nologo
+-LD	=	link /nologo
++LD	=	link /nologo /manifest
+ 
+ CFLAGS  =	$(OPTFLAGS) $(INCL) $(EXTRAFLAGS)
+ CXXFLAGS =	$(OPTFLAGS) $(INCL) $(EXTRAFLAGS)
+diff -Nur libtiff.orig/libtiff/tif_getimage.c libtiff/libtiff/tif_getimage.c
+--- libtiff.orig/libtiff/tif_getimage.c	Wed Jun  6 15:35:22 2012
++++ libtiff/libtiff/tif_getimage.c	Sun Jan 13 21:53:26 2013
+@@ -590,12 +590,12 @@
+ {
+     TIFF* tif = img->tif;
+     tileContigRoutine put = img->put.contig;
+-    uint32 col, row, y, rowstoread;
++    uint32 col, row, y, rowstoread, colstoread;
+     tmsize_t pos;
+     uint32 tw, th;
+     unsigned char* buf;
+     int32 fromskew, toskew;
+-    uint32 nrow;
++    uint32 nrow, npix;
+     int ret = 1, flip;
+ 
+     buf = (unsigned char*) _TIFFmalloc(TIFFTileSize(tif));
+@@ -621,7 +621,7 @@
+     {
+         rowstoread = th - (row + img->row_offset) % th;
+     	nrow = (row + rowstoread > h ? h - row : rowstoread);
+-	for (col = 0; col < w; col += tw) 
++	for (col = 0; col < w; col += npix) 
+         {
+ 	    if (TIFFReadTile(tif, buf, col+img->col_offset,  
+ 			     row+img->row_offset, 0, 0)==(tmsize_t)(-1) && img->stoponerr)
+@@ -630,15 +630,18 @@
+                 break;
+             }
+ 	    
+-	    pos = ((row+img->row_offset) % th) * TIFFTileRowSize(tif);  
++	    pos = ((row+img->row_offset) % th) * TIFFTileRowSize(tif) +
++	          ((col+img->col_offset) % tw) * TIFFTileRowSize(tif) / tw;  
+ 
+-    	    if (col + tw > w) 
++    	    colstoread = tw - (col + img->col_offset) % tw;
++    	    npix = (col + colstoread > w ? w - col : colstoread);
++
++    	    if (npix != tw)
+             {
+                 /*
+                  * Tile is clipped horizontally.  Calculate
+                  * visible portion and skewing factors.
+                  */
+-                uint32 npix = w - col;
+                 fromskew = tw - npix;
+                 (*put)(img, raster+y*w+col, col, y,
+                        npix, nrow, fromskew, toskew + fromskew, buf + pos);
+@@ -1237,6 +1240,7 @@
+     uint32** BWmap = img->BWmap;
+ 
+     (void) y;
++    fromskew *= 2 * samplesperpixel;
+     while (h-- > 0) {
+         uint16 *wp = (uint16 *) pp;
+ 

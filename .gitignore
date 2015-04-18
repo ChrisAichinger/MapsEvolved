@@ -4,7 +4,29 @@ __pycache__
 /__gpxpy_source
 /__unxutils
 /venv
-/ODM/*
 /pymaplib/*.dll
 /pymaplib/*.pyd
 /pymaplib/*/
+
+# Ignore the libraries but include the loader and build scripts
+/ODM/libraries/*
+!/ODM/libraries/build_environ.sh
+!/ODM/libraries/run_make.js
+!/ODM/libraries/*.diff
+
+# Ignore misc visual studio files
+*.opensdf
+*.sdf
+*.suo
+*.vcxproj.user
+*.vcproj.*.user
+
+# Ignore Debug, Release and Intellisense directories
+Debug/
+Release/
+/ODM/ipch/
+
+# Ignore the various stuff we need for testing
+/ODM/tests/*.dll
+/ODM/tests/*.exe
+/ODM/tests/build
