@@ -1,8 +1,37 @@
-diff -Nur proj4.orig/src/proj.def proj4/src/proj.def
---- proj4.orig/src/proj.def	Wed May  4 20:50:18 2011
-+++ proj4/src/proj.def	Tue Jan 15 15:55:49 2013
-@@ -54,3 +54,4 @@
- 	pj_ctx_get_app_data       @52
- 	pj_log 			  @53
- 	pj_clear_initcache @54
-+        pj_get_spheroid_defn      @55
+--- proj4.orig\CMakeLists.txt	Sun Apr 19 16:18:26 2015
++++ proj4\CMakeLists.txt	Sun Apr 19 16:18:52 2015
+@@ -53,9 +53,8 @@
+ endif ()
+ 
+ if (MSVC OR CMAKE_CONFIGURATION_TYPES)
+-  # For multi-config systems and for Visual Studio, the debug version of
+-  # the library has _d appended.
+-  set (CMAKE_DEBUG_POSTFIX _d)
++  # We don't want a _d postfix for debug libraries, thank you.
++  set (CMAKE_DEBUG_POSTFIX "")
+ endif ()
+ 
+ option(PROJ4_TESTS "Enable build of collection of PROJ4 tests" ON)
+--- proj4\src\CMakeLists.txt.orig	Sun Apr 19 16:39:43 2015
++++ proj4\src\CMakeLists.txt	Sun Apr 19 16:39:50 2015
+@@ -37,9 +37,3 @@
+ if(BUILD_NAD2BIN)
+   include(bin_nad2bin.cmake)
+ endif(BUILD_NAD2BIN)
+-
+-if (MSVC OR CMAKE_CONFIGURATION_TYPES)
+-  # Add _d suffix for your debug versions of the tools
+-  set_target_properties (cs2cs binproj geod nad2bin PROPERTIES
+-    DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
+-endif ()
+--- proj4\cmake\Proj4Utilities.cmake.old	Sun Apr 19 18:34:30 2015
++++ proj4\cmake\Proj4Utilities.cmake	Sun Apr 19 18:34:43 2015
+@@ -395,7 +395,7 @@
+   if (WIN32)
+     string(LENGTH "${${PROJECT_INTERN_NAME}_ABI_VERSION}" abilen)
+     if(abilen GREATER 0)
+-      set(SUFFIX "_${${PROJECT_INTERN_NAME}_ABI_VERSION}")
++      set(SUFFIX "")
+     endif()
+   endif()
+ 

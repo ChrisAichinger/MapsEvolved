@@ -10,8 +10,7 @@ __pycache__
 
 # Ignore the libraries but include the loader and build scripts
 /ODM/libraries/*
-!/ODM/libraries/build_environ.sh
-!/ODM/libraries/run_make.js
+!/ODM/libraries/tasks.py
 !/ODM/libraries/*.diff
 
 # Ignore misc visual studio files

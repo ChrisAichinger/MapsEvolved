@@ -90,7 +90,7 @@ diff -Nur libtiff.orig/nmake.opt libtiff/nmake.opt
 diff -Nur libtiff.orig/libtiff/tif_getimage.c libtiff/libtiff/tif_getimage.c
 --- libtiff.orig/libtiff/tif_getimage.c	Wed Jun  6 15:35:22 2012
 +++ libtiff/libtiff/tif_getimage.c	Sun Jan 13 21:53:26 2013
-@@ -590,12 +590,12 @@
+@@ -605,12 +605,12 @@
  {
      TIFF* tif = img->tif;
      tileContigRoutine put = img->put.contig;
@@ -105,16 +105,16 @@ diff -Nur libtiff.orig/libtiff/tif_getimage.c libtiff/libtiff/tif_getimage.c
      int ret = 1, flip;
  
      buf = (unsigned char*) _TIFFmalloc(TIFFTileSize(tif));
-@@ -621,7 +621,7 @@
+@@ -636,7 +636,7 @@
      {
          rowstoread = th - (row + img->row_offset) % th;
      	nrow = (row + rowstoread > h ? h - row : rowstoread);
 -	for (col = 0; col < w; col += tw) 
-+	for (col = 0; col < w; col += npix) 
++	for (col = 0; col < w; col += npix)
          {
  	    if (TIFFReadTile(tif, buf, col+img->col_offset,  
  			     row+img->row_offset, 0, 0)==(tmsize_t)(-1) && img->stoponerr)
-@@ -630,15 +630,18 @@
+@@ -645,15 +645,18 @@
                  break;
              }
  	    
@@ -136,7 +136,7 @@ diff -Nur libtiff.orig/libtiff/tif_getimage.c libtiff/libtiff/tif_getimage.c
                  fromskew = tw - npix;
                  (*put)(img, raster+y*w+col, col, y,
                         npix, nrow, fromskew, toskew + fromskew, buf + pos);
-@@ -1237,6 +1240,7 @@
+@@ -1258,6 +1261,7 @@
      uint32** BWmap = img->BWmap;
  
      (void) y;

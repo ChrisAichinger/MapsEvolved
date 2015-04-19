@@ -7,7 +7,7 @@ diff -Nur GeographicLib.orig/Makefile.vc geographiclib/Makefile.vc
 +TARGET=src\Geographiclib.lib
 +PDB=src\vc.pdb
 +
-+OBJS=src\AlbersEqualArea.obj src\AzimuthalEquidistant.obj src\CassiniSoldner.obj src\CircularEngine.obj src\DMS.obj src\Ellipsoid.obj src\EllipticFunction.obj src\GeoCoords.obj src\Geocentric.obj src\Geodesic.obj src\GeodesicExact.obj src\GeodesicLine.obj src\GeodesicLineExact.obj src\Geohash.obj src\Geoid.obj src\Gnomonic.obj src\GravityCircle.obj src\GravityModel.obj src\LambertConformalConic.obj src\LocalCartesian.obj src\MGRS.obj src\MagneticCircle.obj src\MagneticModel.obj src\NormalGravity.obj src\OSGB.obj src\PolarStereographic.obj src\PolygonArea.obj src\SphericalEngine.obj src\TransverseMercator.obj src\TransverseMercatorExact.obj src\UTMUPS.obj src\Utility.obj
++OBJS=src\Accumulator.obj src\AlbersEqualArea.obj src\AzimuthalEquidistant.obj src\CassiniSoldner.obj src\CircularEngine.obj src\DMS.obj src\Ellipsoid.obj src\EllipticFunction.obj src\Geocentric.obj src\GeoCoords.obj src\Geodesic.obj src\GeodesicExact.obj src\GeodesicExactC4.obj src\GeodesicLine.obj src\GeodesicLineExact.obj src\Geohash.obj src\Geoid.obj src\Gnomonic.obj src\GravityCircle.obj src\GravityModel.obj src\LambertConformalConic.obj src\LocalCartesian.obj src\MagneticCircle.obj src\MagneticModel.obj src\MGRS.obj src\NormalGravity.obj src\OSGB.obj src\PolarStereographic.obj src\PolygonArea.obj src\Rhumb.obj src\SphericalEngine.obj src\TransverseMercator.obj src\TransverseMercatorExact.obj src\Utility.obj src\UTMUPS.obj
 +
 +all: $(TARGET)
 +

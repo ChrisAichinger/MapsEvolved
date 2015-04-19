@@ -1,7 +1,7 @@
 diff -Nur libgeotiff.orig/makefile.vc libgeotiff/makefile.vc
 --- libgeotiff.orig/makefile.vc	Thu Mar 29 18:05:21 2012
 +++ libgeotiff/makefile.vc	Fri Nov 16 16:21:34 2012
-@@ -7,10 +7,13 @@
+@@ -7,10 +7,14 @@
  # You may want to add optimization options to the CFLAGS macro as well. 
  #
  
@@ -13,12 +13,13 @@ diff -Nur libgeotiff.orig/makefile.vc libgeotiff/makefile.vc
 +TIFF_INC = -I$(LIBTIFF_DIR)\libtiff
 +TIFF_LIB_DLL = $(LIBTIFF_DIR)\libtiff\libtiff_i.lib
 +
-+PROJ_DIR = ..\proj4\src
-+PROJ_DLL = $(PROJ_DIR)\proj_i.lib
++PROJ_DIR = ..\proj4
++PROJ_INC = $(PROJ_DIR)\instdir\include
++PROJ_LIB_DLL = $(PROJ_DIR)\instdir\lib\proj.lib
  
  # Installation locations (with install, or devinstall targets)
  PREFIX =	release	
-@@ -33,8 +36,14 @@
+@@ -33,8 +37,14 @@
  DLLNAME = geotiff.dll
  
  # Set optimization or debug flags here.
@@ -29,13 +30,13 @@ diff -Nur libgeotiff.orig/makefile.vc libgeotiff/makefile.vc
 +
 +!IFDEF WANT_PROJ4
 +CFLAGS = $(CFLAGS) /DHAVE_LIBPROJ=1 /DHAVE_PROJECTS_H=1
-+INCL = $(INCL) -I$(PROJ_DIR)
-+TIFF_LIB_DLL = $(TIFF_LIB_DLL) $(PROJ_DLL)
++INCL = $(INCL) -I$(PROJ_INC)
++TIFF_LIB_DLL = $(TIFF_LIB_DLL) $(PROJ_LIB_DLL)
 +!ENDIF
  
  #
  OBJS    = \
-@@ -71,7 +80,7 @@
+@@ -71,7 +81,7 @@
  
  #
  $(DLLNAME):    $(OBJS)
@@ -76,81 +77,3 @@ diff -Nur libgeotiff-1.4.0/libxtiff/xtiffio.h libgeotiff/libxtiff/xtiffio.h
  extern TIFF CPL_DLL * XTIFFFdOpen(int fd, const char* name, const char* mode);
  extern void CPL_DLL XTIFFClose(TIFF *tif);
  
---- libgeotiff-1.4.0/bin/geotifcp.c	Sat Sep  6 23:51:20 2014
-+++ libgeotiff/bin/geotifcp.c	Sat Sep  6 23:51:29 2014
-@@ -17,6 +17,7 @@
- /* GeoTIFF overrides */
- 
- #include "geotiff.h"
-+#include "geovalues.h"
- #include "geo_normalize.h"
- #include "geo_tiffp.h"
- #include "geo_keyp.h"
-@@ -38,6 +39,7 @@
- 
- int getopt();
- 
-+static  int force_dhm = 0;
- static  int outtiled = -1;
- static  uint32 tilewidth;
- static  uint32 tilelength;
-@@ -81,7 +83,7 @@
- 	extern int optind;
- 	extern char* optarg;
- 
--	while ((c = getopt(argc, argv, "c:f:l:o:p:r:w:e:g:4:aistd")) != -1)
-+	while ((c = getopt(argc, argv, "c:f:l:o:p:r:w:e:g:4:aistdV")) != -1)
- 		switch (c) {
- 		case 'a':		/* append to output */
- 			mode = "a";
-@@ -141,6 +143,9 @@
- 			outtiled = TRUE;
- 			deftilewidth = atoi(optarg);
- 			break;
-+		case 'V':		/* force DHM output */
-+			force_dhm = TRUE;
-+			break;
- 		case '?':
- 			usage();
- 			/*NOTREACHED*/
-@@ -276,6 +281,9 @@
-             exit (-1);
-         }
-     }
-+    if (force_dhm) {
-+        GTIFKeySet(gtif, VerticalUnitsGeoKey, TYPE_SHORT, 1, Linear_Meter);
-+    }
-     GTIFWriteKeys(gtif);
-     GTIFFree(gtif);
-     return;
-@@ -379,6 +387,7 @@
- " -t		write output in tiles",
- " -i		ignore read errors",
- " -d		truncate 8 bitspersample to 4bitspersample",
-+" -V		force output of a digital elevation model file",
- "",
- " -r #		make each strip have no more than # rows",
- " -w #		set output tile width (pixels)",
-@@ -477,7 +486,7 @@
- 	{ TIFFTAG_DATETIME,		1, TIFF_ASCII },
- 	{ TIFFTAG_ARTIST,		1, TIFF_ASCII },
- 	{ TIFFTAG_HOSTCOMPUTER,		1, TIFF_ASCII },
--	{ TIFFTAG_WHITEPOINT,		1, TIFF_RATIONAL },
-+	{ TIFFTAG_WHITEPOINT,		2, TIFF_RATIONAL },
- 	{ TIFFTAG_PRIMARYCHROMATICITIES,(uint16) -1,TIFF_RATIONAL },
- 	{ TIFFTAG_HALFTONEHINTS,	2, TIFF_SHORT },
- 	{ TIFFTAG_BADFAXLINES,		1, TIFF_LONG },
-@@ -650,6 +659,13 @@
- 		break;
- 	}
- 	cpOtherTags(in, out);
-+
-+        if (force_dhm)
-+            TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_INT);
-+        else {
-+            uint16 samplefmt;
-+            CopyField(TIFFTAG_SAMPLEFORMAT, samplefmt);
-+        }
- 
- 	if (geofile || proj4_string )
-             InstallGeoTIFF(out);

@@ -5,14 +5,14 @@ set -e
 
 if [ "x$1" = "xDEBUG" ]; then
     cd libraries
-    ./build_environ.sh delete || true
-    ./build_environ.sh download build DEBUG copydll
+    invoke distclean
+    invoke download build --config DEBUG publish --targets ../Debug;../Release;../tests
     cd ..
     cmd.exe \/c 'tools\\build.bat /p:Configuration=Debug'
 elif [ "x$1" = "xRELEASE" ]; then
     cd libraries
-    ./build_environ.sh delete || true
-    ./build_environ.sh download build RELEASE copydll
+    invoke distclean
+    invoke download build --config RELEASE publish --targets ../Debug;../Release;../tests
     cd ..
     cmd.exe \/c 'tools\\build.bat /p:Configuration=Release'
 else
