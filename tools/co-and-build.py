@@ -101,16 +101,15 @@ def main():
 
     subprocess.check_call([git, "clone", mev_git, mev_dir])
 
-    # Run ODM/build.sh using GIT bash. Spawn a login shell to force sourcing
-    # /etc/profile on Windows to set $PATH (add /bin and /usr/bin).
-    os.chdir(odm_dir)
-    bash = os.path.join(os.path.dirname(git), 'bash')
-    subprocess.check_call([bash, '--login', "./build.sh", args.mode])
-
     os.chdir(mev_dir)
     init_venv = os.path.join("tools", "init_venv.py")
     subprocess.check_call([sys.executable, init_venv])
 
+    invoke = os.path.abspath(os.path.join('venv', 'Scripts', 'invoke'))
+    os.chdir(odm_dir)
+    subprocess.check_call([invoke, 'configure', '--config', args.mode])
+
+    os.chdir(mev_dir)
     init_sh = os.path.join("tools", "init_shell.py")
     subprocess.check_call([sys.executable, init_sh, 'venv', "python", "configure.py"])
 

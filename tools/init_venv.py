@@ -208,6 +208,9 @@ def main():
         print("\nInstalling gpxpy")
         subprocess.check_call(['pip.exe', 'install', "gpxpy"])
 
+        print("\nInstalling invoke")
+        subprocess.check_call(['pip.exe', 'install', "invoke"])
+
         print("\nInstalling pyodbc")
         subprocess.check_call(['pip.exe', 'install',
                                '--allow-external', 'pyodbc',
