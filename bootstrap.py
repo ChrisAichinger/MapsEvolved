@@ -75,7 +75,7 @@ def main():
                 os.path.join(venv_dir, 'lib', 'site-packages'))
 
     print('Bootstrapping finished. Next:')
-    print(r'  venv\Scripts\activate && cd ODM && invoke configure -c DEBUG|RELEASE')
+    print(r'  venv\Scripts\activate && invoke configure -c DEBUG|RELEASE')
 
 if __name__ == '__main__':
     main()
