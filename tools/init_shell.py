@@ -40,22 +40,24 @@ def execute(args):
 
 def main():
     program_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    if sys.argv[1:] and sys.argv[1] == '--rerun-in-venv':
+    if sys.argv[1:2] != ['--rerun-in-venv']:
+        if sys.argv[1:]:
+            venv = sys.argv[1]
+        else:
+            venv = os.path.join(program_dir, '..', 'venv')
+        init_sh_bat = os.path.join(program_dir, 'init_shell_helper.bat')
+        args_b32 = shell_encode(sys.argv[2:])
+        already_in_venv = os.environ.get('VIRTUAL_ENV')
+        do_deactivate = 'deactivate' if already_in_venv else ''
+        execute([init_sh_bat, do_deactivate, venv,
+                 "python", sys.argv[0], '--rerun-in-venv', args_b32])
+    else:
         # We are within the venv now. Decode args and run client programs.
         args = shell_decode(sys.argv[2])
         if not args:
             args = ["cmd.exe"]
         print("Running", repr(args), file=sys.stderr)
         execute(args)
-    else:
-        if sys.argv[1:]:
-            venv = sys.argv[1]
-        else:
-            venv = os.path.join(program_dir, '..', 'venv')
-        init_sh_bat = os.path.join(program_dir, 'init_shell.bat')
-        args_b32 = shell_encode(sys.argv[2:])
-        execute([init_sh_bat, venv,
-                 "python", sys.argv[0], '--rerun-in-venv', args_b32])
 
 if __name__ == '__main__':
     main()
