@@ -234,7 +234,7 @@ def download(ctx, modules=None):
         args = {k: v for k, v in module.items() if k in args}
         unpack(**args)
         for src, dest in module.get('rename', []):
-            os.rename(src, dest)
+            mev_build_utils.resiliant_rename(src, dest)
         for patch in module.get('patches', []):
             patch = os.path.abspath(patch)
             cmd = 'cd {modulename} && "{patch_prog}" -p1 --forward --fuzz 0 < "{patch}"'

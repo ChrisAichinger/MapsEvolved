@@ -2,12 +2,31 @@
 import sys
 import os
 import glob
+import time
 import hashlib
 import itertools
 import contextlib
 
+def resiliant_rename(src, dest, retries=3, delay=0.5):
+    """Rename src file to dest, retrying on temprary errors
+
+    Rename src to dest. If a PermissionError is encountered, wait briefly,
+    then retry (for up to retries times).
+
+    This may be necessary on Windows where virus scanners, Dropbox, ... may
+    briefly prevent us from renaming files.
+    """
+    for i in range(retries - 1):
+        try:
+            return os.rename(src, dest)
+        except PermissionError:
+            time.sleep(delay)
+    return os.rename(src, dest)
+
 @contextlib.contextmanager
 def temporary_chdir(path):
+    "Context manager for cd'ing to path and back"
+
     curdir = os.getcwd()
     os.chdir(path)
     try: yield
