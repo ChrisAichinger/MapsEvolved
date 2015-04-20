@@ -7,6 +7,27 @@ import hashlib
 import itertools
 import contextlib
 
+def is_venv_active():
+    "Return True if a virtual environment is currently active"
+
+    return 'VIRTUAL_ENV' in os.environ
+
+def run_in_venv(ctx, venv_dir, command, **kwargs):
+    """Execute command in a venv
+
+    Run command in the venv specified by venv_dir, using the pyinvoke context
+    ctx. Keyword arguments are pass on to the runner.
+
+    The command argument should be a list!
+    """
+
+    cmd = []
+    if is_venv_active():
+        cmd += ['deactivate', '&&']
+    cmd += [os.path.join(venv_dir, 'scripts', 'activate'), '&&']
+    cmd += command
+    return ctx.run(cmd, **kwargs)
+
 def resiliant_rename(src, dest, retries=3, delay=0.5):
     """Rename src file to dest, retrying on temprary errors
 

@@ -107,11 +107,15 @@ def checkout_and_build(ctx, repository, target_dir, config):
         print("Could not find git executable", file=sys.stderr)
         sys.exit(2)
     ctx.run([git, "clone", repository, target_dir])
+
     with mev_build_utils.temporary_chdir(target_dir):
+        # Change codepage so we don't get errors printing to the console.
+        ctx.run(['chcp', "65001"])
         ctx.run(['python', "bootstrap.py"])
-        ctx.run([os.path.join('venv', 'scripts', 'invoke'),
-                 'configure', '--config', config,
-                 'build', '--config', config])
+        mev_build_utils.run_in_venv(ctx, 'venv',
+                                    ['invoke',
+                                     'configure', '--config', config,
+                                     'build', '--config', config])
 
 @ctask
 def distclean(ctx):
