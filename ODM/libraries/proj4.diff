@@ -1,5 +1,5 @@
---- proj4.orig\CMakeLists.txt	Sun Apr 19 16:18:26 2015
-+++ proj4\CMakeLists.txt	Sun Apr 19 16:18:52 2015
+--- proj4.orig/CMakeLists.txt	Sun Apr 19 16:18:26 2015
++++ proj4/CMakeLists.txt	Sun Apr 19 16:18:52 2015
 @@ -53,9 +53,8 @@
  endif ()
  
@@ -12,8 +12,8 @@
  endif ()
  
  option(PROJ4_TESTS "Enable build of collection of PROJ4 tests" ON)
---- proj4\src\CMakeLists.txt.orig	Sun Apr 19 16:39:43 2015
-+++ proj4\src\CMakeLists.txt	Sun Apr 19 16:39:50 2015
+--- proj4.orig/src/CMakeLists.txt	Sun Apr 19 16:39:43 2015
++++ proj4/src/CMakeLists.txt	Sun Apr 19 16:39:50 2015
 @@ -37,9 +37,3 @@
  if(BUILD_NAD2BIN)
    include(bin_nad2bin.cmake)
@@ -24,8 +24,8 @@
 -  set_target_properties (cs2cs binproj geod nad2bin PROPERTIES
 -    DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
 -endif ()
---- proj4\cmake\Proj4Utilities.cmake.old	Sun Apr 19 18:34:30 2015
-+++ proj4\cmake\Proj4Utilities.cmake	Sun Apr 19 18:34:43 2015
+--- proj4.orig/cmake/Proj4Utilities.cmake	Sun Apr 19 18:34:30 2015
++++ proj4/cmake/Proj4Utilities.cmake	Sun Apr 19 18:34:43 2015
 @@ -395,7 +395,7 @@
    if (WIN32)
      string(LENGTH "${${PROJECT_INTERN_NAME}_ABI_VERSION}" abilen)

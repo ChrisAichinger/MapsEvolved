@@ -71,6 +71,9 @@ def main():
     pip = os.path.join(venv_dir, 'Scripts', 'pip3')
     subprocess.check_call([pip, 'install', '-r', 'requirements.txt'])
 
+    shutil.copy(os.path.join('tools', 'findgit.py'),
+                os.path.join(venv_dir, 'lib', 'site-packages'))
+
     print('Bootstrapping finished. Next:')
     print(r'  venv\Scripts\activate && cd ODM && invoke configure -c DEBUG|RELEASE')
 

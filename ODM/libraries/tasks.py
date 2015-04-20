@@ -11,6 +11,8 @@ import urllib.request
 
 from invoke import ctask
 
+import findgit
+
 class ModuleValidationError(RuntimeError):
     pass
 
@@ -19,6 +21,15 @@ def SourceForgeURL(fname):
     return url.format(fname)
 
 AVAILABLE_MODULES = collections.OrderedDict([
+   ('unxutils', {
+       'compression': 'zip',
+       'url': SourceForgeURL('unxutils/unxutils/current/UnxUtils.zip'),
+       'sha256': 'b8c694072723a417194022a2ba265750eec61e15d1725e39449df1763e224b45',
+       'unpack_location': 'unxutils2',
+       'rename': [('unxutils2/usr/local/wbin', 'unxutils'),
+                  ('unxutils2/bin/sh.exe', 'unxutils/sh.exe'),
+                  ('unxutils2', 'unxutils/misc'),],
+   }),
    ('cmake', {
        'compression': 'zip',
        'url': 'http://www.cmake.org/files/v3.2/cmake-3.2.2-win32-x86.zip',
@@ -93,15 +104,6 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'patches': ['geographiclib.diff'],
        'build': [('nmake', '/f Makefile.vc "OPTFLAGS= -nologo {flags}" {targets}'),],
    }),
-   ('unxutils', {
-       'compression': 'zip',
-       'url': SourceForgeURL('unxutils/unxutils/current/UnxUtils.zip'),
-       'sha256': 'b8c694072723a417194022a2ba265750eec61e15d1725e39449df1763e224b45',
-       'unpack_location': 'unxutils2',
-       'rename': [('unxutils2/usr/local/wbin', 'unxutils'),
-                  ('unxutils2/bin/sh.exe', 'unxutils/sh.exe'),
-                  ('unxutils2', 'unxutils/misc'),],
-   }),
    ('sip', {
        'compression': 'zip',
        'url': SourceForgeURL('pyqt/sip/sip-4.15.4/sip-4.15.4.zip'),
@@ -138,6 +140,9 @@ TARGETS = {
 }
 PUBLISH_DIR = 'published'
 PY_INC_DIR = os.path.join(os.environ['VIRTUAL_ENV'], 'Include')
+# We can't easily use UnxUtils patch.exe as it lacks a manifest.
+# Cf. http://stackoverflow.com/questions/533939
+PATCH_PROG = os.path.abspath(os.path.join(findgit.find_git_bindir(), 'patch'))
 
 def extract_filename(url):
     return os.path.basename(url.split('?')[0])
@@ -231,8 +236,10 @@ def download(ctx, modules=None):
         for src, dest in module.get('rename', []):
             os.rename(src, dest)
         for patch in module.get('patches', []):
-            # FIXME
-            ctx.run('patch -p0 --forward --fuzz 0 < {}'.format(patch))
+            patch = os.path.abspath(patch)
+            cmd = 'cd {modulename} && "{patch_prog}" -p1 --forward --fuzz 0 < "{patch}"'
+            ctx.run(cmd.format(modulename=modulename, patch_prog=PATCH_PROG,
+                               patch=patch))
 
 @ctask(help={'config': 'Which configuration to build: debug/release/clean',
              'modules': 'Semicolon-separated list of modules to operate on (default: all)'})
