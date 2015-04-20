@@ -19,6 +19,9 @@ OBJEXT=obj
 SHLIBEXT=dll
 LIBEXT=lib
 
+PYTHON_LIB_DIR=$(VIRTUAL_ENV)/libs
+PYTHON_LIB=$(notdir $(wildcard $(PYTHON_LIB_DIR)/python??.$(LIBEXT)))
+
 ifdef RELEASE
 CPPDEBUG = -DNDEBUG -MD -O2 -Oy
 # We still want the linker to generate debug information (.pdb's), but enable
@@ -39,7 +42,7 @@ CPPOUT = -Fo
 
 LDFLAGS = -nologo -DYNAMICBASE -NXCOMPAT -DLL -MANIFEST \
           -MANIFESTFILE:$(TARGET).manifest -INCREMENTAL:NO
-LIBS = -LIBPATH:$(ODMPATH) -LIBPATH:venv/libs OutdoorMapper.lib python33.lib
+LIBS = -LIBPATH:$(ODMPATH) "-LIBPATH:$(PYTHON_LIB_DIR)" OutdoorMapper.lib $(PYTHONLIB)
 LDOUT = -OUT:
 
 MANIFEST = mt -nologo -manifest $(TARGET).manifest -outputresource:$(TARGET);2
