@@ -10,7 +10,7 @@ $(error This Makefile requires GNU Make.)
 endif
 
 ifeq ("$(wildcard $(SBF_FILE))","")
-$(error configure.py must be run before invoking make.)
+$(error SIP must be run before invoking make (use 'invoke build'))
 endif
 
 include $(SBF_FILE)

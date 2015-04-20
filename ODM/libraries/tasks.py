@@ -11,7 +11,7 @@ import urllib.request
 
 from invoke import ctask
 
-import findgit
+import mev_build_utils
 
 class ModuleValidationError(RuntimeError):
     pass
@@ -142,7 +142,7 @@ PUBLISH_DIR = 'published'
 PY_INC_DIR = os.path.join(os.environ['VIRTUAL_ENV'], 'Include')
 # We can't easily use UnxUtils patch.exe as it lacks a manifest.
 # Cf. http://stackoverflow.com/questions/533939
-PATCH_PROG = os.path.abspath(os.path.join(findgit.find_git_bindir(), 'patch'))
+PATCH_PROG = os.path.abspath(os.path.join(mev_build_utils.find_git_bindir(), 'patch'))
 
 def extract_filename(url):
     return os.path.basename(url.split('?')[0])
