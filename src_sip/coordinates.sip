@@ -28,13 +28,13 @@ PyObject *repr_helper(PyObject *obj, double f1, double f2) {
 }
 %End
 
-class BezierCoord {
+class UnitSquareCoord {
 %TypeHeaderCode
 #include "coordinates.h"
 %End
     public:
-        BezierCoord();
-        BezierCoord(double x_, double y_);
+        UnitSquareCoord();
+        UnitSquareCoord(double x_, double y_);
         double x;
         double y;
 
