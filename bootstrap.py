@@ -65,11 +65,13 @@ def main():
     venv_dir = 'venv'
     make_venv(venv_dir)
 
-    py_venv = os.path.join(venv_dir, 'Scripts', 'python.exe')
+    py_venv = os.path.join(venv_dir, 'Scripts', 'python')
     subprocess.check_call([py_venv, '-m', 'ensurepip'])
 
-    pip = os.path.join(venv_dir, 'Scripts', 'pip3')
-    subprocess.check_call([pip, 'install', '-r', 'requirements.txt'])
+    # Don't call 'pip.exe' directly to enable clean upgrades on Windows.
+    # See https://github.com/pypa/pip/issues/1299.
+    subprocess.check_call([py_venv, '-m', 'pip', 'install', '--upgrade', 'pip'])
+    subprocess.check_call([py_venv, '-m', 'pip', 'install', '-r', 'requirements.txt'])
 
     shutil.copy(os.path.join('tools', 'mev_build_utils.py'),
                 os.path.join(venv_dir, 'lib', 'site-packages'))
