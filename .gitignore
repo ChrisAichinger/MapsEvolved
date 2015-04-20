@@ -7,10 +7,10 @@ __pycache__
 /pymaplib/*.pyd
 /pymaplib/*/
 
-# Ignore the libraries but include the loader and build scripts
-/ODM/libraries/*
-!/ODM/libraries/tasks.py
-!/ODM/libraries/*.diff
+# Ignore the downloaded packages but include patches and the pyinvoke script
+/third-party/*
+!/third-party/*.diff
+!/third-party/tasks.py
 
 # Ignore misc visual studio files
 *.opensdf
@@ -28,3 +28,4 @@ Release/
 /ODM/tests/*.dll
 /ODM/tests/*.exe
 /ODM/tests/build
+/ODM/tests/csv

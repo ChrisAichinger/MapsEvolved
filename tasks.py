@@ -71,7 +71,7 @@ def build_pymaplib(ctx, config, targets='all'):
     run_sip(ctx)
 
     init_sh = os.path.join("tools", "init_shell.py")
-    gmake = os.path.join("ODM", "libraries", "unxutils", "make.exe")
+    gmake = os.path.join("third-party", "unxutils", "make.exe")
     cmd = [sys.executable, init_sh, 'venv', gmake]
     config_arg = { 'release': ['RELEASE=1'], 'debug': [] }[config.lower()]
     targets = targets.split(',')
@@ -84,7 +84,7 @@ def configure(ctx, config):
     for target in TARGETS:
         os.makedirs(target, exist_ok=True)
 
-    cmd = ' '.join(['cd ODM\\libraries && invoke distclean download',
+    cmd = ' '.join(['cd third-party && invoke distclean download',
                     'build --config {config}',
                     'publish "--targets={targets}"'])
     targets = ';'.join(os.path.abspath(target) for target in TARGETS)
@@ -117,5 +117,5 @@ def checkout_and_build(ctx, repository, target_dir, config):
 def distclean(ctx):
     "Delete generated and downloaded files"
 
-    ctx.run('cd ODM\\libraries && invoke distclean')
+    ctx.run('cd third-party && invoke distclean')
     build_odm(ctx, args='/t:Clean')
