@@ -117,7 +117,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
                            {'f': ' '.join([
                                  '-nologo -Zm200 /Zc:wchar_t /D WIN32 /D STRICT',
                                  '/D NOMINMAX /D _DEBUG /D _WINDOWS /D _WINDLL',
-                                 '/D _UNICODE /D UNICODE /W0 /Oy- /Gm /RTC1 /GS',
+                                 '/D _UNICODE /D UNICODE /W0 /Oy- /Gm /GS',
                                  '/fp:precise -nologo -W0 -w34100 -w34189',
                                  '{flags}'])
                            }),
@@ -129,7 +129,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
 
 
 FLAGS = {
-    'debug': "-D_MT -MDd /Zi /Od",
+    'debug': "-D_MT -MDd /Zi /RTC1 /Od",
     'release': "-D_MT -MD /Ox",
     'clean': "-D_MT -MD /Ox",
 }
