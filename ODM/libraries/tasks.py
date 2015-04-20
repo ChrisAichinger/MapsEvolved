@@ -93,6 +93,36 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'patches': ['geographiclib.diff'],
        'build': [('nmake', '/f Makefile.vc "OPTFLAGS= -nologo {flags}" {targets}'),],
    }),
+   ('unxutils', {
+       'compression': 'zip',
+       'url': SourceForgeURL('unxutils/unxutils/current/UnxUtils.zip'),
+       'sha256': 'b8c694072723a417194022a2ba265750eec61e15d1725e39449df1763e224b45',
+       'unpack_location': 'unxutils2',
+       'rename': [('unxutils2/usr/local/wbin', 'unxutils'),
+                  ('unxutils2/bin/sh.exe', 'unxutils/sh.exe'),
+                  ('unxutils2', 'unxutils/misc'),],
+   }),
+   ('sip', {
+       'compression': 'zip',
+       'url': SourceForgeURL('pyqt/sip/sip-4.15.4/sip-4.15.4.zip'),
+       'sha256': 'd4b522caf93620675a6f1a7f3ed6ddcb9533cce71482d77d5015f61b98e426d2',
+       'rename': [('sip-4.15.4', 'sip'),],
+       'build': [('shell', 'python configure.py --platform=win32-msvc2010 ' +
+                           '-e "{py_inc_dir}" INCDIR+="{py_inc_dir}" ' +
+                           'LFLAGS+="/DEBUG /PDB:$(TARGET).pdb"'),
+                 ('shell', 'cd sipgen && nmake {targets}'),
+                 ('shell', 'cd siplib && nmake "CFLAGS=%(f)s" "CXXFLAGS=%(f)s /EHsc" {targets}' %
+                           {'f': ' '.join([
+                                 '-nologo -Zm200 /Zc:wchar_t /D WIN32 /D STRICT',
+                                 '/D NOMINMAX /D _DEBUG /D _WINDOWS /D _WINDLL',
+                                 '/D _UNICODE /D UNICODE /W0 /Oy- /Gm /RTC1 /GS',
+                                 '/fp:precise -nologo -W0 -w34100 -w34189',
+                                 '{flags}'])
+                           }),
+                 ('shell', 'IF /I [{config}] == [DEBUG] nmake install'),
+                 ('shell', 'IF /I [{config}] == [RELEASE] nmake install'),
+                ],
+   }),
 ])
 
 
@@ -107,6 +137,7 @@ TARGETS = {
     'clean': 'clean',
 }
 PUBLISH_DIR = 'published'
+PY_INC_DIR = os.path.join(os.environ['VIRTUAL_ENV'], 'Include')
 
 def extract_filename(url):
     return os.path.basename(url.split('?')[0])
@@ -150,7 +181,9 @@ def templated_run(template, ctx, directory, config, args):
 
     args = args.format(config=config,
                        flags=FLAGS[config.lower()],
-                       targets=TARGETS[config.lower()])
+                       targets=TARGETS[config.lower()],
+                       py_inc_dir=PY_INC_DIR)
+
     ctx.run(template.format(directory=directory, args=args))
 
 def nmake(ctx, directory, config, args):
@@ -174,6 +207,11 @@ def touch(ctx, directory, config, fname):
     fname = os.path.join(directory, fname)
     with open(fname, 'a'):
         os.utime(fname)
+
+def shell(ctx, directory, config, args):
+    cmd = ('call "%VS100COMNTOOLS%\\vsvars32.bat" && ' +
+           'cd "{directory}" && {args}')
+    templated_run(cmd, ctx, directory, config, args)
 
 def select_modules(modules):
     "Yield items from AVAILABLE_MODULES selected by the modules parameter"

@@ -2,7 +2,6 @@ __pycache__
 /__build
 /__sip_source
 /__gpxpy_source
-/__unxutils
 /venv
 /pymaplib/*.dll
 /pymaplib/*.pyd

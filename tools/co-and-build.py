@@ -102,8 +102,7 @@ def main():
     subprocess.check_call([git, "clone", mev_git, mev_dir])
 
     os.chdir(mev_dir)
-    init_venv = os.path.join("tools", "init_venv.py")
-    subprocess.check_call([sys.executable, init_venv])
+    subprocess.check_call([sys.executable, 'bootstrap.py'])
 
     invoke = os.path.abspath(os.path.join('venv', 'Scripts', 'invoke'))
     os.chdir(odm_dir)
@@ -113,7 +112,7 @@ def main():
     init_sh = os.path.join("tools", "init_shell.py")
     subprocess.check_call([sys.executable, init_sh, 'venv', "python", "configure.py"])
 
-    gmake = os.path.join("__unxutils", "make.exe")
+    gmake = os.path.join("ODM", "libraries", "unxutils", "make.exe")
     if args.mode == 'RELEASE':
         subprocess.check_call([sys.executable, init_sh, 'venv', gmake, "RELEASE=1", "all"])
     else:
