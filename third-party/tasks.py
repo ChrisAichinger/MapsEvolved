@@ -51,7 +51,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
                   ('libjpeg2', 'libjpeg/zip-file-folders'),
                   ('libjpeg/jconfig.vc', 'libjpeg/jconfig.h'),],
        'patches': ['jpeg.diff'],
-       'build': [('nmake', '/f Makefile.vc "cvars= {flags}" {targets}')],
+       'build': [('nmake', '/f Makefile.vc "cvars= {flags}"')],
        'publish': ['libjpeg.dll'],
    }),
    ('proj4', {
@@ -81,7 +81,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
                            '-D_CRT_SECURE_NO_DEPRECATE ' +
                            '-D_CRT_SECURE_NO_WARNINGS ' +
                            '-D_CRT_NONSTDC_NO_DEPRECATE ' +
-                           '-DZFILLODER_LSB2MSB {flags}" {targets}')],
+                           '-DZFILLODER_LSB2MSB {flags}"')],
        'publish': ['libtiff\\libtiff.dll'],
    }),
    ('libgeotiff', {
@@ -92,7 +92,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'patches': ['libgeotiff.diff'],
        'build': [('touch', 'geo_config.h.vc'),
                  ('nmake', '/f Makefile.vc WANT_PROJ4=1 "OPTFLAGS= -nologo {flags}" geo_config.h'),
-                 ('nmake', '/f Makefile.vc WANT_PROJ4=1 "OPTFLAGS= -nologo {flags}" {targets}'),
+                 ('nmake', '/f Makefile.vc WANT_PROJ4=1 "OPTFLAGS= -nologo {flags}"'),
                 ],
        'publish': ['geotiff.dll', 'csv'],
    }),
@@ -102,7 +102,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'sha256': 'fd48b6608fffa9419cb221c3f0663426900961ad5a02b8db3065101f53528bfa',
        'rename': [('GeographicLib-1.41', 'geographiclib')],
        'patches': ['geographiclib.diff'],
-       'build': [('nmake', '/f Makefile.vc "OPTFLAGS= -nologo {flags}" {targets}'),],
+       'build': [('nmake', '/f Makefile.vc "OPTFLAGS= -nologo {flags}"'),],
    }),
    ('sip', {
        'compression': 'zip',
@@ -112,8 +112,8 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'build': [('shell', 'python configure.py --platform=win32-msvc2010 ' +
                            '-e "{py_inc_dir}" INCDIR+="{py_inc_dir}" ' +
                            'LFLAGS+="/DEBUG /PDB:$(TARGET).pdb"'),
-                 ('shell', 'cd sipgen && nmake {targets}'),
-                 ('shell', 'cd siplib && nmake "CFLAGS=%(f)s" "CXXFLAGS=%(f)s /EHsc" {targets}' %
+                 ('shell', 'cd sipgen && nmake'),
+                 ('shell', 'cd siplib && nmake "CFLAGS=%(f)s" "CXXFLAGS=%(f)s /EHsc"' %
                            {'f': ' '.join([
                                  '-nologo -Zm200 /Zc:wchar_t /D WIN32 /D STRICT',
                                  '/D NOMINMAX /D _DEBUG /D _WINDOWS /D _WINDLL',
@@ -131,12 +131,6 @@ AVAILABLE_MODULES = collections.OrderedDict([
 FLAGS = {
     'debug': "-D_MT -MDd /Zi /RTC1 /Od",
     'release': "-D_MT -MD /Ox",
-    'clean': "-D_MT -MD /Ox",
-}
-TARGETS = {
-    'debug': '',
-    'release': '',
-    'clean': 'clean',
 }
 PUBLISH_DIR = 'published'
 PY_INC_DIR = os.path.join(os.environ['VIRTUAL_ENV'], 'Include')
@@ -175,7 +169,7 @@ def templated_run(template, ctx, directory, config, args):
 
     First, perform ``str.format()`` expansion on ``args`` with these keywords:
 
-    * config: the desired build configuration (release/debug/clean)
+    * config: the desired build configuration (release/debug)
     * flags: the current build flags
     * target: the current build target
 
@@ -186,7 +180,6 @@ def templated_run(template, ctx, directory, config, args):
 
     args = args.format(config=config,
                        flags=FLAGS[config.lower()],
-                       targets=TARGETS[config.lower()],
                        py_inc_dir=PY_INC_DIR)
 
     ctx.run(template.format(directory=directory, args=args))
@@ -241,7 +234,7 @@ def download(ctx, modules=None):
             ctx.run(cmd.format(modulename=modulename, patch_prog=PATCH_PROG,
                                patch=patch))
 
-@ctask(help={'config': 'Which configuration to build: debug/release/clean',
+@ctask(help={'config': 'Which configuration to build: debug/release',
              'modules': 'Semicolon-separated list of modules to operate on (default: all)'})
 def build(ctx, config, modules=None):
     "Build third-party modules required for building MapsEvolved"
