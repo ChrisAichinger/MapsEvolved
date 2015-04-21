@@ -1,11 +1,51 @@
 #!../venv/Scripts/python
 import sys
 import os
+import re
 import glob
 import time
 import hashlib
+import functools
 import itertools
 import contextlib
+import subprocess
+
+@functools.lru_cache()
+def get_vs_paths():
+    "Return a list of search paths for Visual Studio binaries"
+
+    vsvars = os.path.expandvars('%VS100COMNTOOLS%\\vsvars32.bat')
+    output = subprocess.check_output(
+            ['call', vsvars, '>nul', '&&',
+             'set', 'PATH'],
+            shell=True, universal_newlines=True).strip('\n')
+
+    # Select the path= strings and remove the portion before the content.
+    output = [line[5:] for line in output.split('\n')
+                       if line.lower().startswith('path=')]
+    new_path_str = output[0]
+    old_path = [p.strip('"') for p in os.environ['PATH'].split(os.pathsep)]
+    new_path = [p.strip('"') for p in new_path_str.split(os.pathsep)]
+    new_dirs = new_path[:-len(old_path)]
+    return new_dirs
+    vs_dirs = set(new_path) - set(old_path)
+
+    # Preserve the order of vs_dirs in the path.
+    return [p for p in new_path if p in vs_dirs]
+
+def get_vs_executable(name):
+    """Return the full path for a Visual Studio program
+
+    The argument `name` must include the file extension.
+    If the program could not be found, `ValueError` is raised.
+    """
+
+    for path in get_vs_paths():
+        fname = os.path.join(path, name)
+        if os.path.isfile(fname):
+            return fname
+    raise ValueError("VisualStudio executable couldn't be found", name)
+
 
 def is_venv_active():
     "Return True if a virtual environment is currently active"

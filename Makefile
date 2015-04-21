@@ -66,3 +66,6 @@ clean:
 	-$(RMRF) pymaplib/csv
 	-$(RM) pymaplib/maplib_sip.pyd
 	-$(RM) pymaplib/*.$(SHLIBEXT)
+
+crtcheck:
+	python tools/check_linked_libs.py pymaplib/*.pyd pymaplib/*.$(SHLIBEXT)

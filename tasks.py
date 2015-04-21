@@ -115,7 +115,8 @@ def checkout_and_build(ctx, repository, target_dir, config):
         mev_build_utils.run_in_venv(ctx, 'venv',
                                     ['invoke',
                                      'configure', '--config', config,
-                                     'build', '--config', config])
+                                     'build', '--config', config,
+                                     'crtcheck'])
 
 @ctask
 def distclean(ctx):
@@ -123,3 +124,11 @@ def distclean(ctx):
 
     ctx.run('cd third-party && invoke distclean')
     build_odm(ctx, args='/t:Clean')
+
+@ctask
+def crtcheck(ctx):
+    "Verify that we link only against a single version of the CRT library"
+
+    init_sh = os.path.join("tools", "init_shell.py")
+    gmake = os.path.join("third-party", "unxutils", "make.exe")
+    ctx.run([sys.executable, init_sh, 'venv', gmake, 'crtcheck'])
