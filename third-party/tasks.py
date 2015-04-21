@@ -57,18 +57,6 @@ AVAILABLE_MODULES = collections.OrderedDict([
                  ('{cmake} --build . --target install --config {cmake_config}')],
        'publish': ['instdir\\bin\\jpeg62.dll'],
    }),
-   ('libjpeg', {
-       'compression': 'zip',
-       'url': SourceForgeURL('gnuwin32/jpeg/6b-4/jpeg-6b-4-src.zip'),
-       'sha256': 'fdf5a7d3c14647fabc689a91d5a03538e839467be08a553f21ad9f4b8d87d372',
-       'unpack_location': 'libjpeg2',
-       'rename': [('libjpeg2/src/jpeg/6b/jpeg-6b-src', 'libjpeg'),
-                  ('libjpeg2', 'libjpeg/zip-file-folders'),
-                  ('libjpeg/jconfig.vc', 'libjpeg/jconfig.h'),],
-       'patches': ['jpeg.diff'],
-       'build': [('nmake /f Makefile.vc "cvars= {flags}"')],
-       'publish': ['libjpeg.dll'],
-   }),
    ('proj4', {
        'compression': 'tar',
        'url': 'http://download.osgeo.org/proj/proj-4.9.1.tar.gz',
