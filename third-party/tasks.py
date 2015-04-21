@@ -36,11 +36,19 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'sha256': '8728119bbb48468ab45230a579463729e7b12d6babfa1ad77e771b239b5430db',
        'rename': [('cmake-3.2.2-win32-x86', 'cmake')],
    }),
+   ('nasm', {
+       'compression': 'zip',
+       'url': SourceForgeURL('nasm/Win32 binaries/2.07/nasm-2.07-win32.zip'),
+       'sha256': '3188d693619cf9cf646e4429329fccd4c9f1ba08fda14437de43e55452e352b8',
+       'rename': [('nasm-2.07', 'nasm')],
+   }),
    ('libjpeg-turbo', {
        'compression': 'tar',
        'url': SourceForgeURL('libjpeg-turbo/1.4.0/libjpeg-turbo-1.4.0.tar.gz'),
        'sha256': 'd93ad8546b510244f863b39b4c0da0fa4c0d53a77b61a8a3880f258c232bbbee',
        'rename': [('libjpeg-turbo-1.4.0', 'libjpeg-turbo')],
+       'build': [('cmake', '-G "Visual Studio 10 2010" -DNASM:PATH="..\\..\\nasm\\nasm"'),
+                 ('cmake', '--build . --config {config}')],
    }),
    ('libjpeg', {
        'compression': 'zip',
