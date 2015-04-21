@@ -9,8 +9,15 @@
 # This displays a stack dump every time a DB connection is established.
 # DSN, UID and PWD are visible there.
 
-import pyodbc
+import sys
 import sqlite3
+
+try:
+    import pyodbc
+except ImportError:
+    print("Could not import the pyodbc module\n"
+          "To use this script, please install pyodbc.", file=sys.stderr)
+    sys.exit(1)
 
 def extract_schema(connectstr, fname):
     conn = pyodbc.connect(connectstr)
