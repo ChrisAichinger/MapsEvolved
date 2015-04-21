@@ -7,11 +7,11 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(MEVThirdPartyDir)libgeotiff;$(MEVThirdPartyDir)libtiff\libtiff;$(MEVThirdPartyDir)proj4\instdir\include;$(MEVThirdPartyDir)geographiclib\include;$(MEVThirdPartyDir)libjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MEVThirdPartyDir)libgeotiff;$(MEVThirdPartyDir)libtiff\libtiff;$(MEVThirdPartyDir)proj4\instdir\include;$(MEVThirdPartyDir)geographiclib\include;$(MEVThirdPartyDir)libjpeg-turbo\instdir\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(MEVThirdPartyDir)proj4\instdir\lib;$(MEVThirdPartyDir)libgeotiff;$(MEVThirdPartyDir)libtiff\libtiff;$(MEVThirdPartyDir)geographiclib\src;$(MEVThirdPartyDir)libjpeg;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>comctl32.lib;opengl32.lib;glu32.lib;ole32.lib;comdlg32.lib;Winmm.lib;geotiff_i.lib;libtiff_i.lib;proj.lib;geographiclib.lib;libjpeg_i.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MEVThirdPartyDir)proj4\instdir\lib;$(MEVThirdPartyDir)libgeotiff;$(MEVThirdPartyDir)libtiff\libtiff;$(MEVThirdPartyDir)geographiclib\src;$(MEVThirdPartyDir)libjpeg-turbo\instdir\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>comctl32.lib;opengl32.lib;glu32.lib;ole32.lib;comdlg32.lib;Winmm.lib;geotiff_i.lib;libtiff_i.lib;proj.lib;geographiclib.lib;jpeg.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

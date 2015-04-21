@@ -92,7 +92,13 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'build': [('nmake /f Makefile.vc '
                   '"OPTFLAGS= -EHsc -W3 -D_CRT_SECURE_NO_DEPRECATE '
                   '-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE '
-                  '-DZFILLODER_LSB2MSB {flags}"')],
+                  '-DZFILLODER_LSB2MSB {flags}" '
+                  'JPEG_SUPPORT=1 '
+                  'JPEGDIR=../../libjpeg-turbo/instdir '
+                  'JPEG_INCLUDE=-I$(JPEGDIR)/include '
+                  'JPEG_LIB=$(JPEGDIR)/lib/jpeg.lib '
+                  '"LD=link /nologo /manifest" '
+                  )],
        'publish': ['libtiff\\libtiff.dll'],
    }),
    ('libgeotiff', {
