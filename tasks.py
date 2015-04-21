@@ -84,6 +84,8 @@ def configure(ctx, config):
     for target in TARGETS:
         os.makedirs(target, exist_ok=True)
 
+    # Disable Python output buffering to get consistent log output.
+    os.environ['PYTHONUNBUFFERED'] = '1'
     cmd = ' '.join(['cd third-party && invoke distclean download',
                     'build --config {config}',
                     'publish "--targets={targets}"'])
@@ -107,17 +109,19 @@ def build(ctx, config):
 
 @ctask(help={'config': 'Which configuration to build: debug/release'})
 def checkout_and_build(ctx, repository, target_dir, config):
-    "Perform GIT checkout and build"
+    '''Perform GIT checkout and build'''
 
     git = mev_build_utils.find_git_executable()
     if not git:
-        print("Could not find git executable", file=sys.stderr)
+        print('Could not find git executable', file=sys.stderr)
         sys.exit(2)
-    ctx.run([git, "clone", repository, target_dir])
+    ctx.run([git, 'clone', repository, target_dir])
 
     with mev_build_utils.temporary_chdir(target_dir):
         # Change codepage so we don't get errors printing to the console.
-        ctx.run(['chcp', "65001"])
+        ctx.run(['chcp', '65001'])
+        # Disable Python output buffering to get consistent log output.
+        os.environ['PYTHONUNBUFFERED'] = '1'
         ctx.run(['python', "bootstrap.py"])
         mev_build_utils.run_in_venv(ctx, 'venv',
                                     ['invoke',
