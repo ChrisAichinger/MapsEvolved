@@ -6,6 +6,7 @@ import hashlib
 import inspect
 import tarfile
 import zipfile
+import functools
 import collections
 import urllib.request
 
@@ -13,8 +14,6 @@ from invoke import ctask
 
 import mev_build_utils
 
-class ModuleValidationError(RuntimeError):
-    pass
 
 def SourceForgeURL(fname):
     url = 'http://downloads.sourceforge.net/project/{}?use_mirror=autoselect'
@@ -28,27 +27,35 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'unpack_location': 'unxutils2',
        'rename': [('unxutils2/usr/local/wbin', 'unxutils'),
                   ('unxutils2/bin/sh.exe', 'unxutils/sh.exe'),
-                  ('unxutils2', 'unxutils/misc'),],
+                  ('unxutils2', 'unxutils/misc'),
+                  ('unxutils/patch.exe', 'unxutils/p_a_t_c_h.exe'),],
+       # We rename patch.exe so Windows doesn't treat it as RunAsAdmin binary.
+       # Cf. http://stackoverflow.com/questions/533939
+       'provides': [('patch', 'p_a_t_c_h.exe')],
    }),
    ('cmake', {
        'compression': 'zip',
        'url': 'http://www.cmake.org/files/v3.2/cmake-3.2.2-win32-x86.zip',
        'sha256': '8728119bbb48468ab45230a579463729e7b12d6babfa1ad77e771b239b5430db',
        'rename': [('cmake-3.2.2-win32-x86', 'cmake')],
+       'provides': [('cmake', 'bin\\cmake.exe')],
    }),
    ('nasm', {
        'compression': 'zip',
        'url': SourceForgeURL('nasm/Win32 binaries/2.07/nasm-2.07-win32.zip'),
        'sha256': '3188d693619cf9cf646e4429329fccd4c9f1ba08fda14437de43e55452e352b8',
        'rename': [('nasm-2.07', 'nasm')],
+       'provides': [('nasm', 'nasm.exe')],
    }),
    ('libjpeg-turbo', {
        'compression': 'tar',
        'url': SourceForgeURL('libjpeg-turbo/1.4.0/libjpeg-turbo-1.4.0.tar.gz'),
        'sha256': 'd93ad8546b510244f863b39b4c0da0fa4c0d53a77b61a8a3880f258c232bbbee',
        'rename': [('libjpeg-turbo-1.4.0', 'libjpeg-turbo')],
-       'build': [('cmake', '-G "Visual Studio 10 2010" -DNASM:PATH="..\\..\\nasm\\nasm"'),
-                 ('cmake', '--build . --config {config}')],
+       'build': [('{cmake} -DNASM="{nasm}"  -DCMAKE_INSTALL_PREFIX=instdir '
+                          '-G "{cmake_generator}"'),
+                 ('{cmake} --build . --target install --config {cmake_config}')],
+       'publish': ['instdir\\bin\\jpeg62.dll'],
    }),
    ('libjpeg', {
        'compression': 'zip',
@@ -59,7 +66,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
                   ('libjpeg2', 'libjpeg/zip-file-folders'),
                   ('libjpeg/jconfig.vc', 'libjpeg/jconfig.h'),],
        'patches': ['jpeg.diff'],
-       'build': [('nmake', '/f Makefile.vc "cvars= {flags}"')],
+       'build': [('nmake /f Makefile.vc "cvars= {flags}"')],
        'publish': ['libjpeg.dll'],
    }),
    ('proj4', {
@@ -68,13 +75,11 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'sha256': 'fca0388f3f8bc5a1a803d2f6ff30017532367992b30cf144f2d39be88f36c319',
        'rename': [('proj-4.9.1', 'proj4')],
        'patches': ['proj4.diff'],
-       'build': [('cmake', '-DBUILD_LIBPROJ_SHARED:BOOL="1" ' +
-                           '-DCMAKE_INSTALL_PREFIX=instdir ' +
-                           '-DINCLUDEDIR=instdir\\include ' +
-                           '-DLIBDIR=instdir\\lib ' +
-                           '-DPROJ_CORE_TARGET_OUTPUT_NAME=proj ' +
-                           '-G "Visual Studio 10 2010"'),
-                 ('cmake', '--build . --target install --config {config}'),
+       'build': [('{cmake} -DBUILD_LIBPROJ_SHARED:BOOL="1" -DCMAKE_INSTALL_PREFIX=instdir '
+                          '-DINCLUDEDIR=instdir\\include -DLIBDIR=instdir\\lib '
+                          '-DPROJ_CORE_TARGET_OUTPUT_NAME=proj '
+                          '-G "{cmake_generator}"'),
+                 ('{cmake} --build . --target install --config {cmake_config}'),
                 ],
        'publish': ['instdir\\bin\\proj.dll'],
    }),
@@ -84,12 +89,10 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'sha256': '612dada703c859ea0e024e12b1bdb10d65eaf6807e06a57ac9d3ae73afe39945',
        'rename': [('tiff-4.0.4beta', 'libtiff')],
        'patches': ['libtiff.diff'],
-       'build': [('nmake', '/f Makefile.vc ' +
-                           '"OPTFLAGS= -EHsc -W3 ' +
-                           '-D_CRT_SECURE_NO_DEPRECATE ' +
-                           '-D_CRT_SECURE_NO_WARNINGS ' +
-                           '-D_CRT_NONSTDC_NO_DEPRECATE ' +
-                           '-DZFILLODER_LSB2MSB {flags}"')],
+       'build': [('nmake /f Makefile.vc '
+                  '"OPTFLAGS= -EHsc -W3 -D_CRT_SECURE_NO_DEPRECATE '
+                  '-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE '
+                  '-DZFILLODER_LSB2MSB {flags}"')],
        'publish': ['libtiff\\libtiff.dll'],
    }),
    ('libgeotiff', {
@@ -98,9 +101,9 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'sha256': '13e723ce4672d84f640eb3fc321e73a615bf5cec41760751af00a70168f25e0d',
        'rename': [('libgeotiff-1.4.1', 'libgeotiff')],
        'patches': ['libgeotiff.diff'],
-       'build': [('touch', 'geo_config.h.vc'),
-                 ('nmake', '/f Makefile.vc WANT_PROJ4=1 "OPTFLAGS= -nologo {flags}" geo_config.h'),
-                 ('nmake', '/f Makefile.vc WANT_PROJ4=1 "OPTFLAGS= -nologo {flags}"'),
+       'build': [('copy /b geo_config.h.vc +,,'),
+                 ('nmake /f Makefile.vc WANT_PROJ4=1 "OPTFLAGS= -nologo {flags}" geo_config.h'),
+                 ('nmake /f Makefile.vc WANT_PROJ4=1 "OPTFLAGS= -nologo {flags}"'),
                 ],
        'publish': ['geotiff.dll', 'csv'],
    }),
@@ -110,43 +113,47 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'sha256': 'fd48b6608fffa9419cb221c3f0663426900961ad5a02b8db3065101f53528bfa',
        'rename': [('GeographicLib-1.41', 'geographiclib')],
        'patches': ['geographiclib.diff'],
-       'build': [('nmake', '/f Makefile.vc "OPTFLAGS= -nologo {flags}"'),],
+       'build': [('nmake /f Makefile.vc "OPTFLAGS= -nologo {flags}"'),],
    }),
    ('sip', {
        'compression': 'zip',
        'url': SourceForgeURL('pyqt/sip/sip-4.15.4/sip-4.15.4.zip'),
        'sha256': 'd4b522caf93620675a6f1a7f3ed6ddcb9533cce71482d77d5015f61b98e426d2',
        'rename': [('sip-4.15.4', 'sip'),],
-       'build': [('shell', 'python configure.py --platform=win32-msvc2010 ' +
-                           '-e "{py_inc_dir}" INCDIR+="{py_inc_dir}" ' +
-                           'LFLAGS+="/DEBUG /PDB:$(TARGET).pdb"'),
-                 ('shell', 'cd sipgen && nmake'),
-                 ('shell', 'cd siplib && nmake "CFLAGS=%(f)s" "CXXFLAGS=%(f)s /EHsc"' %
-                           {'f': ' '.join([
-                                 '-nologo -Zm200 /Zc:wchar_t /D WIN32 /D STRICT',
-                                 '/D NOMINMAX /D _DEBUG /D _WINDOWS /D _WINDLL',
-                                 '/D _UNICODE /D UNICODE /W0 /Oy- /Gm /GS',
-                                 '/fp:precise -nologo -W0 -w34100 -w34189',
-                                 '{flags}'])
-                           }),
-                 ('shell', 'IF /I [{config}] == [DEBUG] nmake install'),
-                 ('shell', 'IF /I [{config}] == [RELEASE] nmake install'),
+       'build': [('python configure.py --platform=win32-msvc2010 '
+                      '-e "{py_inc_dir}" INCDIR+="{py_inc_dir}" '
+                      'LFLAGS+="/DEBUG /PDB:$(TARGET).pdb"'),
+                 ('cd sipgen && nmake'),
+                 # siplib is linked into our application, so control its compilation
+                 # flags. We need to replace both CFLAGS and CXXFlags, so use this
+                 # expansion strategy here.
+                 ('cd siplib && nmake "CFLAGS=%(f)s" "CXXFLAGS=%(f)s /EHsc"' % { 'f':
+                     ('-nologo -Zm200 /Zc:wchar_t /D WIN32 /D STRICT '
+                      '/D NOMINMAX /D _DEBUG /D _WINDOWS /D _WINDLL '
+                      '/D _UNICODE /D UNICODE /W0 /Oy- /Gm /GS '
+                      '/fp:precise -nologo -W0 -w34100 -w34189 '
+                      '{flags}')}),
+                 ('nmake install'),
                 ],
    }),
 ])
 
 
-FLAGS = {
-    'debug': "-D_MT -MDd /Zi /RTC1 /Od",
-    'release': "-D_MT -MD /Ox",
-}
+FLAGS = { 'debug': "-D_MT -MDd /Zi /RTC1 /Od",
+          'release': "-D_MT -MD /Ox" }
+CMAKE_CONFIG = { 'debug': 'Debug',
+                 'release': 'RelWithDebInfo' }
+CMAKE_GENERATOR = "Visual Studio 10 2010"
 PUBLISH_DIR = 'published'
 PY_INC_DIR = os.path.join(os.environ['VIRTUAL_ENV'], 'Include')
-# We can't easily use UnxUtils patch.exe as it lacks a manifest.
-# Cf. http://stackoverflow.com/questions/533939
-PATCH_PROG = os.path.abspath(os.path.join(mev_build_utils.find_git_bindir(), 'patch'))
+
+
+class ModuleValidationError(RuntimeError):
+    pass
+
 
 def extract_filename(url):
+    """Extract a probable filename from an URL"""
     return os.path.basename(url.split('?')[0])
 
 def unpack(url, sha256, compression, unpack_location='.'):
@@ -172,52 +179,49 @@ def unpack(url, sha256, compression, unpack_location='.'):
     with compressor(f, 'r') as cf:
         cf.extractall(unpack_location)
 
-def templated_run(template, ctx, directory, config, args):
-    """Substitute arguments in a command template and execute it
 
-    First, perform ``str.format()`` expansion on ``args`` with these keywords:
+@functools.lru_cache()
+def get_provides():
+    """Return a dict mapping all provides to actual executables
 
-    * config: the desired build configuration (release/debug)
-    * flags: the current build flags
-    * target: the current build target
+    Collect all provides from AVAILABLE_MODULES and return them as `dict`
+    mapping template name to executables.
 
-    Then substitute the resulting args string into the command
-    template (keywords: 'args' and 'directory') and execute the resulting
-    expression in the shell.
+    Executable names are absolute paths.
     """
 
-    args = args.format(config=config,
-                       flags=FLAGS[config.lower()],
-                       py_inc_dir=PY_INC_DIR)
+    provides = {}
+    for modulename, module in AVAILABLE_MODULES.items():
+        for name, cmd in module.get('provides', []):
+            provides[name] = os.path.abspath(os.path.join(modulename, cmd))
+    return provides
 
-    ctx.run(template.format(directory=directory, args=args))
+def run_with_vs(ctx, directory, command, config):
+    """Template-expand a command and run it under a VS environment
 
-def nmake(ctx, directory, config, args):
-    cmd = ('call "%VS100COMNTOOLS%\\vsvars32.bat" && ' +
-           'cd "{directory}" && nmake {args} || pause')
-    templated_run(cmd, ctx, directory, config, args)
+    Keyword-expand `command` (via `str.format()`), then execute it in
+    `directory` with an active Visual Studio environment.
 
-def msbuild(ctx, directory, config, args):
-    cmd = ('call "%VS100COMNTOOLS%\\vsvars32.bat" && ' +
-           'cd "{directory}" && msbuild {args} || pause')
-    templated_run(cmd, ctx, directory, config, args)
+    Available keywords:
 
-def cmake(ctx, directory, config, args):
-    cmake = os.path.abspath('cmake/bin/cmake.exe')
-    cmd = 'cd "{directory}" && "%s" {args} || pause' % cmake
-    templated_run(cmd, ctx, directory, config, args)
+    * `config`: desired build configuration (release/debug)
+    * `cmake_config`: cmake build configuration (RelWithDebInfo/Debug)
+    * `cmake_generator`: cmake generator to use
+    * `flags`: current build flags
+    * `py_inc_dir`: include directory of the python distribution (or venv)
+    * all expansions exported via the `'provides'` mechanism
+    """
 
-def touch(ctx, directory, config, fname):
-    "A Python version of the UNIX touch command"
-
-    fname = os.path.join(directory, fname)
-    with open(fname, 'a'):
-        os.utime(fname)
-
-def shell(ctx, directory, config, args):
-    cmd = ('call "%VS100COMNTOOLS%\\vsvars32.bat" && ' +
-           'cd "{directory}" && {args}')
-    templated_run(cmd, ctx, directory, config, args)
+    provides_expands = get_provides()
+    command = command.format(config=config,
+                             flags=FLAGS[config.lower()],
+                             cmake_config=CMAKE_CONFIG[config.lower()],
+                             cmake_generator=CMAKE_GENERATOR,
+                             py_inc_dir=PY_INC_DIR,
+                             **provides_expands)
+    return ctx.run('call "%VS100COMNTOOLS%\\vsvars32.bat" && '
+                   'cd "{directory}" && '
+                   '{command}'.format(directory=directory, command=command))
 
 def select_modules(modules):
     "Yield items from AVAILABLE_MODULES selected by the modules parameter"
@@ -236,11 +240,11 @@ def download(ctx, modules=None):
         unpack(**args)
         for src, dest in module.get('rename', []):
             mev_build_utils.resiliant_rename(src, dest)
-        for patch in module.get('patches', []):
-            patch = os.path.abspath(patch)
-            cmd = 'cd {modulename} && "{patch_prog}" -p1 --forward --fuzz 0 < "{patch}"'
-            ctx.run(cmd.format(modulename=modulename, patch_prog=PATCH_PROG,
-                               patch=patch))
+        for diff in module.get('patches', []):
+            cmd = 'cd {modulename} && "{patch}" -p1 --forward --fuzz 0 < "{diff}"'
+            ctx.run(cmd.format(modulename=modulename,
+                               patch=get_provides()['patch'],
+                               diff=os.path.abspath(diff)))
 
 @ctask(help={'config': 'Which configuration to build: debug/release',
              'modules': 'Semicolon-separated list of modules to operate on (default: all)'})
@@ -248,11 +252,8 @@ def build(ctx, config, modules=None):
     "Build third-party modules required for building MapsEvolved"
 
     for modulename, module in select_modules(modules):
-        if not module.get('build'):
-            continue
-        for funcname, args in module['build']:
-            func = globals()[funcname]
-            func(ctx, modulename, config, args)
+        for command in module.get('build', []):
+            run_with_vs(ctx, modulename, command, config)
 
 @ctask(help={'modules': 'Semicolon-separated list of modules to operate on (default: all)'})
 def distclean(ctx, modules=None):
@@ -290,4 +291,3 @@ def listmodules(ctx):
     "List available third-party modules"
 
     print('\n'.join(AVAILABLE_MODULES.keys()))
-# chcp 65001
