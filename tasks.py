@@ -98,6 +98,13 @@ def build(ctx, config):
     build_odm(ctx, config)
     build_pymaplib(ctx, config)
 
+    print()
+    print('*******************************')
+    print('* Build finished successfully *')
+    print('*******************************')
+    print()
+    print('Next: ./MapsEvolved.py')
+
 @ctask(help={'config': 'Which configuration to build: debug/release'})
 def checkout_and_build(ctx, repository, target_dir, config):
     "Perform GIT checkout and build"
