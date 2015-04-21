@@ -1,11 +1,12 @@
 diff -Nur libtiff.orig/Makefile.vc libtiff/Makefile.vc
 --- libtiff.orig/Makefile.vc	Fri Mar 28 01:07:32 2008
 +++ libtiff/Makefile.vc	Sat Nov 17 00:30:56 2012
-@@ -33,26 +33,26 @@
+@@ -33,26 +33,27 @@
  
  port::
  	cd port
 -	$(MAKE) /f Makefile.vc
++       REM We need /E to propagate our flags to the recursive sub-makes.
 +	$(MAKE) /E /f Makefile.vc
  	cd..
  
@@ -96,7 +97,7 @@ diff -Nur libtiff.orig/libtiff/tif_getimage.c libtiff/libtiff/tif_getimage.c
  	    
 -	    pos = ((row+img->row_offset) % th) * TIFFTileRowSize(tif);  
 +	    pos = ((row+img->row_offset) % th) * TIFFTileRowSize(tif) +
-+	          ((col+img->col_offset) % tw) * TIFFTileRowSize(tif) / tw;  
++	          ((col+img->col_offset) % tw) * TIFFTileRowSize(tif) / tw;
  
 -    	    if (col + tw > w) 
 +    	    colstoread = tw - (col + img->col_offset) % tw;
