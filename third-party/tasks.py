@@ -66,7 +66,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
                            '-DLIBDIR=instdir\\lib ' +
                            '-DPROJ_CORE_TARGET_OUTPUT_NAME=proj ' +
                            '-G "Visual Studio 10 2010"'),
-                 ('cmake', '--build . --target install --config Debug'),
+                 ('cmake', '--build . --target install --config {config}'),
                 ],
        'publish': ['instdir\\bin\\proj.dll'],
    }),
