@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import sys
 import os
 import io
@@ -10,10 +12,11 @@ import xml.etree.ElementTree as ET
 
 import wx
 
-parent_path = os.path.join(os.path.dirname(sys.argv[0]), '..')
-sys.path.append(parent_path)
-import pymaplib
-import pymaplib.filelist
+try:
+    import pymaplib
+except ImportError:
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+    import pymaplib
 
 
 DEFAULT_TILE_SIZE = pymaplib.MapPixelDeltaInt(512, 512)
