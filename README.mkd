@@ -1,0 +1,75 @@
+MapsEvolved - A Map Viewer Optimized for Hiking and Ski Touring
+===============================================================
+
+MapsEvolved is a map viewer designed to make it easier to plan new outdoor
+trips or analyze past outings. Besides displaying maps, it can also read
+digital elevation models (DEMs) and extract elevation as well as slope
+orientation and steepness. Special relief display modes help getting a feel for
+the terrain.
+
+MapsEvolved can display GPS tracks and analyze them to find metrics such as
+total distance covered or elevation gain. New GPS tracks can be drawn directly
+on the map and be similarly evaluated. This capability makes MapsEvolved the
+perfect tool for planning trips into the unknown.
+
+Supported file formats:
+
+ * GeoTIFF: A widely used format for topographic maps. Many other maps can be
+   converted to GeoTIFF through freely available converters.
+ * GVG: The map file format used by several Alpine Clubs in Europe.
+ * GPX: The most common format for GPS tracks.
+
+Screenshots
+-----------
+
+The main map display of MapsEvolved:  
+![Map Display](images/screenshots/screenshot1.png)
+
+The map manager where you can tell MapsEvolved about the location of your maps,
+GPS tracks and point-of-interest(POI) databases:  
+![Map Manager](images/screenshots/screenshot2.png)
+
+A Dachstein and Hochkönig regions in Austria in relief shading, which is
+computed directly from digital elevation data:  
+![Relief Map](images/screenshots/screenshot3.png)
+
+A GPS track of a tour from 2014. The coloring indicates terrain steepness. As
+can be seen, the track closely follows the most gentle slope up the mountain.
+Below the steepness shading is a 1:25000 map of the area.  
+![Steepness Map with GPS Track](images/screenshots/screenshot4.png)
+
+Building
+--------
+
+Currently, MapsEvolved supports only 32 bit Windows platforms.
+
+### Build requirements
+
+Visual Studio 2010 must be installed.
+
+Several other build tools and libraries are required, but they will be
+downloaded automatically as part of the build process. See the third-party
+folder for more information about this process.
+
+### Build process
+
+The build process is super simple:
+
+    chcp 65001
+    python3.4 bootstrap.py
+    venv/scripts/activate
+    invoke configure --config Release build --config Release
+
+We change the command window to an UTF-8 codepage with `chcp`, otherwise we
+can't write all unicode characters to the console
+([Python Issue#1602](https://bugs.python.org/issue1602)).
+Then we create a virtual environment with `bootstrap.py`, activate it, and
+execute the full build using pyinvoke.
+
+Roadmap
+-------
+
+Currently, we are forced to stay with Visual Studio 2010, as Python 3.4 is
+built with that compiler. Python 3.5 will switch to VS 2015. As soon as that
+happens, we will switch as well so we're able to finally use newer C++
+features.
