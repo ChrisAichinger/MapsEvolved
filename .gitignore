@@ -1,11 +1,8 @@
 __pycache__
-/__build
-/__sip_source
-/__gpxpy_source
 /venv
 /pymaplib/*.dll
 /pymaplib/*.pyd
-/pymaplib/*/
+/pymaplib/csv
 
 # Ignore the downloaded packages but include patches and the pyinvoke script
 /third-party/*

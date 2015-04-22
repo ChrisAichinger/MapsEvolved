@@ -17,11 +17,12 @@ LINK = link
 
 OBJEXT=obj
 
-PYMAPLIB_CPP_DIR = pymaplib_cpp
+PYMAPLIB_CPP_DIR = ..
 PYMAPLIB_CPP_INC = $(PYMAPLIB_CPP_DIR)/include
 PYMAPLIB_CPP_LIB = $(PYMAPLIB_CPP_DIR)/dist/pymaplib_cpp.lib
 
 PYTHON_LIB=$(wildcard $(VIRTUAL_ENV)/libs/python??.lib)
+PYTHON_INC=$(VIRTUAL_ENV)/include
 
 ifdef RELEASE
 CPPDEBUG = -MD -O2 -Oy -DNDEBUG
@@ -31,16 +32,16 @@ CPPDEBUG = -MDd -Od -Oy- -RTC1
 LDDEBUG = -OPT:REF
 endif
 
-CPPFLAGS = -I. -I$(PYMAPLIB_CPP_INC) -Isrc_sip -Ivenv/Include
+CPPFLAGS = -I$(PYMAPLIB_CPP_INC) -I$(SIP_SRC) -I$(PYTHON_INC)
 CXXFLAGS = -D "UNICODE" -D "QT_LARGEFILE_SUPPORT" -D "STRICT" -D "NOMINMAX" \
            -EHsc -Zc:wchar_t -W3 -WX -w44800 -Gm -GS -nologo -Zi \
            -Fd$(BUILDDIR)\\
 CPPOUT = -Fo
 
 LDFLAGS = -nologo -DYNAMICBASE -NXCOMPAT -DLL -MANIFEST \
-          -MANIFESTFILE:$(TARGET).manifest -INCREMENTAL:NO \
-          -DEBUG -PDB:$(TARGET).pdb
+          -MANIFESTFILE:$@.manifest -INCREMENTAL:NO \
+          -DEBUG -PDB:$@.pdb
 LIBS = $(PYMAPLIB_CPP_LIB) "$(PYTHON_LIB)"
 LDOUT = -OUT:
 
-MANIFEST = mt -nologo -manifest $(TARGET).manifest -outputresource:$(TARGET);2
+MANIFEST = mt -nologo -manifest $@.manifest -outputresource:$@;2
