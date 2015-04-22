@@ -619,7 +619,7 @@ class MainFrame(wx.Frame):
         ok, ll = self.mapdisplay.GetBaseMap().PixelToLatLon(base_point)
         if not ok:
             self.statusbar.SetStatusText(_("lat/lon unknown"), i=0)
-            self.statusbar.SetStatusText(_("Height unknown"), i=1)
+            self.statusbar.SetStatusText(_("Elevation unknown"), i=1)
             self.statusbar.SetStatusText(_("Terrain orientation unknown"), i=2)
             self.statusbar.SetStatusText(_("Steepness unknown"), i=3)
             return
@@ -628,13 +628,13 @@ class MainFrame(wx.Frame):
 
         ok, ti = self.heightfinder.calc_terrain(ll)
         if not ok:
-            self.statusbar.SetStatusText(_("Height unknown"), i=1)
+            self.statusbar.SetStatusText(_("Elevation unknown"), i=1)
             self.statusbar.SetStatusText(_("Terrain orientation unknown"), i=2)
             self.statusbar.SetStatusText(_("Steepness unknown"), i=3)
             return
 
         NESW = pymaplib.CompassPointFromDirection(ti.slope_face_deg)
-        self.statusbar.SetStatusText(_("Height: %.1f m") % ti.height_m, i=1)
+        self.statusbar.SetStatusText(_("Elevation: %.1f m") % ti.height_m, i=1)
         self.statusbar.SetStatusText(
                _("Orientation: %3s (%.0f°)") % (NESW, ti.slope_face_deg), i=2)
         self.statusbar.SetStatusText(
