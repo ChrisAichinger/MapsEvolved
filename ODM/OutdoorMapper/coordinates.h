@@ -5,10 +5,19 @@
 #include <algorithm>
 #include "odm_config.h"
 
+// UnitSquareCoord represents coordinates in the unit square (x, y in 0..1).
+//
+// Usecases include Bezier calculations, where a 2D Bezier surface spans the
+// unit square.
+//
+// Values outside (0, 1) are valid and can have well-defined meaning,
+// depending on the context. For example, map coordinates can be normalized to
+// the unit square. Then points inside (0, 1) are on the map, while points
+// outside (0, 1) are not.
 class EXPORT UnitSquareCoord {
     public:
         UnitSquareCoord() : x(0), y(0) {};
-        UnitSquareCoord(double x_, double y_);
+        UnitSquareCoord(double x_, double y_) : x(x_), y(y_) {};
         double x, y;
 };
 

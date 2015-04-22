@@ -9,18 +9,6 @@
 
 #include "util.h"
 
-UnitSquareCoord::UnitSquareCoord(double x_, double y_)
-    : x(x_), y(y_)
-{
-    if (x < 0 || x > 1) {
-        throw std::runtime_error(string_format(
-                    "UnitSquareCoord: x must be between 0 and 1 (it is %f).", x));
-    }
-    if (y < 0 || y > 1) {
-        throw std::runtime_error(string_format(
-                    "UnitSquareCoord: y must be between 0 and 1 (it is %f).", x));
-    }
-}
 
 #define OPERATORS_COORD_ADDSUB(Coord, Delta, x, y)                            \
     Coord &Coord::operator+=(const Delta &rhs) {                              \
