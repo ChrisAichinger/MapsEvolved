@@ -3,8 +3,15 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
     <MEVThirdPartyDir>$(SolutionDir)..\third-party\</MEVThirdPartyDir>
+    <MEVBuildDir>$(SolutionDir)build\</MEVBuildDir>
+    <MEVDistDir>$(SolutionDir)dist\</MEVDistDir>
   </PropertyGroup>
-  <PropertyGroup />
+  <PropertyGroup>
+    <OutDir>$(MEVDistDir)</OutDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntDir>$(MEVBuildDir)</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>$(MEVThirdPartyDir)libgeotiff;$(MEVThirdPartyDir)libtiff\libtiff;$(MEVThirdPartyDir)proj4\instdir\include;$(MEVThirdPartyDir)geographiclib\include;$(MEVThirdPartyDir)libjpeg-turbo\instdir\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -17,6 +24,12 @@
   <ItemGroup>
     <BuildMacro Include="MEVThirdPartyDir">
       <Value>$(MEVThirdPartyDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="MEVBuildDir">
+      <Value>$(MEVBuildDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="MEVDistDir">
+      <Value>$(MEVDistDir)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

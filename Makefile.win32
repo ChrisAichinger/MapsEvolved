@@ -19,6 +19,8 @@ OBJEXT=obj
 SHLIBEXT=dll
 LIBEXT=lib
 
+ODMPATH = pymaplib-cpp/dist
+
 PYTHON_LIB_DIR=$(VIRTUAL_ENV)/libs
 PYTHON_LIB=$(notdir $(wildcard $(PYTHON_LIB_DIR)/python??.$(LIBEXT)))
 
@@ -27,14 +29,12 @@ CPPDEBUG = -DNDEBUG -MD -O2 -Oy
 # We still want the linker to generate debug information (.pdb's), but enable
 # optimizations.
 LDDEBUG = -DEBUG -PDB:$(TARGET).pdb -OPT:REF
-ODMPATH = ODM/Release
 else
 CPPDEBUG = -MDd -Od -Oy- -RTC1
 LDDEBUG = -DEBUG -PDB:$(TARGET).pdb
-ODMPATH = ODM/Debug
 endif
 
-CPPFLAGS = -I. -IODM/OutdoorMapper -Isrc_sip -Ivenv/Include
+CPPFLAGS = -I. -Ipymaplib-cpp/OutdoorMapper -Isrc_sip -Ivenv/Include
 CXXFLAGS = -D "UNICODE" -D "QT_LARGEFILE_SUPPORT" -D "STRICT" -D "NOMINMAX" \
            -EHsc -Zc:wchar_t -W3 -WX -w44800 -Gm -GS -nologo -Zi \
            -Fd$(BUILDDIR)\\

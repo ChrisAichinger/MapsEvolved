@@ -22,10 +22,12 @@ __pycache__
 # Ignore Debug, Release and Intellisense directories
 Debug/
 Release/
-/ODM/ipch/
+/pymaplib-cpp/build
+/pymaplib-cpp/dist
+/pymaplib-cpp/ipch/
 
 # Ignore the various stuff we need for testing
-/ODM/tests/*.dll
-/ODM/tests/*.exe
-/ODM/tests/build
-/ODM/tests/csv
+/pymaplib-cpp/tests/*.dll
+/pymaplib-cpp/tests/*.exe
+/pymaplib-cpp/tests/build
+/pymaplib-cpp/tests/csv

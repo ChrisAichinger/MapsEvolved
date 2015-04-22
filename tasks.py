@@ -5,7 +5,7 @@ from invoke import ctask
 
 import mev_build_utils
 
-TARGETS = ['ODM\\Debug', 'ODM\\Release', 'ODM\\tests']
+TARGETS = ['pymaplib-cpp\\dist', 'pymaplib-cpp\\tests']
 SIP_BUILD_DIR = '__build'
 
 
@@ -56,7 +56,7 @@ def run_sip(ctx):
 def build_odm(ctx, config=None, args=''):
     "Build the OutdoorMapper library"
 
-    cmd = 'call "%VS100COMNTOOLS%\\vsvars32.bat" && cd ODM && msbuild '
+    cmd = 'call "%VS100COMNTOOLS%\\vsvars32.bat" && cd pymaplib-cpp && msbuild '
     if config is not None:
         cmd += '/p:Configuration={config} '
     cmd += args
@@ -95,7 +95,7 @@ def configure(ctx, config):
 
 @ctask(help={'config': 'Which configuration to build: debug/release'})
 def build(ctx, config):
-    "Build ODM and pymaplib"
+    "Build pymaplib-cpp and its SIP bindings"
 
     build_odm(ctx, config)
     build_pymaplib(ctx, config)
