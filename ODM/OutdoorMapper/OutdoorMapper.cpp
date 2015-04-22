@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <commctrl.h>
 
-#include "resource.h"
 #include "winwrap.h"
 
 #include <stdio.h>

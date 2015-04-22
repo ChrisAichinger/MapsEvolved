@@ -129,13 +129,9 @@
     <ClInclude Include="pixelbuf.h" />
     <ClInclude Include="projection.h" />
     <ClInclude Include="rastermap.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="tiles.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="winwrap.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
