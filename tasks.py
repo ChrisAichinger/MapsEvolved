@@ -1,11 +1,12 @@
 import sys
 import os
+import shutil
 
 from invoke import ctask
 
 import mev_build_utils
 
-TARGETS = ['pymaplib_cpp\\dist', 'pymaplib_cpp\\tests']
+TARGETS = ['pymaplib_cpp\\dist', 'pymaplib_cpp\\tests', 'pymaplib']
 SIP_BUILD_DIR = '__build'
 
 
@@ -100,12 +101,19 @@ def build(ctx, config):
     build_cpp(ctx, config)
     build_pymaplib(ctx, config)
 
+    os.environ['PYTHONUNBUFFERED'] = '1'
+    cmd = ' '.join(['cd third-party && invoke publish "--targets={targets}"'])
+    targets = ';'.join(os.path.abspath(target) for target in TARGETS)
+    ctx.run(cmd.format(targets=targets))
+
+    shutil.copy(os.path.join('pymaplib_cpp', 'dist', 'pymaplib_cpp.dll'), 'pymaplib')
+    shutil.copy(os.path.join('__build', 'maplib_sip.pyd'), 'pymaplib')
+
     print()
     print('*******************************')
     print('* Build finished successfully *')
     print('*******************************')
     print()
-    print('Next: ./MapsEvolved.py')
 
 @ctask(help={'config': 'Which configuration to build: debug/release'})
 def checkout_and_build(ctx, repository, target_dir, config):
@@ -140,6 +148,9 @@ def distclean(ctx):
 def crtcheck(ctx):
     "Verify that we link only against a single version of the CRT library"
 
+    files = list(mev_build_utils.multiglob('pymaplib/*.pyd', 'pymaplib/*.dll'))
     init_sh = os.path.join("tools", "init_shell.py")
-    gmake = os.path.join("third-party", "unxutils", "make.exe")
-    ctx.run([sys.executable, init_sh, 'venv', gmake, 'crtcheck'])
+    check = os.path.join("tools", "check_linked_libs.py")
+
+    os.environ['PYTHONUNBUFFERED'] = '1'
+    ctx.run([sys.executable, init_sh, 'venv', 'python', check] + files)

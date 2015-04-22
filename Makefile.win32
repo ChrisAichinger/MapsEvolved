@@ -16,24 +16,19 @@ CXX = cl
 LINK = link
 
 OBJEXT=obj
-SHLIBEXT=dll
-LIBEXT=lib
 
 PYMAPLIB_CPP_DIR = pymaplib_cpp
 PYMAPLIB_CPP_INC = $(PYMAPLIB_CPP_DIR)/include
-PYMAPLIB_CPP_LIB = $(PYMAPLIB_CPP_DIR)/dist
+PYMAPLIB_CPP_LIB = $(PYMAPLIB_CPP_DIR)/dist/pymaplib_cpp.lib
 
-PYTHON_LIB_DIR=$(VIRTUAL_ENV)/libs
-PYTHON_LIB=$(notdir $(wildcard $(PYTHON_LIB_DIR)/python??.$(LIBEXT)))
+PYTHON_LIB=$(wildcard $(VIRTUAL_ENV)/libs/python??.lib)
 
 ifdef RELEASE
-CPPDEBUG = -DNDEBUG -MD -O2 -Oy
-# We still want the linker to generate debug information (.pdb's), but enable
-# optimizations.
-LDDEBUG = -DEBUG -PDB:$(TARGET).pdb -OPT:REF
+CPPDEBUG = -MD -O2 -Oy -DNDEBUG
+LDDEBUG =
 else
 CPPDEBUG = -MDd -Od -Oy- -RTC1
-LDDEBUG = -DEBUG -PDB:$(TARGET).pdb
+LDDEBUG = -OPT:REF
 endif
 
 CPPFLAGS = -I. -I$(PYMAPLIB_CPP_INC) -Isrc_sip -Ivenv/Include
@@ -43,8 +38,9 @@ CXXFLAGS = -D "UNICODE" -D "QT_LARGEFILE_SUPPORT" -D "STRICT" -D "NOMINMAX" \
 CPPOUT = -Fo
 
 LDFLAGS = -nologo -DYNAMICBASE -NXCOMPAT -DLL -MANIFEST \
-          -MANIFESTFILE:$(TARGET).manifest -INCREMENTAL:NO
-LIBS = -LIBPATH:$(PYMAPLIB_CPP_LIB) "-LIBPATH:$(PYTHON_LIB_DIR)" pymaplib_cpp.lib $(PYTHONLIB)
+          -MANIFESTFILE:$(TARGET).manifest -INCREMENTAL:NO \
+          -DEBUG -PDB:$(TARGET).pdb
+LIBS = $(PYMAPLIB_CPP_LIB) "$(PYTHON_LIB)"
 LDOUT = -OUT:
 
 MANIFEST = mt -nologo -manifest $(TARGET).manifest -outputresource:$(TARGET);2

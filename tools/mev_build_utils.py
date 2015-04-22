@@ -10,6 +10,23 @@ import itertools
 import contextlib
 import subprocess
 
+def multiglob(*patterns, unique=True):
+    """Yield paths matching one or more of multiple pathname patterns
+
+    This function is similar to glob.iglob() but accepts multiple arguments.
+
+    If `unique` is False, the same path may be yielded multiple times if it
+    matches more than one pattern. If `unique` is True, each path will be
+    yielded only once.
+    """
+
+    if unique:
+        yield from set(multiglob(*patterns, unique=False))
+        return
+    for p in patterns:
+        yield from glob.iglob(p)
+
+
 @functools.lru_cache()
 def get_vs_paths():
     "Return a list of search paths for Visual Studio binaries"
