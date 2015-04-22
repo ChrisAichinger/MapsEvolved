@@ -26,7 +26,7 @@ OFILES = $(sources:.cpp=.$(OBJEXT)) __build/smartptr_proxy.$(OBJEXT)
 HFILES = $(headers) src_sip/smartptr_proxy.h Makefile
 
 
-all: $(TARGET) pymaplib/maplib_sip.pyd pymaplib/OutdoorMapper.$(SHLIBEXT) pymaplib/csv
+all: $(TARGET) pymaplib/maplib_sip.pyd pymaplib/pymaplib_cpp.$(SHLIBEXT) pymaplib/csv
 
 $(OFILES): $(HFILES)
 
@@ -39,10 +39,10 @@ $(BUILDDIR)/%.$(OBJEXT): src_sip/%.cpp
 pymaplib/maplib_sip.pyd: __build/maplib_sip.pyd
 	$(CP) $< $@
 
-pymaplib/OutdoorMapper.$(SHLIBEXT): $(ODMPATH)/OutdoorMapper.$(SHLIBEXT)
-	$(CP) $(wildcard $(ODMPATH)/*.$(SHLIBEXT)) $(dir $@).
+pymaplib/pymaplib_cpp.$(SHLIBEXT): $(PYMAPLIB_CPP_LIB)/pymaplib_cpp.$(SHLIBEXT)
+	$(CP) $(wildcard $(PYMAPLIB_CPP_LIB)/*.$(SHLIBEXT)) $(dir $@).
 
-pymaplib/csv: $(ODMPATH)/csv
+pymaplib/csv: $(PYMAPLIB_CPP_LIB)/csv
 	$(CPR) $< $@
 
 # We need this ugly contraption because
@@ -54,7 +54,7 @@ pymaplib/csv: $(ODMPATH)/csv
 #   Basically, we create an empty file or truncate it if it already exists.
 # - Then we iterate over all our args and echo them into our file.
 # - The final echo terminates the && chain.
-$(TARGET): $(ODMPATH)/OutdoorMapper.$(LIBEXT) $(OFILES)
+$(TARGET): $(PYMAPLIB_CPP_LIB)/pymaplib_cpp.$(LIBEXT) $(OFILES)
 	dd count=0 > $@.linkargs
 	$(foreach lib,$(OFILES) $(LIBS),echo $(lib) >> $@.linkargs && ) echo
 	$(LINK) $(LDFLAGS) $(LDDEBUG) $(LDOUT)$(TARGET) @$@.linkargs

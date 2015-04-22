@@ -5,7 +5,7 @@ from invoke import ctask
 
 import mev_build_utils
 
-TARGETS = ['pymaplib-cpp\\dist', 'pymaplib-cpp\\tests']
+TARGETS = ['pymaplib_cpp\\dist', 'pymaplib_cpp\\tests']
 SIP_BUILD_DIR = '__build'
 
 
@@ -53,10 +53,10 @@ def run_sip(ctx):
 
 @ctask(help={'config': 'Which configuration to build: debug/release (default: as last build)',
              'args': 'Additional arguments for msbuild'})
-def build_odm(ctx, config=None, args=''):
-    "Build the OutdoorMapper library"
+def build_cpp(ctx, config=None, args=''):
+    "Build the pymaplib_cpp library"
 
-    cmd = 'call "%VS100COMNTOOLS%\\vsvars32.bat" && cd pymaplib-cpp && msbuild '
+    cmd = 'call "%VS100COMNTOOLS%\\vsvars32.bat" && cd pymaplib_cpp && msbuild '
     if config is not None:
         cmd += '/p:Configuration={config} '
     cmd += args
@@ -91,13 +91,13 @@ def configure(ctx, config):
                     'publish "--targets={targets}"'])
     targets = ';'.join(os.path.abspath(target) for target in TARGETS)
     ctx.run(cmd.format(config=config, targets=targets))
-    build_odm(ctx, config=config)
+    build_cpp(ctx, config=config)
 
 @ctask(help={'config': 'Which configuration to build: debug/release'})
 def build(ctx, config):
-    "Build pymaplib-cpp and its SIP bindings"
+    "Build pymaplib_cpp and its SIP bindings"
 
-    build_odm(ctx, config)
+    build_cpp(ctx, config)
     build_pymaplib(ctx, config)
 
     print()
@@ -134,7 +134,7 @@ def distclean(ctx):
     "Delete generated and downloaded files"
 
     ctx.run('cd third-party && invoke distclean')
-    build_odm(ctx, args='/t:Clean')
+    build_cpp(ctx, args='/t:Clean')
 
 @ctask
 def crtcheck(ctx):

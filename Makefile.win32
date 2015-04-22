@@ -19,7 +19,9 @@ OBJEXT=obj
 SHLIBEXT=dll
 LIBEXT=lib
 
-ODMPATH = pymaplib-cpp/dist
+PYMAPLIB_CPP_DIR = pymaplib_cpp
+PYMAPLIB_CPP_INC = $(PYMAPLIB_CPP_DIR)/include
+PYMAPLIB_CPP_LIB = $(PYMAPLIB_CPP_DIR)/dist
 
 PYTHON_LIB_DIR=$(VIRTUAL_ENV)/libs
 PYTHON_LIB=$(notdir $(wildcard $(PYTHON_LIB_DIR)/python??.$(LIBEXT)))
@@ -34,7 +36,7 @@ CPPDEBUG = -MDd -Od -Oy- -RTC1
 LDDEBUG = -DEBUG -PDB:$(TARGET).pdb
 endif
 
-CPPFLAGS = -I. -Ipymaplib-cpp/OutdoorMapper -Isrc_sip -Ivenv/Include
+CPPFLAGS = -I. -I$(PYMAPLIB_CPP_INC) -Isrc_sip -Ivenv/Include
 CXXFLAGS = -D "UNICODE" -D "QT_LARGEFILE_SUPPORT" -D "STRICT" -D "NOMINMAX" \
            -EHsc -Zc:wchar_t -W3 -WX -w44800 -Gm -GS -nologo -Zi \
            -Fd$(BUILDDIR)\\
@@ -42,7 +44,7 @@ CPPOUT = -Fo
 
 LDFLAGS = -nologo -DYNAMICBASE -NXCOMPAT -DLL -MANIFEST \
           -MANIFESTFILE:$(TARGET).manifest -INCREMENTAL:NO
-LIBS = -LIBPATH:$(ODMPATH) "-LIBPATH:$(PYTHON_LIB_DIR)" OutdoorMapper.lib $(PYTHONLIB)
+LIBS = -LIBPATH:$(PYMAPLIB_CPP_LIB) "-LIBPATH:$(PYTHON_LIB_DIR)" pymaplib_cpp.lib $(PYTHONLIB)
 LDOUT = -OUT:
 
 MANIFEST = mt -nologo -manifest $(TARGET).manifest -outputresource:$(TARGET);2
