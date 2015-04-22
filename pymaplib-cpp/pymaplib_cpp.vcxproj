@@ -29,11 +29,11 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
-    <Import Project="..\common_properties.props" />
+    <Import Project="common_properties.props" />
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-    <Import Project="..\common_properties.props" />
+    <Import Project="common_properties.props" />
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -57,6 +57,7 @@
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <TreatWarningAsError>true</TreatWarningAsError>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -78,6 +79,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -91,43 +93,43 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="bezier.cpp" />
-    <ClCompile Include="coordinates.cpp" />
-    <ClCompile Include="disp_ogl.cpp" />
-    <ClCompile Include="memjpeg.cpp" />
-    <ClCompile Include="map_gvg.cpp" />
-    <ClCompile Include="mapdisplay.cpp" />
-    <ClCompile Include="map_composite.cpp" />
-    <ClCompile Include="map_dhm_advanced.cpp" />
-    <ClCompile Include="map_geotiff.cpp" />
-    <ClCompile Include="map_gridlines.cpp" />
-    <ClCompile Include="OutdoorMapper.cpp" />
-    <ClCompile Include="pixelbuf.cpp" />
-    <ClCompile Include="projection.cpp" />
-    <ClCompile Include="rastermap.cpp" />
-    <ClCompile Include="tiles.cpp" />
-    <ClCompile Include="util.cpp" />
-    <ClCompile Include="winwrap.cpp" />
+    <ClCompile Include="src\bezier.cpp" />
+    <ClCompile Include="src\coordinates.cpp" />
+    <ClCompile Include="src\disp_ogl.cpp" />
+    <ClCompile Include="src\memjpeg.cpp" />
+    <ClCompile Include="src\map_gvg.cpp" />
+    <ClCompile Include="src\mapdisplay.cpp" />
+    <ClCompile Include="src\map_composite.cpp" />
+    <ClCompile Include="src\map_dhm_advanced.cpp" />
+    <ClCompile Include="src\map_geotiff.cpp" />
+    <ClCompile Include="src\map_gridlines.cpp" />
+    <ClCompile Include="src\OutdoorMapper.cpp" />
+    <ClCompile Include="src\pixelbuf.cpp" />
+    <ClCompile Include="src\projection.cpp" />
+    <ClCompile Include="src\rastermap.cpp" />
+    <ClCompile Include="src\tiles.cpp" />
+    <ClCompile Include="src\util.cpp" />
+    <ClCompile Include="src\winwrap.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bezier.h" />
-    <ClInclude Include="coordinates.h" />
-    <ClInclude Include="disp_ogl.h" />
-    <ClInclude Include="external\glext.h" />
-    <ClInclude Include="memjpeg.h" />
-    <ClInclude Include="map_gvg.h" />
-    <ClInclude Include="mapdisplay.h" />
-    <ClInclude Include="map_composite.h" />
-    <ClInclude Include="map_dhm_advanced.h" />
-    <ClInclude Include="map_geotiff.h" />
-    <ClInclude Include="map_gridlines.h" />
-    <ClInclude Include="odm_config.h" />
-    <ClInclude Include="pixelbuf.h" />
-    <ClInclude Include="projection.h" />
-    <ClInclude Include="rastermap.h" />
-    <ClInclude Include="tiles.h" />
-    <ClInclude Include="util.h" />
-    <ClInclude Include="winwrap.h" />
+    <ClInclude Include="include\bezier.h" />
+    <ClInclude Include="include\coordinates.h" />
+    <ClInclude Include="include\disp_ogl.h" />
+    <ClInclude Include="include\external\glext.h" />
+    <ClInclude Include="include\memjpeg.h" />
+    <ClInclude Include="include\map_gvg.h" />
+    <ClInclude Include="include\mapdisplay.h" />
+    <ClInclude Include="include\map_composite.h" />
+    <ClInclude Include="include\map_dhm_advanced.h" />
+    <ClInclude Include="include\map_geotiff.h" />
+    <ClInclude Include="include\map_gridlines.h" />
+    <ClInclude Include="include\odm_config.h" />
+    <ClInclude Include="include\pixelbuf.h" />
+    <ClInclude Include="include\projection.h" />
+    <ClInclude Include="include\rastermap.h" />
+    <ClInclude Include="include\tiles.h" />
+    <ClInclude Include="include\util.h" />
+    <ClInclude Include="include\winwrap.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

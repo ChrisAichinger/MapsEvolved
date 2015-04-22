@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C++ Express 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OutdoorMapper", "OutdoorMapper\OutdoorMapper.vcxproj", "{8A1C9647-EBD2-4D55-9CB9-7B2BC355F4A3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pymaplib_cpp", "pymaplib_cpp.vcxproj", "{8A1C9647-EBD2-4D55-9CB9-7B2BC355F4A3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gvg2geotiff", "gvg2geotiff\gvg2geotiff.vcxproj", "{C837FA4C-354C-4925-9DC3-5137E08C7033}"
 EndProject

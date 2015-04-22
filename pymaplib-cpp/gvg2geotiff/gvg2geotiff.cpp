@@ -4,8 +4,8 @@
 #include <string>
 #include <iostream>
 
-#include "../OutdoorMapper/map_gvg.h"
-#include "../OutdoorMapper/util.h"
+#include "../include/map_gvg.h"
+#include "../include/util.h"
 
 #include "tiff.h"
 #include "geotiff.h"
