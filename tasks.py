@@ -98,6 +98,19 @@ def distclean(ctx):
     ctx.run('cd third-party && invoke distclean')
     build_cpp(ctx, args='/t:Clean')
 
+    paths = mev_build_utils.multiglob(
+            'build', 'dist', '*.egg-info',
+            'pymaplib/*.dll', 'pymaplib/*.pyd', 'pymaplib/csv',
+            'pymaplib_cpp/build', 'pymaplib_cpp/dist',
+            )
+    for p in paths:
+        if not os.path.exists(p):
+            continue
+        if os.path.isdir(p):
+            shutil.rmtree(p)
+        else:
+            os.unlink(p)
+
 @ctask
 def crtcheck(ctx):
     "Verify that we link only against a single version of the CRT library"
