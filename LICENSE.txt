@@ -31,7 +31,8 @@ The file pymaplib/xh_gizmos.py is taken from XRCed and is available under a
     POSSIBILITY OF SUCH DAMAGE.
 
 
-The FamFamFam SILK icon set is located under images\famfamfam_silk_icons.
+The FamFamFam SILK icon set is included under
+mapsevolved/data/famfamfam_silk_icons.
 It was created by Mark James (<mjames@gmail.com>) and can be found online at:
     http://www.famfamfam.com/lab/icons/silk/
 
@@ -44,9 +45,9 @@ both of those licenses. Furthermore, they can be used under the license
 governing Maps Evolved as a whole (see above, as soon as that is decided).
 
 
-images/land_shallow_topo_* and images/world.topo.* are images from the
-"Blue Marble" collection of NASA Visible Earth, partially augmented with
-geospatial information.
+mapsevolved/data/land_shallow_topo_* and mapsevolved/data/world.topo.* are
+images from the "Blue Marble" collection of NASA Visible Earth, partially
+augmented with geospatial information.
 
 The original data is freely available in the public domain (no copyright),
 and can be obtained from:

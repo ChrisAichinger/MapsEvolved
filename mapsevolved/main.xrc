@@ -76,60 +76,60 @@
     </object>
     <object class="wxToolBar" name="MainToolbar">
       <object class="tool" name="ManageMapsTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\database.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\database.png</bitmap>
         <tooltip>Manage Maps</tooltip>
       </object>
       <object class="tool" name="SaveBitmapTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\disk.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\disk.png</bitmap>
         <tooltip>Save Bitmap</tooltip>
       </object>
       <object class="tool" name="PrintTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\printer.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\printer.png</bitmap>
         <tooltip>Print</tooltip>
       </object>
       <object class="separator"/>
       <object class="tool" name="ZoomInTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\zoom_in.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\zoom_in.png</bitmap>
         <tooltip>Zoom In</tooltip>
       </object>
       <object class="tool" name="ZoomOutTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\zoom_out.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\zoom_out.png</bitmap>
         <tooltip>Zoom Out</tooltip>
       </object>
       <object class="tool" name="ZoomResetTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\zoom_exact.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\zoom_exact.png</bitmap>
         <tooltip>Reset Zoom</tooltip>
       </object>
       <object class="tool" name="LargerScaleMapTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\map_magnify_plus.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\map_magnify_plus.png</bitmap>
         <tooltip>Switch to larger scale map</tooltip>
       </object>
       <object class="tool" name="SmallerScaleMapTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\map_magnify_minus.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\map_magnify_minus.png</bitmap>
         <tooltip>Switch to smaller scale map</tooltip>
       </object>
       <object class="separator"/>
       <object class="tool" name="GotoCoordTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\find.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\find.png</bitmap>
         <tooltip>Go to coordinate</tooltip>
       </object>
       <object class="tool" name="ToggleLayerMgrTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\layers.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\layers.png</bitmap>
         <toggle>1</toggle>
         <tooltip>Show/Hide Layer Manager</tooltip>
       </object>
       <bitmapsize>16</bitmapsize>
       <style>wxTB_FLAT|wxTB_DOCKABLE</style>
       <object class="tool" name="PanoramaTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\photo.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\photo.png</bitmap>
         <tooltip>Show Panorama</tooltip>
       </object>
       <object class="tool" name="GPSTrackAnalyzerTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\gpstrack-analyze.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\gpstrack-analyze.png</bitmap>
         <tooltip>Show GPS Track Analyzer</tooltip>
       </object>
       <object class="tool" name="GPSTrackCreatorTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\gpstrack-create.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\gpstrack-create.png</bitmap>
         <toggle>1</toggle>
         <tooltip>Create GPS Track</tooltip>
       </object>
@@ -158,7 +158,7 @@
               <object class="wxBoxSizer">
                 <object class="sizeritem">
                   <object class="wxBitmapButton" name="LayerMoveDownBtn">
-                    <bitmap>..\images\famfamfam_silk_icons\arrow_down.png</bitmap>
+                    <bitmap>data\famfamfam_silk_icons\arrow_down.png</bitmap>
                   </object>
                   <flag>wxALIGN_CENTRE</flag>
                 </object>
@@ -167,7 +167,7 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxBitmapButton" name="LayerMoveUpBtn">
-                    <bitmap>..\images\famfamfam_silk_icons\arrow_up.png</bitmap>
+                    <bitmap>data\famfamfam_silk_icons\arrow_up.png</bitmap>
                   </object>
                   <flag>wxALIGN_CENTRE</flag>
                 </object>
@@ -255,33 +255,33 @@
       <bitmapsize>16</bitmapsize>
       <style>wxTB_FLAT|wxTB_DOCKABLE</style>
       <object class="tool" name="MapAddTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\map_add.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\map_add.png</bitmap>
         <tooltip>Add Map</tooltip>
       </object>
       <object class="tool" name="GPXAddTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\chart_line_add.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\chart_line_add.png</bitmap>
         <tooltip>Add GPS Track</tooltip>
       </object>
       <object class="tool" name="DBAddTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\poi_db_add.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\poi_db_add.png</bitmap>
         <tooltip>Add POI database</tooltip>
       </object>
       <object class="tool" name="MapRemoveTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\map-gpstrack-delete.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\map-gpstrack-delete.png</bitmap>
         <tooltip>Remove Map/GPS Track</tooltip>
       </object>
       <object class="separator"/>
       <object class="tool" name="DisplayTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\eye.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\eye.png</bitmap>
         <tooltip>Display Map</tooltip>
       </object>
       <object class="tool" name="DisplayOverlayTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\eye-layers.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\eye-layers.png</bitmap>
         <tooltip>Display as Overlay</tooltip>
       </object>
       <object class="separator"/>
       <object class="tool" name="CreateCompositeTBButton">
-        <bitmap>..\images\famfamfam_silk_icons\link.png</bitmap>
+        <bitmap>data\famfamfam_silk_icons\link.png</bitmap>
         <tooltip>&amp;Create composite maps</tooltip>
       </object>
     </object>

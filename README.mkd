@@ -23,20 +23,20 @@ Screenshots
 -----------
 
 The main map display of MapsEvolved:  
-![Map Display](images/screenshots/screenshot1.png)
+![Map Display](docs/screenshots/screenshot1.png)
 
 The map manager where you can tell MapsEvolved about the location of your maps,
 GPS tracks and point-of-interest(POI) databases:  
-![Map Manager](images/screenshots/screenshot2.png)
+![Map Manager](docs/screenshots/screenshot2.png)
 
 A Dachstein and Hochkönig regions in Austria in relief shading, which is
 computed directly from digital elevation data:  
-![Relief Map](images/screenshots/screenshot3.png)
+![Relief Map](docs/screenshots/screenshot3.png)
 
 A GPS track of a tour from 2014. The coloring indicates terrain steepness. As
 can be seen, the track closely follows the most gentle slope up the mountain.
 Below the steepness shading is a 1:25000 map of the area.  
-![Steepness Map with GPS Track](images/screenshots/screenshot4.png)
+![Steepness Map with GPS Track](docs/screenshots/screenshot4.png)
 
 Building
 --------

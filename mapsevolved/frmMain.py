@@ -13,8 +13,8 @@ from mapsevolved import dlgGotoCoord, util, config, uimodes
 
 def _(s): return s
 
-DEFAULT_MAP = os.path.join(os.path.dirname(sys.argv[0]),
-                           'images', 'land_shallow_topo_8192.tif')
+DEFAULT_MAP = os.path.join(os.path.dirname(__file__),
+                           'data', 'land_shallow_topo_8192.tif')
 DEFAULT_MAP_ZOOM = -12
 
 class CustomRearrangeList(wx.CheckListBox):
