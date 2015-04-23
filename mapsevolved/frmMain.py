@@ -263,7 +263,7 @@ class MainFrame(wx.Frame):
             350, wx.ClientDC(self.panel))
         info.WebSite = ("http://greek0.net", _("Greek0.net Homepage"))
         info.Developers = ["Christian Aichinger <Greek0@gmx.net>"]
-        info.License = wordwrap(_("Still unknown."), 500,
+        info.License = wordwrap(_("Apache License version 2"), 500,
                                 wx.ClientDC(self.panel))
         wx.adv.AboutBox(info)
 
