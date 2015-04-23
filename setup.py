@@ -17,8 +17,7 @@ def read(*filenames, encoding='utf-8', filesep='\n'):
             buf.append(f.read())
     return filesep.join(buf)
 
-
-setup(
+cfg = dict(
     name='MapsEvolved',
     version='0.1-dev',
     url='',
@@ -65,3 +64,9 @@ setup(
         #'License :: OSI Approved :: Apache Software License',
     ],
 )
+
+if __name__ == '__main__':
+    if sys.argv[-1] == 'sdist':
+        sys.exit(os.system('invoke sdist'))
+    else:
+        setup(**cfg)
