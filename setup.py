@@ -3,12 +3,19 @@
 import sys
 import os
 import io
+import importlib
 
 from setuptools import setup
 
-
-# allow setup.py to be run from any path
+# Allow setup.py to be run from any path.
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
+
+
+# Manually load mapsevolved to get the local version independent of sys.path.
+loader = importlib.machinery.SourceFileLoader("mapsevolved",
+                                              "mapsevolved/__init__.py")
+mapsevolved = loader.load_module()
+
 
 def read(*filenames, encoding='utf-8', filesep='\n'):
     buf = []
@@ -17,9 +24,10 @@ def read(*filenames, encoding='utf-8', filesep='\n'):
             buf.append(f.read())
     return filesep.join(buf)
 
+
 cfg = dict(
     name='MapsEvolved',
-    version='0.1-dev',
+    version=mapsevolved.__version__,
     url='',
     license='TBD',
     description='Map Viewer Optimized for Hiking and Ski Touring',

@@ -8,6 +8,7 @@ import wx.adv
 from wx.lib.wordwrap import wordwrap
 
 import pymaplib
+import mapsevolved
 from mapsevolved import frmMapManager, frmPanorama, frmGPSAnalyzer
 from mapsevolved import dlgGotoCoord, util, config, uimodes
 
@@ -255,10 +256,10 @@ class MainFrame(wx.Frame):
     def on_about(self, evt):
         info = wx.adv.AboutDialogInfo()
         info.Name = "Maps Evolved"
-        info.Version = "0.0.1"
-        info.Copyright = "(C) 2012-2014 Christian Aichinger"
+        info.Version = mapsevolved.__version__
+        info.Copyright = "(C) 2012-2015 Christian Aichinger"
         info.Description = wordwrap(
-            _("A map viewer implementing advanced features."),
+            _("A Map Viewer Optimized for Hiking and Ski Touring."),
             350, wx.ClientDC(self.panel))
         info.WebSite = ("http://greek0.net", _("Greek0.net Homepage"))
         info.Developers = ["Christian Aichinger <Greek0@gmx.net>"]
