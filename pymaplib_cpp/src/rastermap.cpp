@@ -13,6 +13,7 @@
 #include <cctype>
 #include <limits>
 #include <cmath>
+#include <iostream>
 #include <stdio.h>
 
 #include <GeographicLib/Geodesic.hpp>
@@ -139,7 +140,10 @@ EXPORT std::shared_ptr<RasterMap> LoadMap(const std::wstring &fname) {
         } else {
             assert(false);  // Not implemented
         }
-    } catch (const std::runtime_error &) {
+    } catch (const std::runtime_error &err) {
+        std::wcerr << L"Could not open map '" << fname << L"'." << std::endl;
+        std::wcerr << L"Error message: "
+                   << WStringFromString(err.what(), "utf-8") << std::endl;
         map.reset(new RasterMapError(fname.c_str(), L"Exception"));
     }
     return map;
