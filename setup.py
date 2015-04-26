@@ -3,9 +3,11 @@
 import sys
 import os
 import io
+import glob
 import importlib
 
 from setuptools import setup
+import py2exe
 
 # Allow setup.py to be run from any path.
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
@@ -41,10 +43,17 @@ cfg = dict(
     packages=['pymaplib', 'mapsevolved', 'mapsevolved.tools'],
     platforms='Windows',
     package_data = {
-        'pymaplib': ['csv/*.c', 'csv/*.csv', '*.dll', '*.pyd'],
-        'mapsevolved': ['data/*.*', 'data/famfamfam_silk_icons/*.*'],
+        'pymaplib': ['*.dll', '*.pyd'],
     },
     zip_safe=False,
+    data_files=[
+        ('.', ['README.mkd', 'LICENSE.mkd']),
+        ('csv', glob.glob('pymaplib/csv/*.*')),
+        ('mapsevolved', glob.glob('mapsevolved/*.xrc')),
+        ('mapsevolved/data', glob.glob('mapsevolved/data/*.*')),
+        ('mapsevolved/data/famfamfam_silk_icons',
+         glob.glob('mapsevolved/data/famfamfam_silk_icons/*.*')),
+    ],
     entry_points={
         'gui_scripts': [
             'MapsEvolved = mapsevolved.main:main',
@@ -55,6 +64,30 @@ cfg = dict(
             'gvgdump = mapsevolved.tools.gvgdump:main',
         ],
     },
+    options={"py2exe": {
+        "compressed": True,
+        "optimize": 1,
+        'bundle_files': 1,
+        "dist_dir": "dist/MapsEvolved-win32",
+        "packages": ['wx.lib.pubsub',
+                     'wx.lib.pubsub.core',
+                     'wx.lib.pubsub.core.kwargs'],
+        "includes": ['sip'],
+        "ignores": ['lxml', 'ipdb'],
+        },
+    },
+    windows=[{
+        "script": "MapsEvolved.py",
+        "dest_base": "MapsEvolved",  # Output executable name (MapsEvolved.exe)
+        "version": mapsevolved.__version__.replace('-dev', ''),
+        "company_name": u"",
+        "copyright": u"Copyright 2012-2015 Christian Aichinger",
+        "name": "MapsEvolved",
+        "description": "MapsEvolved",
+        'icon_resources': [(1, os.path.join('mapsevolved', 'data',
+                                            'famfamfam_silk_icons', 'map.ico'))],
+        },
+    ],
     #test_suite='sandman.test.test_sandman',
     #tests_require=['pytest'],
     classifiers=[

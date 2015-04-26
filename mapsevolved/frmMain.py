@@ -14,7 +14,7 @@ from mapsevolved import dlgGotoCoord, util, config, uimodes
 
 def _(s): return s
 
-DEFAULT_MAP = os.path.join(os.path.dirname(__file__),
+DEFAULT_MAP = os.path.join(util.get_mapsevolved_dir(),
                            'data', 'land_shallow_topo_8192.tif')
 DEFAULT_MAP_ZOOM = -12
 

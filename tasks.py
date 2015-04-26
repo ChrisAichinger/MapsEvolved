@@ -68,7 +68,9 @@ def build(ctx, config):
     print('*******************************')
     print()
 
-@ctask(help={'config': 'Which configuration to build: debug/release'})
+@ctask(help={'repository': 'Path to the git repo to build',
+             'target_dir': 'Working directory for checkout and build',
+             'config': 'Which configuration to build: debug/release'})
 def checkout_and_build(ctx, repository, target_dir, config):
     '''Perform GIT checkout and build'''
     git = mev_build_utils.find_git_executable()
@@ -87,7 +89,7 @@ def checkout_and_build(ctx, repository, target_dir, config):
                                     ['invoke',
                                      'configure', '--config', config,
                                      'build', '--config', config,
-                                     'crtcheck'])
+                                     'crtcheck', 'py2exe'])
 
 @ctask
 def distclean(ctx):
@@ -154,3 +156,10 @@ def sdist(ctx):
     shutil.rmtree(BUILDDIR)
 
     print("Source distribution built in '{}'.".format(zipname))
+
+@ctask
+def py2exe(ctx):
+    """Create a binary distribution for running on Windows"""
+
+    os.makedirs('dist', exist_ok=True)
+    subprocess.check_call([sys.executable, 'setup.py', 'py2exe'])

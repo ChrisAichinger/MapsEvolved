@@ -1,6 +1,9 @@
+import sys
 import os
+import imp
 import math
 import contextlib
+import functools
 
 import wx
 import wx.xrc as xrc
@@ -8,22 +11,36 @@ import wx.lib.pubsub
 
 from mapsevolved import xh_gizmos
 
+def main_is_frozen():
+    """Determine if run via py2exe or a similar tool"""
+    return (hasattr(sys, "frozen") or    # new py2exe
+            hasattr(sys, "importers") or # old py2exe
+            imp.is_frozen("__main__"))   # tools/freeze
+
+def get_mapsevolved_dir():
+    """Get the mapsevolved package dir
+
+    When run normally, returns the directory of the mapsevolved package.
+    When run frozen (i.e. via py2exe or similar), return the directory of the
+    main executable.
+    """
+
+    if main_is_frozen():
+        return os.path.join(os.path.dirname(sys.executable), 'mapsevolved')
+    return os.path.dirname(os.path.realpath(__file__))
+
 def get_xrc_path_default(xrc_name):
-    """"""
+    """Resolve the name of an XRC file to a full path"""
     if not xrc_name.endswith('.xrc'):
         xrc_name = xrc_name + '.xrc'
-    this_file_dir = os.path.dirname(os.path.realpath(__file__))
-    return os.path.join(this_file_dir, xrc_name)
+    return os.path.join(get_mapsevolved_dir(), xrc_name)
 
+@functools.lru_cache()
 def get_resources(xrc_name, get_xrc_path=get_xrc_path_default):
     """ This function provides access to the XML resources in this module."""
-    if not hasattr(get_resources, 'res'):
-        get_resources.res = dict()
-    if xrc_name not in get_resources.res:
-        res = xrc.XmlResource(get_xrc_path(xrc_name))
-        res.AddHandler(xh_gizmos.TreeListCtrlXmlHandler())
-        get_resources.res[xrc_name] = res
-    return get_resources.res[xrc_name]
+    res = xrc.XmlResource(get_xrc_path(xrc_name))
+    res.AddHandler(xh_gizmos.TreeListCtrlXmlHandler())
+    return res
 
 
 _command_events = {
