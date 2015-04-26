@@ -461,3 +461,12 @@ long long int GetFilesize(const std::wstring &name) {
     return ifs.tellg();
 #endif
 }
+
+bool FileExists(const std::string &name) {
+    std::ifstream ifs(name, std::ifstream::in | std::ifstream::binary);
+    return !ifs.fail();
+}
+bool FileExists(const std::wstring &name) {
+    std::wifstream ifs(name, std::ifstream::in | std::ifstream::binary);
+    return !ifs.fail();
+}

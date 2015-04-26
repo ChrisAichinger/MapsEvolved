@@ -187,5 +187,6 @@ class TemporaryValue {
 };
 
 long long int  GetFilesize(const std::wstring &filename);
-
+bool FileExists(const std::string &name);
+bool FileExists(const std::wstring &name);
 #endif

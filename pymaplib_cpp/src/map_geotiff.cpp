@@ -335,11 +335,14 @@ Tiff::GetField(ttag_t field) const {
     return std::make_tuple(length, data);
 }
 
-
 static const char *CSVFileOverride(const char * pszInput) {
     static char szPath[1024];
     std::string csvdir = GetModuleDir_char() + "csv" + ODM_PathSep_char;
     sprintf_s(szPath, sizeof(szPath), "%s%s", csvdir.c_str(), pszInput);
+    if (!FileExists(szPath)) {
+        throw std::runtime_error(string_format("CSV file does not exist: %s",
+                                               szPath));
+    }
     return(szPath);
 }
 
