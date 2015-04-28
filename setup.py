@@ -3,6 +3,7 @@
 import sys
 import os
 import io
+import re
 import glob
 import importlib
 
@@ -17,6 +18,56 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 loader = importlib.machinery.SourceFileLoader("mapsevolved",
                                               "mapsevolved/__init__.py")
 mapsevolved = loader.load_module()
+
+def microsoftize_version(version):
+    """Deal with Microsoft's rigid version format
+
+    The version field in assemblyIdentity tags in manifest files must
+    be in D.D.D.D format. Parse our version and output something resembling
+    that requirement.
+
+    Note that we simply drop '-dev' and other suffixes. Sigh.
+
+    >>> microsoftize_version('0.1')
+    '0.1.0.0'
+    >>> microsoftize_version('0.1-dev')
+    '0.1.0.0'
+    """
+
+    version = version.split('.')
+    version = version + ['0'] * (4 - len(version))
+    return '.'.join(re.sub(r'\D', '', v) for v in version)
+
+
+
+windows_manifest = """
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <assemblyIdentity
+      version="{version}"
+      processorArchitecture="*"
+      name="NoCompany.MapsEvolved"
+      type="win32" />
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level='asInvoker' uiAccess='false' />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity
+         type="win32"
+         name="Microsoft.Windows.Common-Controls"
+         version="6.0.0.0"
+         processorArchitecture="*"
+         publicKeyToken="6595b64144ccf1df"
+         language="*" />
+    </dependentAssembly>
+  </dependency>
+</assembly>
+""".format(version=microsoftize_version(mapsevolved.__version__))
 
 
 def read(*filenames, encoding='utf-8', filesep='\n'):
@@ -79,13 +130,14 @@ cfg = dict(
     windows=[{
         "script": "MapsEvolved.py",
         "dest_base": "MapsEvolved",  # Output executable name (MapsEvolved.exe)
-        "version": mapsevolved.__version__.replace('-dev', ''),
+        "version": microsoftize_version(mapsevolved.__version__),
         "company_name": u"",
         "copyright": u"Copyright 2012-2015 Christian Aichinger",
         "name": "MapsEvolved",
         "description": "MapsEvolved",
         'icon_resources': [(1, os.path.join('mapsevolved', 'data',
                                             'famfamfam_silk_icons', 'map.ico'))],
+        'other_resources': [(24, 1, windows_manifest)],
         },
     ],
     #test_suite='sandman.test.test_sandman',
