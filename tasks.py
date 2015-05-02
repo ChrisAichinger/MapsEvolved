@@ -163,3 +163,19 @@ def py2exe(ctx):
 
     os.makedirs('dist', exist_ok=True)
     subprocess.check_call([sys.executable, 'setup.py', 'py2exe'])
+
+    # Copy MSVC runtime libraries into the dist folder
+    redist = r'%VS100COMNTOOLS%..\..\VC\redist\x86\Microsoft.VC100.CRT'
+    redist = os.path.expandvars(redist)
+    libs = glob.glob(os.path.join(redist, 'msvc?100.dll'))
+    if not libs:
+        print("Warning: Could not copy CRT libraries. Expect deployment problems.",
+              file=sys.stderr)
+        return
+    BUILDDIR = 'dist\\MapsEvolved-win32'
+    for lib in libs:
+        shutil.copy(lib, BUILDDIR)
+    zipname = shutil.make_archive(BUILDDIR, 'zip', BUILDDIR)
+    print("Successfully created Windows binary distribution.",
+          file=sys.stderr)
+
