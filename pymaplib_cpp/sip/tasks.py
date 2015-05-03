@@ -51,6 +51,26 @@ def run_sip(ctx):
 
     sip_inject_build_directory(SIP_BUILDFILE, SIP_BUILD_DIR)
 
+def sanitized_env():
+    """Return a santitized environment safe for running GNU Make
+
+    For the build process on Windows, GNU Make should use cmd.exe, not any
+    sh.exe that happens to be on $PATH. The build fails otherwise, due to
+    missing/removed directory separators (backslashes).
+
+    Return an environment dict that hides all 'sh' shells on the system.
+    """
+
+    path = os.environ['PATH'].split(';')
+    path = [d for d in path if not os.path.exists(os.path.join(d, 'sh.exe'))]
+    san_env = dict(os.environ)
+    san_env['PATH'] = ';'.join(path)
+
+    # Apparently, make can find sh even from _OLD_VIRTUAL_PATH.
+    if '_OLD_VIRTUAL_PATH' in san_env:
+        del san_env['_OLD_VIRTUAL_PATH']
+    return san_env
+
 @ctask(help={'config': 'Which configuration to build: debug/release',
              'targets': 'Comma-separated list of build targets (default:all)'})
 def build(ctx, config, targets='all'):
@@ -64,4 +84,4 @@ def build(ctx, config, targets='all'):
     cmd = [sys.executable, init_sh, venv, gmake]
     config_arg = { 'release': ['RELEASE=1'], 'debug': [] }[config.lower()]
     targets = targets.split(',')
-    subprocess.check_call(cmd + config_arg + targets)
+    subprocess.check_call(cmd + config_arg + targets, env=sanitized_env())
