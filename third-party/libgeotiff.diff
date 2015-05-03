@@ -56,8 +56,8 @@ diff -Nur libgeotiff-1.4.0/libxtiff/xtiff.c libgeotiff/libxtiff/xtiff.c
 +XTIFFOpenW(const wchar_t* name, const char* mode)
 +{
 +    /* Set up the callback */
-+    XTIFFInitialize();	
-+	
++    XTIFFInitialize();
++
 +    /* Open the file; the callback will set everything up
 +     */
 +    return TIFFOpenW(name, mode);
@@ -77,3 +77,48 @@ diff -Nur libgeotiff-1.4.0/libxtiff/xtiffio.h libgeotiff/libxtiff/xtiffio.h
  extern TIFF CPL_DLL * XTIFFFdOpen(int fd, const char* name, const char* mode);
  extern void CPL_DLL XTIFFClose(TIFF *tif);
  
+diff -Nur libgeotiff-1.4.0/libxtiff/xtiffio.h libgeotiff/libxtiff/xtiffio.h
+--- libgeotiff-1.4.0/geotiff_proj4.c
++++ libgeotiff/geotiff_proj4.c
+@@ -1270,4 +1270,41 @@
+     }
+ 
++    else if( psDefn->CTProjection == CT_HotineObliqueMercatorAzimuthCenter )
++    {
++        /* special case for swiss oblique mercator : see GDAL bug 423 */
++        if( fabs(psDefn->ProjParm[2] - 90.0) < 0.0001
++            && fabs(psDefn->ProjParm[3]-90.0) < 0.0001 )
++        {
++            sprintf( szProjection+strlen(szProjection),
++                     "+proj=somerc +lat_0=%.16g +lon_0=%.16g"
++                     " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
++                     psDefn->ProjParm[0],
++                     psDefn->ProjParm[1],
++                     psDefn->ProjParm[4],
++                     psDefn->ProjParm[5],
++                     psDefn->ProjParm[6] );
++        }
++        else
++        {
++            sprintf( szProjection+strlen(szProjection),
++                     "+proj=omerc +lat_0=%.16g +lonc=%.16g +alpha=%.16g"
++                     " +k=%.16g +x_0=%.16g +y_0=%.16g ",
++                     psDefn->ProjParm[0],
++                     psDefn->ProjParm[1],
++                     psDefn->ProjParm[2],
++                     psDefn->ProjParm[4],
++                     psDefn->ProjParm[5],
++                     psDefn->ProjParm[6] );
++
++            /* RSO variant - http://trac.osgeo.org/proj/ticket/62 */
++            /* Note that gamma is only supported by PROJ 4.8.0 and later. */
++            /* FIXME: how to detect that gamma isn't set to default value */
++            /*if( psDefn->ProjParm[3] != 0.0 )
++            {
++                sprintf( szProjection+strlen(szProjection), "+gamma=%.16g ",
++                         psDefn->ProjParm[3] );
++            }*/
++        }
++    }
+ /* ==================================================================== */
+ /*      Handle ellipsoid information.                                   */
