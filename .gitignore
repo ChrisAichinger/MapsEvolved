@@ -32,3 +32,6 @@ Release/
 /pymaplib_cpp/tests/*.exe
 /pymaplib_cpp/tests/build
 /pymaplib_cpp/tests/csv
+
+# Ignore generated SVG files but include the master SVG, the PNGs and the ICO.
+/mapsevolved/data/mapsevolved_icons/MapsEvolved-*.svg

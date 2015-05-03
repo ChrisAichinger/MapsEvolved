@@ -102,6 +102,8 @@ cfg = dict(
         ('csv', glob.glob('pymaplib/csv/*.*')),
         ('mapsevolved', glob.glob('mapsevolved/*.xrc')),
         ('mapsevolved/data', glob.glob('mapsevolved/data/*.*')),
+        ('mapsevolved/data/mapsevolved_icons',
+         glob.glob('mapsevolved/data/mapsevolved_icons/*.*')),
         ('mapsevolved/data/famfamfam_silk_icons',
          glob.glob('mapsevolved/data/famfamfam_silk_icons/*.*')),
     ],
@@ -136,7 +138,8 @@ cfg = dict(
         "name": "MapsEvolved",
         "description": "MapsEvolved",
         'icon_resources': [(1, os.path.join('mapsevolved', 'data',
-                                            'famfamfam_silk_icons', 'map.ico'))],
+                                            'mapsevolved_icons',
+                                            'MapsEvolved.ico'))],
         'other_resources': [(24, 1, windows_manifest)],
         },
     ],
@@ -154,7 +157,7 @@ cfg = dict(
         'Programming Language :: Python :: 3.4',
         'Topic :: Multimedia :: Graphics :: Viewers',
         'Topic :: Scientific/Engineering :: GIS',
-        #'License :: OSI Approved :: Apache Software License',
+        'License :: OSI Approved :: Apache Software License',
     ],
 )
 
