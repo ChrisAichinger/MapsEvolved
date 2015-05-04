@@ -117,8 +117,14 @@ MapDisplayManager::GenerateDisplayOrders(const DisplayDelta &disp_size_d,
 }
 
 void MapDisplayManager::Paint(const OverlayList &overlays) {
-    auto orders = GenerateDisplayOrders(m_display->GetDisplaySize(), overlays);
-    m_display->Render(orders);
+    if (m_need_full_repaint) {
+        auto orders = GenerateDisplayOrders(m_display->GetDisplaySize(),
+                                            overlays);
+        m_display->Render(orders);
+        m_need_full_repaint = false;
+    } else {
+        m_display->Redraw();
+    }
 }
 
 PixelBuf MapDisplayManager::PaintToBuffer(ODMPixelFormat format,
