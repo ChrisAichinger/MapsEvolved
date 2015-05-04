@@ -246,6 +246,7 @@ double MapDisplayManager::GetCenterY() const {
 
 void MapDisplayManager::SetCenter(const BaseMapCoord &center) {
     m_center = center;
+    m_display->ForceRepaint();
 }
 
 void MapDisplayManager::SetCenter(const LatLon &center) {

@@ -486,7 +486,6 @@ class MainFrame(wx.Frame):
 
             if res == wx.ID_OK:
                 self.mapdisplay.SetCenter(dlg.latlon)
-                self.panel.Refresh(eraseBackground=False)
         finally:
             self.drag_suppress = False
 
