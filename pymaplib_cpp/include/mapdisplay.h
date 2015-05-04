@@ -113,6 +113,7 @@ class EXPORT MapDisplayManager {
         void PaintLayerDirect(
                 std::list<std::shared_ptr<DisplayOrder>> *orders,
                 const std::shared_ptr<class GeoDrawable> &map,
+                const DisplayDelta &disp_size_d,
                 const MapPixelDelta &half_disp_size,
                 double transparency);
 

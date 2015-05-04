@@ -104,8 +104,8 @@ MapDisplayManager::GenerateDisplayOrders(const DisplayDelta &disp_size_d,
             continue;
         }
         if (ci->GetMap()->SupportsDirectDrawing()) {
-            PaintLayerDirect(&orders, ci->GetMap(), half_disp_size,
-                             ci->GetTransparency());
+            PaintLayerDirect(&orders, ci->GetMap(), disp_size_d,
+                             half_disp_size, ci->GetTransparency());
         } else {
             PaintLayerTiled(&orders, ci->GetMap(),
                             base_pixel_tl, base_pixel_br,
@@ -172,14 +172,14 @@ bool MapDisplayManager::CalcOverlayTiles(
 void MapDisplayManager::PaintLayerDirect(
         std::list<std::shared_ptr<DisplayOrder>> *orders,
         const std::shared_ptr<class GeoDrawable> &map,
+        const DisplayDelta &disp_size_d,
         const MapPixelDelta &half_disp_size,
         double transparency)
 {
     const MapPixelCoord &base_pixel_tl = m_center - half_disp_size;
     const MapPixelCoord &base_pixel_br = m_center + half_disp_size;
-    DisplayDelta disp_size = m_display->GetDisplaySize();
     MapPixelDeltaInt disp_size_int = MapPixelDeltaInt(
-                round_to_int(disp_size.x), round_to_int(disp_size.y));
+                round_to_int(disp_size_d.x), round_to_int(disp_size_d.y));
     orders->push_back(std::shared_ptr<DisplayOrder>(
             new DisplayOrderDirect(
                 map, disp_size_int, m_base_map,
