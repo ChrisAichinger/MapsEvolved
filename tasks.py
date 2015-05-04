@@ -92,6 +92,22 @@ def checkout_and_build(ctx, repository, target_dir, config):
                                      'crtcheck', 'py2exe'])
 
 @ctask
+def clean(ctx):
+    """Delete files generated during the pymaplib_cpp build"""
+
+    paths = mev_build_utils.multiglob(
+            'pymaplib/pymaplib_cpp.dll', 'pymaplib/*.pyd',
+            'pymaplib_cpp/build', 'pymaplib_cpp/dist',
+            )
+    for p in paths:
+        if not os.path.exists(p):
+            continue
+        if os.path.isdir(p):
+            shutil.rmtree(p)
+        else:
+            os.unlink(p)
+
+@ctask
 def distclean(ctx):
     """Delete generated and downloaded files"""
     ctx.run('cd third-party && invoke distclean')
