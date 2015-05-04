@@ -21,11 +21,12 @@ MapDisplayManager::MapDisplayManager(
         const std::shared_ptr<class GeoDrawable> &initial_map)
     : m_display(display), m_base_map(initial_map),
       m_center(BaseMapCoord(BaseMapDelta(m_base_map->GetSize() * 0.5))),
-      m_zoom(1.0)
+      m_zoom(1.0), m_need_full_repaint(true)
 { }
 
 void MapDisplayManager::Resize(unsigned int width, unsigned int height) {
     m_display->Resize(width, height);
+    m_need_full_repaint = true;
 }
 
 bool MapDisplayManager::TryChangeMapPreservePos(
@@ -78,6 +79,7 @@ void MapDisplayManager::ChangeMap(
     }
 
     m_base_map = new_map;
+    m_need_full_repaint = true;
     m_display->ForceRepaint();
 }
 
@@ -245,6 +247,7 @@ double MapDisplayManager::GetCenterY() const {
 
 void MapDisplayManager::SetCenter(const BaseMapCoord &center) {
     m_center = center;
+    m_need_full_repaint = true;
     m_display->ForceRepaint();
 }
 
@@ -271,6 +274,7 @@ void MapDisplayManager::StepZoom(double steps) {
             break;
         }
     }
+    m_need_full_repaint = true;
     m_display->ForceRepaint();
 }
 
@@ -287,6 +291,7 @@ void MapDisplayManager::StepZoom(double steps, const DisplayCoord &mouse_pos) {
 
 void MapDisplayManager::SetZoomOneToOne() {
     m_zoom = 1.0;
+    m_need_full_repaint = true;
     m_display->ForceRepaint();
 }
 
@@ -343,6 +348,7 @@ MapDisplayManager::DisplayCoordCenteredFromMapPixel(
 
 void MapDisplayManager::CenterToDisplayCoord(const DisplayCoord &center) {
     m_center = BaseCoordFromDisplay(center);
+    m_need_full_repaint = true;
     m_display->ForceRepaint();
 }
 
@@ -350,5 +356,6 @@ void MapDisplayManager::DragMap(const DisplayDelta &disp_delta) {
     m_center = m_center - BaseDeltaFromDisplay(disp_delta);
     m_center.ClampToRect(MapPixelCoordInt(0,0),
                          MapPixelCoordInt(m_base_map->GetSize()));
+    m_need_full_repaint = true;
     m_display->ForceRepaint();
 }

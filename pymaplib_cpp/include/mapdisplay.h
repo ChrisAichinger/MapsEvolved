@@ -139,6 +139,8 @@ class EXPORT MapDisplayManager {
         // Zoom of the base map. Larger values indicate higher "zoom".
         // Basemap pixels take up m_zoom display pixels on screen.
         double m_zoom;
+        // Is it required to push a new set of DisplayOrders to the Display?
+        bool m_need_full_repaint;
 
         DISALLOW_COPY_AND_ASSIGN(MapDisplayManager);
 };
