@@ -2,10 +2,12 @@
 #define ODM__MAPDISPLAY_H
 
 #include <list>
+#include <map>
 
 #include "util.h"
 #include "coordinates.h"
 #include "pixelbuf.h"
+#include "tiles.h"
 
 class EXPORT OverlaySpec {
     public:
@@ -141,6 +143,9 @@ class EXPORT MapDisplayManager {
         double m_zoom;
         // Is it required to push a new set of DisplayOrders to the Display?
         bool m_need_full_repaint;
+
+        std::map<const TileCode, std::shared_ptr<class PixelPromise>
+                > m_old_promise_cache, m_new_promise_cache;
 
         DISALLOW_COPY_AND_ASSIGN(MapDisplayManager);
 };

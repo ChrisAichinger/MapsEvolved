@@ -21,7 +21,8 @@ MapDisplayManager::MapDisplayManager(
         const std::shared_ptr<class GeoDrawable> &initial_map)
     : m_display(display), m_base_map(initial_map),
       m_center(BaseMapCoord(BaseMapDelta(m_base_map->GetSize() * 0.5))),
-      m_zoom(1.0), m_need_full_repaint(true)
+      m_zoom(1.0), m_need_full_repaint(true),
+      m_old_promise_cache(), m_new_promise_cache()
 { }
 
 void MapDisplayManager::Resize(unsigned int width, unsigned int height) {
@@ -113,6 +114,8 @@ MapDisplayManager::GenerateDisplayOrders(const DisplayDelta &disp_size_d,
                             tile_size, ci->GetTransparency());
         }
     }
+    m_old_promise_cache.clear();
+    std::swap(m_old_promise_cache, m_new_promise_cache);
     return orders;
 }
 
@@ -232,10 +235,19 @@ void MapDisplayManager::PaintLayerTiled(
             DisplayCoordCentered disp_br = DisplayCoordCenteredFromMapPixel(
                                            map_pos + tile_size, map);
             DisplayRectCentered rect(disp_tl, disp_tr, disp_bl, disp_br);
-            auto promise = std::make_shared<PixelPromiseTiled>(tilecode);
+
+            // Take an already created promise, if available.
+            std::shared_ptr<PixelPromise> promise;
+            auto old_promise = m_old_promise_cache.find(tilecode);
+            if (old_promise != m_old_promise_cache.end()) {
+                promise = old_promise->second;
+            } else {
+                promise = std::make_shared<PixelPromiseTiled>(tilecode);
+            }
             auto dorder = std::make_shared<DisplayOrder>(rect, transparency,
                                                          promise);
             orders->push_back(dorder);
+            m_new_promise_cache[tilecode] = promise;
         }
     }
 }
