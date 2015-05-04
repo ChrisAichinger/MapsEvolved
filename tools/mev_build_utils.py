@@ -5,6 +5,7 @@ import re
 import glob
 import time
 import hashlib
+import pathlib
 import functools
 import itertools
 import contextlib
@@ -219,6 +220,34 @@ def find_git_executable():
 
 def find_git_bindir():
     return os.path.dirname(find_git_executable())
+
+def get_mev_path():
+    """Get the main MapsEvolved directory
+
+    The mapsevolved package will be a subdirectory in this dir.
+    """
+
+    old_p = None
+    p = pathlib.Path(__file__).absolute().parent
+    while p != old_p:
+        mainfile = p / 'MapsEvolved.py'
+        if mainfile.exists():
+            return str(p)
+        old_p, p = p, p.parent
+    raise FileNotFoundError("Couldn't locate MapsEvolved directory.",
+                            startpoint=__file__)
+
+def add_mev_to_path(at_beginning=False):
+    """Add the MapsEvolved dir to sys.path
+
+    Normally, the directory is appended to sys.path. If ``at_beginning`` is
+    True, it is inserted at the beginning instead.
+    """
+
+    if at_beginning:
+        sys.path.insert(0, get_mev_path())
+    else:
+        sys.path.append(get_mev_path())
 
 def main():
     git = find_git_executable()
