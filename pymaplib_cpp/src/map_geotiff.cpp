@@ -145,9 +145,11 @@ class Tiff {
 
         const std::wstring &GetFilename() const { return m_fname; };
         const std::wstring &GetTitle() const { return m_title; };
+        const std::wstring &GetDescription() const { return m_description; };
     protected:
         const std::wstring m_fname;
         std::wstring m_title;
+        std::wstring m_description;
         TiffHandle m_tiffhandle;
         TIFF *m_rawtiff;
 
@@ -228,7 +230,7 @@ static void put16bitbw_DHM(
 
 
 Tiff::Tiff(const std::wstring &fname)
-    : m_fname(fname), m_title(), m_tiffhandle(fname),
+    : m_fname(fname), m_title(), m_description(), m_tiffhandle(fname),
       m_rawtiff(m_tiffhandle.GetTIFF())
 {
     if (!TIFFGetField(m_rawtiff, TIFFTAG_IMAGEWIDTH, &m_width) ||
@@ -244,6 +246,10 @@ Tiff::Tiff(const std::wstring &fname)
     char *title;
     if (TIFFGetField(m_rawtiff, TIFFTAG_DOCUMENTNAME, &title)) {
         m_title = WStringFromString(title, DEFAULT_ENCODING);
+    }
+    char *description;
+    if (TIFFGetField(m_rawtiff, TIFFTAG_IMAGEDESCRIPTION, &description)) {
+        m_description = WStringFromString(description, DEFAULT_ENCODING);
     }
 };
 
@@ -600,8 +606,7 @@ void GeoTiff::Hook_TIFFRGBAImageGet(TIFFRGBAImage &img) const {
 }
 
 TiffMap::TiffMap(const wchar_t *fname)
-    : m_geotiff(new GeoTiff(fname)), m_proj(m_geotiff->GetProj4String()),
-      m_description()
+    : m_geotiff(new GeoTiff(fname)), m_proj(m_geotiff->GetProj4String())
 {}
 
 GeoDrawable::DrawableType TiffMap::GetType() const {
@@ -633,7 +638,7 @@ const std::wstring &TiffMap::GetFname() const
 const std::wstring &TiffMap::GetTitle() const
     { return m_geotiff->GetTitle(); }
 const std::wstring &TiffMap::GetDescription() const
-    { return m_description; }
+    { return m_geotiff->GetDescription(); }
 Projection TiffMap::GetProj() const
     { return m_proj; }
 

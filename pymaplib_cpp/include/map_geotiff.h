@@ -31,7 +31,6 @@ class EXPORT TiffMap : public RasterMap {
     private:
         const std::shared_ptr<class GeoTiff> m_geotiff;
         Projection m_proj;
-        const std::wstring m_description;
 
         virtual bool PixelToPCS(double *x, double *y) const;
         virtual bool PCSToPixel(double *x, double *y) const;
