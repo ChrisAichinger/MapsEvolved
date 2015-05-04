@@ -44,7 +44,7 @@ class Projection {
 
 class Display /Abstract/ {
 %TypeHeaderCode
-#include "disp_ogl.h"
+#include "display.h"
 %End
     public:
         virtual unsigned int GetDisplayWidth() const = 0;
@@ -78,23 +78,24 @@ DisplayCoord DisplayCoordFromCentered(const DisplayCoordCentered& dc,
                                       const Display& disp);
 
 
-class DispOpenGLShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
+class DisplayShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
 %TypeHeaderCode
 #include <memory>
-typedef std::shared_ptr<class DispOpenGL> DispOpenGLShPtr;
+typedef std::shared_ptr<class Display> DisplayShPtr;
 %End
     public:
-        DispOpenGL *get();
+        Display *get();
 };
 
 %ModuleCode
-#include <winwrap.h>
+#include "winwrap.h"
+#include "disp_ogl.h"
 %End
-DispOpenGLShPtr CreateOGLDisplay(size_t handle);
+DisplayShPtr CreateOGLDisplay(size_t handle);
 %MethodCode
     std::shared_ptr<DevContext> dev_ctx(new DevContext((HWND)a0));
     std::shared_ptr<OGLContext> ogl_ctx(new OGLContext(dev_ctx));
-    sipRes = new std::shared_ptr<DispOpenGL>(new DispOpenGL(ogl_ctx));
+    sipRes = new std::shared_ptr<Display>(new DispOpenGL(ogl_ctx));
 %End
 
 
@@ -135,9 +136,9 @@ class MapDisplayManager /NoDefaultCtors/ {
 #include "mapdisplay.h"
 %End
     public:
-        MapDisplayManager(const DispOpenGLShPtr &display,
+        MapDisplayManager(const DisplayShPtr &display,
                           const GeoDrawableShPtr &initial_map);
-        MapDisplayManager(const DispOpenGLShPtr &display,
+        MapDisplayManager(const DisplayShPtr &display,
                           const RasterMapShPtr &initial_map);
 
 

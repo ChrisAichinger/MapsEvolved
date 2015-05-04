@@ -269,7 +269,8 @@ void DispOpenGL::ForceRepaint() {
     m_opengl->GetDevContext()->ForceRepaint();
 }
 
-void DispOpenGL::Render(std::list<std::shared_ptr<DisplayOrder>> &orders) {
+void
+DispOpenGL::Render(const std::list<std::shared_ptr<DisplayOrder>> &orders) {
     DisplayDelta target_size(GetDisplaySize());
 
     glClear(GL_COLOR_BUFFER_BIT);

@@ -7,9 +7,8 @@
 #include <algorithm>
 
 #include "rastermap.h"
-#include "disp_ogl.h"
 #include "tiles.h"
-#include "disp_ogl.h"
+#include "display.h"
 
 
 static const int MAX_TILES = 100;
@@ -18,7 +17,7 @@ const double MapDisplayManager::ZOOM_STEP =
                     1.189207115002721066717499970560475915;
 
 MapDisplayManager::MapDisplayManager(
-        const std::shared_ptr<class DispOpenGL> &display,
+        const std::shared_ptr<class Display> &display,
         const std::shared_ptr<class GeoDrawable> &initial_map)
     : m_display(display), m_base_map(initial_map),
       m_center(BaseMapCoord(BaseMapDelta(m_base_map->GetSize() * 0.5))),

@@ -8,34 +8,13 @@
 #include "util.h"
 #include "coordinates.h"
 #include "pixelbuf.h"
+#include "display.h"
+#include "tiles.h"
+
 
 class DevContext;
 class OGLContext;
 class TextureCache;
-
-class EXPORT Display {
-    public:
-        virtual unsigned int GetDisplayWidth() const = 0;
-        virtual unsigned int GetDisplayHeight() const = 0;
-        virtual DisplayDelta GetDisplaySize() const = 0;
-
-        virtual void Render(
-            class std::list<std::shared_ptr<class DisplayOrder>> &orders) = 0;
-        virtual void Resize(unsigned int width, unsigned int height) = 0;
-        virtual void ForceRepaint() = 0;
-
-        virtual PixelBuf
-        RenderToBuffer(ODMPixelFormat format,
-                       unsigned int width, unsigned int height,
-                       std::list<std::shared_ptr<DisplayOrder>> &orders) = 0;
-};
-
-EXPORT DisplayCoordCentered CenteredCoordFromDisplay(
-    const DisplayCoord& dc, const Display& disp);
-
-EXPORT DisplayCoord DisplayCoordFromCentered(
-    const DisplayCoordCentered& dc, const Display& disp);
-
 
 class EXPORT DispOpenGL : public Display {
     public:
@@ -46,7 +25,7 @@ class EXPORT DispOpenGL : public Display {
         virtual DisplayDelta GetDisplaySize() const;
 
         virtual void Render(
-                class std::list<std::shared_ptr<DisplayOrder>> &orders);
+                const class std::list<std::shared_ptr<DisplayOrder>> &orders);
         virtual void Resize(unsigned int width, unsigned int height);
         virtual void ForceRepaint();
 

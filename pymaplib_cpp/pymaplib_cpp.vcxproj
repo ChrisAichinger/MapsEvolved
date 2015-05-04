@@ -114,6 +114,7 @@
   <ItemGroup>
     <ClInclude Include="include\bezier.h" />
     <ClInclude Include="include\coordinates.h" />
+    <ClInclude Include="include\display.h" />
     <ClInclude Include="include\disp_ogl.h" />
     <ClInclude Include="include\external\glext.h" />
     <ClInclude Include="include\memjpeg.h" />

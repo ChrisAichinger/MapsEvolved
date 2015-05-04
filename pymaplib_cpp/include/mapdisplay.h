@@ -36,7 +36,7 @@ typedef std::vector<OverlaySpec> OverlayList;
 class EXPORT MapDisplayManager {
     public:
         MapDisplayManager(
-                const std::shared_ptr<class DispOpenGL> &display,
+                const std::shared_ptr<class Display> &display,
                 const std::shared_ptr<class GeoDrawable> &initial_map);
 
         std::shared_ptr<class GeoDrawable> GetBaseMap() const;
@@ -131,7 +131,7 @@ class EXPORT MapDisplayManager {
         static const int TILE_SIZE = 512;
         static const double ZOOM_STEP;
 
-        const std::shared_ptr<class DispOpenGL> m_display;
+        const std::shared_ptr<class Display> m_display;
         std::shared_ptr<class GeoDrawable> m_base_map;
 
         // The base map pixel currently shown at the center of the display.
