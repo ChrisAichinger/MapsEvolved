@@ -20,6 +20,7 @@ class EXPORT Display {
             const class std::list<std::shared_ptr<class DisplayOrder>> &orders) = 0;
 
         // Redraw the current display orders.
+        virtual void Redraw() = 0;
         virtual void Resize(unsigned int width, unsigned int height) = 0;
         virtual void ForceRepaint() = 0;
 

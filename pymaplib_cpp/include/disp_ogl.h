@@ -26,6 +26,7 @@ class EXPORT DispOpenGL : public Display {
 
         virtual void Render(
                 const class std::list<std::shared_ptr<DisplayOrder>> &orders);
+        virtual void Redraw();
         virtual void Resize(unsigned int width, unsigned int height);
         virtual void ForceRepaint();
 
@@ -39,6 +40,7 @@ class EXPORT DispOpenGL : public Display {
 
         const std::shared_ptr<OGLContext> m_opengl;
         const std::shared_ptr<class TextureCache> m_texcache;
+        std::list<std::shared_ptr<DisplayOrder>> m_orders;
 };
 
 

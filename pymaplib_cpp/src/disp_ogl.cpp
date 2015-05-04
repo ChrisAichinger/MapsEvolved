@@ -256,7 +256,8 @@ class OGLTemporaryViewport {
 
 DispOpenGL::DispOpenGL(const std::shared_ptr<OGLContext> &ogl_context)
     : m_opengl(ogl_context),
-      m_texcache(new TextureCache())
+      m_texcache(new TextureCache()),
+      m_orders()
 {
     LoadOGLEntryPoints();
 }
@@ -271,12 +272,17 @@ void DispOpenGL::ForceRepaint() {
 
 void
 DispOpenGL::Render(const std::list<std::shared_ptr<DisplayOrder>> &orders) {
+    m_orders = orders;
+    Redraw();
+}
+
+void DispOpenGL::Redraw() {
     DisplayDelta target_size(GetDisplaySize());
 
     glClear(GL_COLOR_BUFFER_BIT);
     glEnable(GL_BLEND);
 
-    for (auto it=orders.cbegin(); it != orders.cend(); ++it) {
+    for (auto it=m_orders.cbegin(); it != m_orders.cend(); ++it) {
         auto dorder = *it;
         const TileCode *tilecode = dorder->GetTileCode();
         std::shared_ptr<Texture> tex;
