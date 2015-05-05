@@ -120,7 +120,7 @@ static const char * const GVG_ENCODING = "ISO-8859-1";
 
 // If the OffsetEast field is not set for a map, force it to 500000.
 // This matches the behavior of the official viewers.
-static double DEFAULT_OFFSET_EAST = 500000.0;
+static const double DEFAULT_OFFSET_EAST = 500000.0;
 
 // A lookup table to decrypt the GVG files.
 static const unsigned char cypher_table[8][256] = {
@@ -456,9 +456,9 @@ GVGFile::GVGFile(const std::wstring &fname)
 }
 
 void GVGFile::ParseINI(const std::wstring &data) {
-    static std::wregex re_header(L"\\[Header\\]");
-    static std::wregex re_map(L"\\[MAP\\d*\\]");
-    static std::wregex re_keyvalue(L"(.*)=(.*)");
+    std::wregex re_header(L"\\[Header\\]");
+    std::wregex re_map(L"\\[MAP\\d*\\]");
+    std::wregex re_keyvalue(L"(.*)=(.*)");
 
     enum parse_mode { PM_NONE, PM_HEADER, PM_MAPINFO };
     enum parse_mode pm = PM_NONE;

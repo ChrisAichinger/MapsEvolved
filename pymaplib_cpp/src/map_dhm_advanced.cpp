@@ -48,8 +48,8 @@ const std::wstring &GradientMap::GetDescription() const {
 }
 
 
-static TimeCounter time_counter;
-static TimeCounter time_counter_loaddisc;
+//static TimeCounter time_counter;
+//static TimeCounter time_counter_loaddisc;
 
 #define DEST(xx,yy) dest[(xx) + size.x * (yy)]
 #define SRC(xx,yy) src[(xx) + req_size.x * (yy)]
@@ -60,7 +60,7 @@ PixelBuf GradientMap::GetRegion(
     if (fixed_bounds_pb.GetData())
         return fixed_bounds_pb;
 
-    time_counter_loaddisc.Start();
+    //time_counter_loaddisc.Start();
     MapPixelCoordInt req_pos = pos - MapPixelDeltaInt(1, 1);
     MapPixelDeltaInt req_size = size + MapPixelDeltaInt(2, 2);
     auto orig_data = m_orig_map->GetRegion(req_pos, req_size);
@@ -69,8 +69,8 @@ PixelBuf GradientMap::GetRegion(
 
     unsigned int *src = orig_data.GetRawData();
     unsigned int *dest = result.GetRawData();
-    time_counter_loaddisc.Stop();
-    time_counter.Start();
+    //time_counter_loaddisc.Stop();
+    //time_counter.Start();
     for (int x=0; x < size.x; x++) {
         for (int y=0; y < size.y; y++) {
             unsigned int elevation = SRC(x+1, y+1);
@@ -85,7 +85,7 @@ PixelBuf GradientMap::GetRegion(
                                    255));
         }
     }
-    time_counter.Stop();
+    //time_counter.Stop();
     return result;
 }
 #undef DEST
@@ -131,7 +131,7 @@ const std::wstring &SteepnessMap::GetDescription() const {
     return m_orig_map->GetDescription();
 }
 
-static unsigned int steepness_colors[] = {
+static const unsigned int steepness_colors[] = {
     0xffffff, 0xedffed, 0x95fd95, 0x63f563,
     0x00e600, 0x00dca2, 0x009ff6, 0x0078ff,
     0x0019ff, 0x0007e5, 0x1700b3, 0x5a00b0,

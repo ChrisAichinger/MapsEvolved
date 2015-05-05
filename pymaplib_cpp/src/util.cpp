@@ -126,24 +126,19 @@ class UsableCodecvt
 };
 
 typedef std::wstring_convert<UsableCodecvt> UsableConvert;
-static std::map<std::string, UsableConvert> codec_map;
 
 std::string StringFromWString(const std::wstring &string,
                               const char* encoding)
 {
-    if (codec_map.count(encoding) == 0) {
-        codec_map[encoding] = UsableConvert(new UsableCodecvt(encoding));
-    }
-    return codec_map[encoding].to_bytes(string);
+    auto encoder = UsableConvert(new UsableCodecvt(encoding));
+    return encoder.to_bytes(string);
 }
 
 std::wstring WStringFromString(const std::string &string,
                                const char* encoding)
 {
-    if (codec_map.count(encoding) == 0) {
-        codec_map[encoding] = UsableConvert(new UsableCodecvt(encoding));
-    }
-    return codec_map[encoding].from_bytes(string);
+    auto encoder = UsableConvert(new UsableCodecvt(encoding));
+    return encoder.from_bytes(string);
 }
 
 

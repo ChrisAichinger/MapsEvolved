@@ -4,10 +4,16 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cmath>
+#include <map>
+
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/lock_guard.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 #include "cpl_serv.h"
 #include "tiff.h"
@@ -341,15 +347,40 @@ Tiff::GetField(ttag_t field) const {
     return std::make_tuple(length, data);
 }
 
-static const char *CSVFileOverride(const char * pszInput) {
-    static char szPath[1024];
-    std::string csvdir = GetModuleDir_char() + "csv" + ODM_PathSep_char;
-    sprintf_s(szPath, sizeof(szPath), "%s%s", csvdir.c_str(), pszInput);
-    if (!FileExists(szPath)) {
-        throw std::runtime_error(string_format("CSV file does not exist: %s",
-                                               szPath));
+/**
+ * Internal callback to resolve csv data filenames to full paths.
+ *
+ * @locking Acquires an internal ``std::mutex``. No external calls are made
+ * with that mutex held.
+ */
+static const char *CSVFileOverride(const char * input_fname) {
+    static boost::mutex strmap_mutex;
+    static std::map<std::string, const char *> strmap;
+
+    {
+        boost::lock_guard<boost::mutex> lock(strmap_mutex);
+        auto result = strmap.find(input_fname);
+        if (result != strmap.end()) {
+            return result->second;
+        }
     }
-    return(szPath);
+
+    std::string csvdir = GetModuleDir_char() + "csv" + ODM_PathSep_char;
+    std::string fpath = csvdir + input_fname;
+    if (!FileExists(fpath)) {
+        throw std::runtime_error("CSV file does not exist: " + fpath);
+    }
+
+    // Intentionally leak this memory.
+    // The buffer address must never change, which STL containers don't
+    // guarantee. Only ~40 input file names are possible, so cache per input
+    // filename and stop worrying.
+    const char * const fpath_cstr = _strdup(fpath.c_str());
+    {
+        boost::lock_guard<boost::mutex> lock(strmap_mutex);
+        strmap[input_fname] = fpath_cstr;
+    }
+    return fpath_cstr;
 }
 
 // http://rocky.ess.washington.edu/data/raster/geotiff/docs/manual.txt

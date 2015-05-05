@@ -10,7 +10,7 @@
 #include "coordinates.h"
 
 
-std::wstring Gridlines::fname = L"";
+const std::wstring Gridlines::fname = L"";
 static const int PIXELS_PER_DEGREE = 100;
 
 Gridlines::Gridlines()

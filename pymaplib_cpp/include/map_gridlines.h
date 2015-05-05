@@ -51,7 +51,7 @@ class EXPORT Gridlines : public GeoDrawable {
         }
     private:
         MapPixelDeltaInt m_size;
-        static std::wstring fname;
+        static const std::wstring fname;
 
         bool PixelToPCS(double *x, double *y) const;
         bool PCSToPixel(double *x, double *y) const;
