@@ -47,6 +47,24 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'rename': [('nasm-2.07', 'nasm')],
        'provides': [('nasm', 'nasm.exe')],
    }),
+   ('boost', {
+       'compression': 'zip',
+       'url': 'file:./boost-mini.zip',
+       'sha256': 'd193179fc5a7dfd556e2b9b23dc5edc7f0f93fbc8c5597edfeea8655bd9ea456',
+       'unpack_location': 'boost',
+       # Publish only the debug/non-debug DLLs, depending on build configuration.
+       'build': [('del build.cfg.* 2>nul; echo 1 > build.cfg.{config}')],
+       'publish': ['lib32-msvc-10.0\\boost_chrono-vc100-mt-1_58.dll',
+                   'lib32-msvc-10.0\\boost_date_time-vc100-mt-1_58.dll',
+                   'lib32-msvc-10.0\\boost_system-vc100-mt-1_58.dll',
+                   'lib32-msvc-10.0\\boost_thread-vc100-mt-1_58.dll',]
+                  if os.path.exists('boost\\build.cfg.release') else
+                  ['lib32-msvc-10.0\\boost_chrono-vc100-mt-gd-1_58.dll',
+                   'lib32-msvc-10.0\\boost_date_time-vc100-mt-gd-1_58.dll',
+                   'lib32-msvc-10.0\\boost_system-vc100-mt-gd-1_58.dll',
+                   'lib32-msvc-10.0\\boost_thread-vc100-mt-gd-1_58.dll',
+                  ],
+   }),
    ('libjpeg-turbo', {
        'compression': 'tar',
        'url': SourceForgeURL('libjpeg-turbo/1.4.0/libjpeg-turbo-1.4.0.tar.gz'),
@@ -268,17 +286,8 @@ def publish(ctx, targets, modules=None):
             src = os.path.join(modulename, src)
             if not os.path.exists(src):
                 raise RuntimeError("Publishing source doesn't exist: %s" % src)
-            if os.path.isfile(src):
-                for target in targets:
-                    shutil.copy(src, target)
-            elif os.path.isdir(src):
-                for target in targets:
-                    dest = os.path.join(target, os.path.basename(src))
-                    if os.path.isdir(dest):
-                        shutil.rmtree(dest)
-                    shutil.copytree(src, dest)
-            else:
-                raise NotImplementedError('Can only copy files and directories!')
+            for target in targets:
+                mev_build_utils.copy_any(src, target, overwrite=True)
 
 @ctask
 def listmodules(ctx):

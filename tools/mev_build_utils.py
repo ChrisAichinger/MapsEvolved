@@ -4,6 +4,7 @@ import os
 import re
 import glob
 import time
+import shutil
 import hashlib
 import pathlib
 import functools
@@ -26,6 +27,53 @@ def multiglob(*patterns, unique=True):
         return
     for p in patterns:
         yield from glob.iglob(p)
+
+
+def copy_any(src, dest_folder, *, overwrite=False):
+    """Copy a source file or directory to a destination folder
+
+    ``src`` must refer to an existing file or directory.
+
+    The destination ``dest_folder`` must be an existing folder. A new file or
+    subdirectory, named ``os.path.basename(src)``, will be created under the
+    that folder.
+
+    If the destination file/subdirectory already exists, the result depends
+    on the ``overwrite`` parameter. However, a file never overwrites a
+    directory and vice versa. A FileExistsError is raised in such cases.
+
+    ``src`` and ``dest_folder`` can be either ``pathlib.Path`` objects or a
+    path string.
+
+    On success, the ``pathlib.Path`` object of the destination file or subdir
+    is returned.
+    """
+
+    dest_folder = pathlib.Path(dest_folder)
+    if not dest_folder.is_dir():
+        raise FileNotFoundError('Destination folder not found', dest_folder)
+
+    src = pathlib.Path(src)
+    if not src.exists():
+        raise FileNotFoundError('Source not found', dest_folder)
+
+    dest_name = dest_folder / src.parts[-1]
+    if src.is_dir():
+        if dest_name.is_dir() and overwrite:
+            shutil.rmtree(str(dest_name))
+        if dest_name.is_file():
+            raise FileExistsError('The destination exists and is a file',
+                                  dest_name)
+        shutil.copytree(str(src), str(dest_name))
+    else:
+        if dest_name.is_file() and overwrite:
+            os.unlink(str(dest_name))
+        if dest_name.is_dir():
+            raise FileExistsError('The destination exists and is a directory',
+                                  dest_name)
+        shutil.copy(str(src), str(dest_name))
+
+    return dest_name
 
 
 @functools.lru_cache()

@@ -14,10 +14,11 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(MEVThirdPartyDir)libgeotiff;$(MEVThirdPartyDir)libtiff\libtiff;$(MEVThirdPartyDir)proj4\instdir\include;$(MEVThirdPartyDir)geographiclib\include;$(MEVThirdPartyDir)libjpeg-turbo\instdir\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MEVThirdPartyDir)libgeotiff;$(MEVThirdPartyDir)libtiff\libtiff;$(MEVThirdPartyDir)proj4\instdir\include;$(MEVThirdPartyDir)geographiclib\include;$(MEVThirdPartyDir)libjpeg-turbo\instdir\include;$(MEVThirdPartyDir)boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BOOST_ALL_DYN_LINK=1;BOOST_ASSERT_CONFIG=1;BOOST_THREAD_PROVIDES_THREAD_DESTRUCTOR_CALLS_TERMINATE_IF_JOINABLE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(MEVThirdPartyDir)proj4\instdir\lib;$(MEVThirdPartyDir)libgeotiff;$(MEVThirdPartyDir)libtiff\libtiff;$(MEVThirdPartyDir)geographiclib\src;$(MEVThirdPartyDir)libjpeg-turbo\instdir\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MEVThirdPartyDir)proj4\instdir\lib;$(MEVThirdPartyDir)libgeotiff;$(MEVThirdPartyDir)libtiff\libtiff;$(MEVThirdPartyDir)geographiclib\src;$(MEVThirdPartyDir)libjpeg-turbo\instdir\lib;$(MEVThirdPartyDir)boost\lib32-msvc-10.0;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>comctl32.lib;opengl32.lib;glu32.lib;ole32.lib;comdlg32.lib;Winmm.lib;geotiff_i.lib;libtiff_i.lib;proj.lib;geographiclib.lib;jpeg.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

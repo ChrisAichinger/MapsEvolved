@@ -8,10 +8,12 @@ __pycache__
 /pymaplib/*.pyd
 /pymaplib/csv
 
-# Ignore the downloaded packages but include patches and the pyinvoke script
+# Ignore the downloaded packages but include patches, the pyinvoke script and
+# our custom boost package.
 /third-party/*
 !/third-party/*.diff
 !/third-party/tasks.py
+!/third-party/boost-mini.zip
 
 # Ignore misc visual studio files
 *.opensdf
