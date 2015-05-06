@@ -107,6 +107,7 @@
     <ClCompile Include="src\pixelbuf.cpp" />
     <ClCompile Include="src\projection.cpp" />
     <ClCompile Include="src\rastermap.cpp" />
+    <ClCompile Include="src\threading.cpp" />
     <ClCompile Include="src\tiles.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\winwrap.cpp" />
@@ -129,6 +130,7 @@
     <ClInclude Include="include\pixelbuf.h" />
     <ClInclude Include="include\projection.h" />
     <ClInclude Include="include\rastermap.h" />
+    <ClInclude Include="include\threading.h" />
     <ClInclude Include="include\tiles.h" />
     <ClInclude Include="include\util.h" />
     <ClInclude Include="include\winwrap.h" />

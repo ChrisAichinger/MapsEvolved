@@ -62,6 +62,9 @@
     <ClCompile Include="src\map_gvg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\threading.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\disp_ogl.h">
@@ -122,6 +125,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\external\concurrent_queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\threading.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
