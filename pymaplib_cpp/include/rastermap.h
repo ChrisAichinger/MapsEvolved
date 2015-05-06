@@ -83,6 +83,23 @@ class EXPORT GeoDrawable : public GeoPixels {
             return PixelBuf();
         };
         virtual ODMPixelFormat GetPixelFormat() const = 0;
+
+        /** Return whether ``GetRegion()`` can be called from multiple threads.
+         *
+         * If `false`, all methods of this implementation must be called from
+         * the main thread.
+         *
+         * If `true`, `GetRegion()` can be called from background threads.
+         * Multiple concurrent `GetRegion()` calls to the same instance are
+         * possible. All other methods must still be called only from the main
+         * thread.
+         *
+         * @locking Any non-trivial `GeoDrawable` implementation will likely
+         * need to use locking primitives when this option is enabled. This
+         * class itself only defines the interface, and consequently doesn't
+         * employ any synchronization.
+         */
+        virtual bool SupportsConcurrentGetRegion() const { return false; }
 };
 
 // Helper function for GetRegion():

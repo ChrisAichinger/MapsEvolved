@@ -242,7 +242,28 @@ void MapDisplayManager::PaintLayerTiled(
             if (old_promise != m_old_promise_cache.end()) {
                 promise = old_promise->second;
             } else {
-                promise = std::make_shared<PixelPromiseTiled>(tilecode);
+                if (map->SupportsConcurrentGetRegion()) {
+                    // Load tiles on a background thread, if the map
+                    // implementation can handle it.
+                    //
+                    // On completion, call ForceRepaint() in the BG thread.
+                    // Use a weak_ptr to ensure correct behavior on shutdown.
+                    //
+                    // This relies rather delicately on the fact that
+                    // ForceRepaint() resolves to a single call to
+                    // InvalidateRect() on Windows, which is safe to run on
+                    // any thread.
+                    const std::weak_ptr<Display> &weak_display = m_display;
+                    auto refresh = [weak_display]() {
+                        if (auto display = weak_display.lock()) {
+                            display->ForceRepaint();
+                        }
+                    };
+                    promise = std::make_shared<PixelPromiseTiledAsync>(
+                              tilecode, refresh);
+                } else {
+                    promise = std::make_shared<PixelPromiseTiled>(tilecode);
+                }
             }
             auto dorder = std::make_shared<DisplayOrder>(rect, transparency,
                                                          promise);
