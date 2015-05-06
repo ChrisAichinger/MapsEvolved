@@ -62,116 +62,79 @@ inline bool operator>=(const TileCode& lhs, const TileCode& rhs) {
     return !operator< (lhs,rhs);
 }
 
-
-class DisplayOrder {
+/**
+ An interface to retrieve a PixelBuf at a later time.
+*/
+class PixelPromise {
     public:
-        DisplayOrder(const DisplayCoordCentered &pos, const DisplayDelta &size,
-                     const double transparency)
-            : m_topleft  (pos.x,          pos.y),
-              m_topright (pos.x + size.x, pos.y),
-              m_botleft  (pos.x,          pos.y + size.y),
-              m_botright (pos.x + size.x, pos.y + size.y),
-              m_transparency(transparency)
-            {};
-        DisplayOrder(const DisplayCoordCentered &TopLeft,
-                     const DisplayCoordCentered &TopRight,
-                     const DisplayCoordCentered &BotLeft,
-                     const DisplayCoordCentered &BotRight,
-                     const double transparency)
-            : m_topleft(TopLeft), m_topright(TopRight),
-              m_botleft(BotLeft), m_botright(BotRight),
-              m_transparency(transparency)
-            {};
-        virtual ~DisplayOrder() {};
-
-        virtual const DisplayCoordCentered &GetTopLeft()  const {
-            return m_topleft;
-        };
-        virtual const DisplayCoordCentered &GetTopRight() const {
-            return m_topright;
-        };
-        virtual const DisplayCoordCentered &GetBotLeft()  const {
-            return m_botleft;
-        };
-        virtual const DisplayCoordCentered &GetBotRight() const {
-            return m_botright;
-        };
-        virtual double GetTransparency() const { return m_transparency; };
+        virtual ~PixelPromise() {};
+        /** Retrieve the promised PixelBuf. */
         virtual PixelBuf GetPixels() const = 0;
-        virtual MapPixelDeltaInt GetPixelSize() const = 0;
-
-        virtual bool IsCachable() const { return !!GetTileCode(); };
-        virtual const TileCode *GetTileCode() const = 0;
+        /** Get the pixel format of the promised PixelBuf. */
         virtual ODMPixelFormat GetPixelFormat() const = 0;
-    protected:
-        DisplayCoordCentered m_topleft;
-        DisplayCoordCentered m_topright;
-        DisplayCoordCentered m_botleft;
-        DisplayCoordCentered m_botright;
-        double m_transparency;
+        /** Get a cache key for possible caching of the delivered PixelBuf.
+            This may be nullptr if caching is not supported for the underlying
+            drawable.
+        */
+        virtual const TileCode *GetCacheKey() const = 0;
 };
 
-
-class DisplayOrderTiled : public DisplayOrder {
+class PixelPromiseTiled : public PixelPromise {
     public:
-        DisplayOrderTiled(const DisplayCoordCentered &pos,
-                          const DisplayDelta &size,
-                          const TileCode& tilecode,
-                          const double transparency)
-            : DisplayOrder(pos, size, transparency), m_tilecode(tilecode)
-            {};
-        DisplayOrderTiled(const DisplayCoordCentered &TopLeft,
-                          const DisplayCoordCentered &TopRight,
-                          const DisplayCoordCentered &BotLeft,
-                          const DisplayCoordCentered &BotRight,
-                          const TileCode& tilecode,
-                          const double transparency)
-            : DisplayOrder(TopLeft, TopRight, BotLeft, BotRight, transparency),
-              m_tilecode(tilecode)
-            {};
-        virtual ~DisplayOrderTiled() {};
-        const TileCode *GetTileCode() const { return &m_tilecode; };
+        PixelPromiseTiled(const TileCode& tilecode)
+            : PixelPromise(), m_tilecode(tilecode) {};
+        virtual ~PixelPromiseTiled() {};
         virtual PixelBuf GetPixels() const {
             return m_tilecode.GetTile();
         }
-        virtual MapPixelDeltaInt GetPixelSize() const {
-            return m_tilecode.GetTileSize();
-        }
         virtual ODMPixelFormat GetPixelFormat() const;
-
+        virtual const TileCode *GetCacheKey() const { return &m_tilecode; };
     private:
         const TileCode m_tilecode;
 };
 
-class DisplayOrderDirect : public DisplayOrder {
+class PixelPromiseDirect : public PixelPromise {
     public:
-        DisplayOrderDirect(
+        PixelPromiseDirect(
                 const std::shared_ptr<class GeoDrawable> &map,
                 const MapPixelDeltaInt &size,
                 const std::shared_ptr<class GeoPixels> &base_map,
                 const MapPixelCoord &base_pixel_tl,
-                const MapPixelCoord &base_pixel_br,
-                const double transparency)
-            : DisplayOrder(DisplayCoordCentered(-size.x/2.0, -size.y/2.0),
-                           DisplayDelta(size.x, size.y), transparency),
-              m_map(map), m_size(size), m_base_map(base_map),
+                const MapPixelCoord &base_pixel_br)
+            : PixelPromise(), m_map(map), m_size(size), m_base_map(base_map),
               m_base_pixel_tl(base_pixel_tl), m_base_pixel_br(base_pixel_br)
             {};
-        virtual ~DisplayOrderDirect() {};
-        virtual const TileCode *GetTileCode() const { return nullptr; };
-        virtual PixelBuf GetPixels() const;
-        virtual MapPixelDeltaInt GetPixelSize() const {
-            return MapPixelDeltaInt(round_to_int(m_size.x),
-                                    round_to_int(m_size.y));
-        }
-        virtual ODMPixelFormat GetPixelFormat() const;
+        virtual ~PixelPromiseDirect() {};
 
+        virtual PixelBuf GetPixels() const;
+        virtual ODMPixelFormat GetPixelFormat() const;
+        virtual const TileCode *GetCacheKey() const { return nullptr; };
     private:
         const std::shared_ptr<class GeoDrawable> m_map;
         const MapPixelDeltaInt m_size;
         const std::shared_ptr<class GeoPixels> m_base_map;
         const MapPixelCoord m_base_pixel_tl;
         const MapPixelCoord m_base_pixel_br;
+};
+
+class DisplayOrder {
+    public:
+        DisplayOrder(const DisplayRectCentered &rect, double transparency,
+                     std::shared_ptr<const PixelPromise> promise)
+            : m_rect(rect), m_transparency(transparency), m_promise(promise)
+            {};
+
+        const DisplayRectCentered &GetDisplayRect() const {
+            return m_rect;
+        }
+        double GetTransparency() const { return m_transparency; };
+        const PixelPromise &GetPixelBufPromise() const {
+            return *m_promise;
+        }
+    private:
+        const DisplayRectCentered m_rect;
+        const double m_transparency;
+        const std::shared_ptr<const PixelPromise> m_promise;
 };
 
 #endif

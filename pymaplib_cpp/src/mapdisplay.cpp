@@ -187,10 +187,15 @@ void MapDisplayManager::PaintLayerDirect(
     const MapPixelCoord &base_pixel_br = m_center + half_disp_size;
     MapPixelDeltaInt disp_size_int = MapPixelDeltaInt(
                 round_to_int(disp_size_d.x), round_to_int(disp_size_d.y));
-    orders->push_back(std::shared_ptr<DisplayOrder>(
-            new DisplayOrderDirect(
-                map, disp_size_int, m_base_map,
-                base_pixel_tl, base_pixel_br, transparency)));
+
+    DisplayRectCentered rect(DisplayCoordCentered(-disp_size_int.x/2.0,
+                                                  -disp_size_int.y/2.0),
+                             DisplayDelta(disp_size_int.x, disp_size_int.y));
+    auto promise = std::make_shared<PixelPromiseDirect>(
+                        map, disp_size_int, m_base_map,
+                        base_pixel_tl, base_pixel_br);
+    auto dorder = std::make_shared<DisplayOrder>(rect, transparency, promise);
+    orders->push_back(dorder);
 }
 
 void MapDisplayManager::PaintLayerTiled(
@@ -226,11 +231,11 @@ void MapDisplayManager::PaintLayerTiled(
                                            map_pos + tile_size_v, map);
             DisplayCoordCentered disp_br = DisplayCoordCenteredFromMapPixel(
                                            map_pos + tile_size, map);
-
-            orders->push_back(
-                std::shared_ptr<DisplayOrder>(
-                    new DisplayOrderTiled(disp_tl, disp_tr, disp_bl, disp_br,
-                                          tilecode, transparency)));
+            DisplayRectCentered rect(disp_tl, disp_tr, disp_bl, disp_br);
+            auto promise = std::make_shared<PixelPromiseTiled>(tilecode);
+            auto dorder = std::make_shared<DisplayOrder>(rect, transparency,
+                                                         promise);
+            orders->push_back(dorder);
         }
     }
 }

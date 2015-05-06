@@ -307,24 +307,25 @@ void DispOpenGL::Redraw() {
 
     for (auto it=m_orders.cbegin(); it != m_orders.cend(); ++it) {
         auto dorder = *it;
-        const TileCode *tilecode = dorder->GetTileCode();
+        const PixelPromise &promise = dorder->GetPixelBufPromise();
+        auto cachekey = promise.GetCacheKey();
         std::shared_ptr<Texture> tex;
-        if (dorder->IsCachable()) {
-            tex = m_texcache->Get(*tilecode);
+        if (cachekey) {
+            tex = m_texcache->Get(*cachekey);
         }
 
         if (!tex) {
-            PixelBuf pixbuf = dorder->GetPixels();
+            PixelBuf pixbuf = promise.GetPixels();
             tex.reset(new Texture(pixbuf.GetWidth(),
                                   pixbuf.GetHeight(),
                                   pixbuf.GetRawData(),
-                                  dorder->GetPixelFormat()));
-            if (dorder->IsCachable()) {
-                m_texcache->Insert(*tilecode, tex);
+                                  promise.GetPixelFormat()));
+            if (cachekey) {
+                m_texcache->Insert(*cachekey, tex);
             }
         }
 
-        switch (dorder->GetPixelFormat()) {
+        switch (promise.GetPixelFormat()) {
             case ODM_PIX_RGBA4:
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 break;
@@ -340,10 +341,11 @@ void DispOpenGL::Redraw() {
 
         tex->Activate();
         glBegin(GL_QUADS);
-        OGLDisplayCoord(dorder->GetBotRight(), target_size).TexVertex2d(1, 0);
-        OGLDisplayCoord(dorder->GetBotLeft(), target_size).TexVertex2d(0, 0);
-        OGLDisplayCoord(dorder->GetTopLeft(), target_size).TexVertex2d(0, 1);
-        OGLDisplayCoord(dorder->GetTopRight(), target_size).TexVertex2d(1, 1);
+        const DisplayRectCentered& drect = dorder->GetDisplayRect();
+        OGLDisplayCoord(drect.br, target_size).TexVertex2d(1, 0);
+        OGLDisplayCoord(drect.bl, target_size).TexVertex2d(0, 0);
+        OGLDisplayCoord(drect.tl, target_size).TexVertex2d(0, 1);
+        OGLDisplayCoord(drect.tr, target_size).TexVertex2d(1, 1);
         glEnd();
         tex->Deactivate();
     }

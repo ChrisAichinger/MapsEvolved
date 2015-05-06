@@ -80,6 +80,25 @@ class EXPORT DisplayDelta {
         double x, y;
 };
 
+class EXPORT DisplayRectCentered {
+    public:
+        DisplayRectCentered(const DisplayCoordCentered &pos,
+                            const DisplayDelta &size)
+            : tl(pos.x,          pos.y),
+              tr(pos.x + size.x, pos.y),
+              bl(pos.x,          pos.y + size.y),
+              br(pos.x + size.x, pos.y + size.y)
+            {};
+        DisplayRectCentered(const DisplayCoordCentered &TopLeft,
+                         const DisplayCoordCentered &TopRight,
+                         const DisplayCoordCentered &BotLeft,
+                         const DisplayCoordCentered &BotRight)
+            : tl(TopLeft), tr(TopRight),
+              bl(BotLeft), br(BotRight)
+            {};
+
+        DisplayCoordCentered tl, tr, bl, br;
+};
 
 class EXPORT MapPixelCoord {
     public:
