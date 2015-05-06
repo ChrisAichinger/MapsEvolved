@@ -2,6 +2,7 @@
 #define ODM__TILES_H
 
 #include <memory>
+#include <functional>
 
 #include "coordinates.h"
 #include "util.h"
@@ -79,6 +80,9 @@ class PixelPromise {
         virtual const TileCode *GetCacheKey() const = 0;
 };
 
+/**
+ A PixelPromise implementation supporting NonDirectDraw maps.
+*/
 class PixelPromiseTiled : public PixelPromise {
     public:
         PixelPromiseTiled(const TileCode& tilecode)
@@ -91,6 +95,45 @@ class PixelPromiseTiled : public PixelPromise {
         virtual const TileCode *GetCacheKey() const { return &m_tilecode; };
     private:
         const TileCode m_tilecode;
+};
+
+/**
+ A PixelPromise class getting data from NonDirectDraw maps asynchronously.
+*/
+class PixelPromiseTiledAsync : public PixelPromise {
+    public:
+        /** Initialize instance with the `TileCode` to retrieve and a callback.
+         *
+         * The `TileCode` is resolved to a `PixelBuf` on a background thread,
+         * in the meantime, an empty `PixelBuf` is returned, if requested.
+         *
+         * On completion, the `refresh` callback is called **from the
+         * background thread**. In other words, modifying application state
+         * from the callback requires special care.
+         */
+        PixelPromiseTiledAsync(const TileCode& tilecode,
+                               const std::function<void()>& refresh);
+        virtual ~PixelPromiseTiledAsync();
+
+        /** Get the data if available, otherwise return an empty `PixelBuf` */
+        virtual PixelBuf GetPixels() const;
+
+        virtual ODMPixelFormat GetPixelFormat() const;
+
+        /** Get the cache key for this PixelPromise.
+         *
+         * A valid `TileCode` will only be returned once the pixel data is
+         * available. This is to prevent accidental caching of the empty
+         * `PixelBuf` returned until the data is ready.
+         */
+        virtual const TileCode *GetCacheKey() const;
+    private:
+        DISALLOW_COPY_AND_ASSIGN(PixelPromiseTiledAsync);
+
+        class AsyncWorker;
+
+        TileCode m_tilecode;
+        std::shared_ptr<AsyncWorker> m_worker;
 };
 
 class PixelPromiseDirect : public PixelPromise {
@@ -116,6 +159,7 @@ class PixelPromiseDirect : public PixelPromise {
         const MapPixelCoord m_base_pixel_tl;
         const MapPixelCoord m_base_pixel_br;
 };
+
 
 class DisplayOrder {
     public:
