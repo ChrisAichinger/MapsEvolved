@@ -116,6 +116,7 @@
     <ClInclude Include="include\coordinates.h" />
     <ClInclude Include="include\display.h" />
     <ClInclude Include="include\disp_ogl.h" />
+    <ClInclude Include="include\external\concurrent_queue.h" />
     <ClInclude Include="include\external\glext.h" />
     <ClInclude Include="include\memjpeg.h" />
     <ClInclude Include="include\map_gvg.h" />
