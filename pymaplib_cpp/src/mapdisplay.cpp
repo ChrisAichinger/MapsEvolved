@@ -80,6 +80,10 @@ void MapDisplayManager::ChangeMap(
     }
 
     m_base_map = new_map;
+    ForceFullRepaint();
+}
+
+void MapDisplayManager::ForceFullRepaint() {
     m_need_full_repaint = true;
     m_display->ForceRepaint();
 }
@@ -291,8 +295,7 @@ double MapDisplayManager::GetCenterY() const {
 
 void MapDisplayManager::SetCenter(const BaseMapCoord &center) {
     m_center = center;
-    m_need_full_repaint = true;
-    m_display->ForceRepaint();
+    ForceFullRepaint();
 }
 
 void MapDisplayManager::SetCenter(const LatLon &center) {
@@ -318,8 +321,7 @@ void MapDisplayManager::StepZoom(double steps) {
             break;
         }
     }
-    m_need_full_repaint = true;
-    m_display->ForceRepaint();
+    ForceFullRepaint();
 }
 
 void MapDisplayManager::StepZoom(double steps, const DisplayCoord &mouse_pos) {
@@ -335,8 +337,7 @@ void MapDisplayManager::StepZoom(double steps, const DisplayCoord &mouse_pos) {
 
 void MapDisplayManager::SetZoomOneToOne() {
     m_zoom = 1.0;
-    m_need_full_repaint = true;
-    m_display->ForceRepaint();
+    ForceFullRepaint();
 }
 
 BaseMapCoord
@@ -392,14 +393,12 @@ MapDisplayManager::DisplayCoordCenteredFromMapPixel(
 
 void MapDisplayManager::CenterToDisplayCoord(const DisplayCoord &center) {
     m_center = BaseCoordFromDisplay(center);
-    m_need_full_repaint = true;
-    m_display->ForceRepaint();
+    ForceFullRepaint();
 }
 
 void MapDisplayManager::DragMap(const DisplayDelta &disp_delta) {
     m_center = m_center - BaseDeltaFromDisplay(disp_delta);
     m_center.ClampToRect(MapPixelCoordInt(0,0),
                          MapPixelCoordInt(m_base_map->GetSize()));
-    m_need_full_repaint = true;
-    m_display->ForceRepaint();
+    ForceFullRepaint();
 }

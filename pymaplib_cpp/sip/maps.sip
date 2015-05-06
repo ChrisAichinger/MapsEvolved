@@ -154,6 +154,7 @@ class MapDisplayManager /NoDefaultCtors/ {
                        bool try_preserve_pos=true);
         void ChangeMap(const RasterMapShPtr &new_map,
                        bool try_preserve_pos=true);
+        void ForceFullRepaint();
 
         void Resize(unsigned int width, unsigned int height);
         void StepZoom(double steps);

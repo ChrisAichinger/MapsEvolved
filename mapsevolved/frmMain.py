@@ -401,7 +401,7 @@ class MainFrame(wx.Frame):
     @util.PUBSUB('gpsanalyzer.gps_point_hl_update')
     def on_track_hl_update(self, track, gpx):
         # Force redrawing all GPS tracks.
-        self.panel.Refresh(eraseBackground=False)
+        self.mapdisplay.ForceFullRepaint();
 
     def show_gpstrackanalyzer(self, gpstrack):
         if self.gpstrackanalyzer_window:
@@ -651,7 +651,7 @@ class MainFrame(wx.Frame):
                 del self.overlays[i]
                 break
         self.overlays.append(pymaplib.OverlaySpec(rastermap))
-        self.panel.Refresh(eraseBackground=False)
+        self.mapdisplay.ForceFullRepaint();
         if not self.have_shown_layermgr_once:
             # Show the layer manager the first time the user adds an overlay.
             # Demonstrate the functionality without bothering the user again if
@@ -732,7 +732,7 @@ class MainFrame(wx.Frame):
         size = self.layerlistbox.Count - 1
         layers.extend(self.layerlistbox.GetClientData(i) for i in range(size))
         self.overlays = list(reversed(layers))
-        self.panel.Refresh(eraseBackground=False)
+        self.mapdisplay.ForceFullRepaint();
 
     def set_initial_size(self):
         disp = wx.Display(wx.Display.GetFromWindow(self))

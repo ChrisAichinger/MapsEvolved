@@ -59,6 +59,7 @@ class EXPORT MapDisplayManager {
         void SetZoomOneToOne();
         void DragMap(const DisplayDelta &delta);
         void CenterToDisplayCoord(const DisplayCoord &center);
+        void ForceFullRepaint();
         void Paint(const OverlayList &overlays);
         void Paint() { Paint(OverlayList()); };
         PixelBuf PaintToBuffer(ODMPixelFormat format,
