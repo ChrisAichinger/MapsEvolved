@@ -10,9 +10,11 @@ import functools
 import collections
 import urllib.request
 
-from invoke import ctask
+from invoke import Collection, Task, ctask
 
 import mev_build_utils
+
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 def SourceForgeURL(fname):
@@ -156,7 +158,6 @@ FLAGS = { 'debug': "-D_MT -MDd /Zi /RTC1 /Od",
 CMAKE_CONFIG = { 'debug': 'Debug',
                  'release': 'RelWithDebInfo' }
 CMAKE_GENERATOR = "Visual Studio 10 2010"
-PUBLISH_DIR = 'published'
 PY_INC_DIR = os.path.join(os.environ['VIRTUAL_ENV'], 'Include')
 
 
@@ -177,7 +178,9 @@ def unpack(url, sha256, compression, unpack_location='.'):
     """
 
     print("Downloading", extract_filename(url))
-    urlopener = urllib.request.urlopen(url)
+    with mev_build_utils.temporary_chdir(THIS_DIR):
+        # Chdir to make relative file:./z.zip URLs work.
+        urlopener = urllib.request.urlopen(url)
     f = io.BytesIO(urlopener.read())
     sha256_found = hashlib.sha256(f.getvalue()).hexdigest()
     if sha256_found != sha256:
@@ -189,7 +192,7 @@ def unpack(url, sha256, compression, unpack_location='.'):
             }
     compressor = available_compressors[compression]
     with compressor(f, 'r') as cf:
-        cf.extractall(unpack_location)
+        cf.extractall(os.path.join(THIS_DIR, unpack_location))
 
 
 @functools.lru_cache()
@@ -205,7 +208,7 @@ def get_provides():
     provides = {}
     for modulename, module in AVAILABLE_MODULES.items():
         for name, cmd in module.get('provides', []):
-            provides[name] = os.path.abspath(os.path.join(modulename, cmd))
+            provides[name] = os.path.join(THIS_DIR, modulename, cmd)
     return provides
 
 def run_with_vs(ctx, directory, command, config):
@@ -231,13 +234,11 @@ def run_with_vs(ctx, directory, command, config):
                              cmake_generator=CMAKE_GENERATOR,
                              py_inc_dir=PY_INC_DIR,
                              **provides_expands)
-    return ctx.run('call "%VS100COMNTOOLS%\\vsvars32.bat" && '
-                   'cd "{directory}" && '
-                   '{command}'.format(directory=directory, command=command))
+    return ctx.run('call "%VS100COMNTOOLS%\\vsvars32.bat" && {command}'.format(
+                   directory=directory, command=command), cwd=directory)
 
 def select_modules(modules):
     "Yield items from AVAILABLE_MODULES selected by the modules parameter"
-
     if modules is None or modules == 'all':
         return AVAILABLE_MODULES.items()
     return ((m, AVAILABLE_MODULES[m]) for m in modules.split(';'))
@@ -245,45 +246,44 @@ def select_modules(modules):
 @ctask(help={'modules': 'Semicolon-separated list of modules to operate on (default: all)'})
 def download(ctx, modules=None):
     "Download third-party modules required for building MapsEvolved"
-
     for modulename, module in select_modules(modules):
         args = set(inspect.getargspec(unpack).args)
         args = {k: v for k, v in module.items() if k in args}
         unpack(**args)
         for src, dest in module.get('rename', []):
-            mev_build_utils.resiliant_rename(src, dest)
+            mev_build_utils.resiliant_rename(os.path.join(THIS_DIR, src),
+                                             os.path.join(THIS_DIR, dest))
         for diff in module.get('patches', []):
-            cmd = 'cd {modulename} && "{patch}" -p1 --forward --fuzz 0 < "{diff}"'
+            cmd = '"{patch}" -p1 --forward --fuzz 0 < "{diff}"'
             ctx.run(cmd.format(modulename=modulename,
                                patch=get_provides()['patch'],
-                               diff=os.path.abspath(diff)))
+                               diff=os.path.join(THIS_DIR, diff)),
+                    cwd=os.path.join(THIS_DIR, modulename))
 
 @ctask(help={'config': 'Which configuration to build: debug/release',
              'modules': 'Semicolon-separated list of modules to operate on (default: all)'})
 def build(ctx, config, modules=None):
     "Build third-party modules required for building MapsEvolved"
-
     for modulename, module in select_modules(modules):
         for command in module.get('build', []):
-            run_with_vs(ctx, modulename, command, config)
+            run_with_vs(ctx, os.path.join(THIS_DIR, modulename), command, config)
 
 @ctask(help={'modules': 'Semicolon-separated list of modules to operate on (default: all)'})
 def distclean(ctx, modules=None):
     "Remove the downloaded modules completely"
-
     for modulename, module in select_modules(modules):
-        if os.path.exists(modulename):
-            shutil.rmtree(modulename)
+        path = os.path.join(THIS_DIR, modulename)
+        if os.path.exists(path):
+            shutil.rmtree(path)
 
 @ctask(help={'modules': 'Semicolon-separated list of modules to operate on (default: all)',
              'targets': 'Semicolon-separated list of directories to copy the libraries into'})
 def publish(ctx, targets, modules=None):
     "Publish built libraries to a target location"
-
     targets = targets.split(';')
     for modulename, module in select_modules(modules):
         for src in module.get('publish', []):
-            src = os.path.join(modulename, src)
+            src = os.path.join(THIS_DIR, modulename, src)
             if not os.path.exists(src):
                 raise RuntimeError("Publishing source doesn't exist: %s" % src)
             for target in targets:
@@ -292,5 +292,7 @@ def publish(ctx, targets, modules=None):
 @ctask
 def listmodules(ctx):
     "List available third-party modules"
-
     print('\n'.join(AVAILABLE_MODULES.keys()))
+
+ns = Collection(*[obj for obj in vars().values() if isinstance(obj, Task)])
+ns.configure({'run': { 'runner': mev_build_utils.LightInvokeRunner }})

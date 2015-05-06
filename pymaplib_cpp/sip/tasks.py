@@ -2,16 +2,17 @@ import sys
 import os
 import subprocess
 
-from invoke import ctask
+from invoke import Collection, Task, ctask
 
 import mev_build_utils
 
-SIP_SRC = '.'
+SIP_SRC = os.path.abspath(os.path.dirname(__file__))
 SIP_INPUT = os.path.join(SIP_SRC, 'maps.sip')
-SIP_BUILD_DIR = '..\\build\\sip'
+SIP_BUILD_DIR_REL = os.path.join('..', 'build', 'sip')
+SIP_BUILD_DIR = os.path.join(SIP_SRC, SIP_BUILD_DIR_REL)
 SIP_BUILDFILE = os.path.join(SIP_BUILD_DIR, "maps.sbf")
 
-ROOT = os.path.join('..', '..')
+ROOT = os.path.join(SIP_SRC, '..', '..')
 
 def sip_inject_build_directory(build_file, build_dir):
     """Include build_dir in the paths of files in build_file
@@ -49,7 +50,7 @@ def run_sip(ctx):
                  "-I", SIP_SRC,          # Additional include dir
                  SIP_INPUT])             # Input file
 
-    sip_inject_build_directory(SIP_BUILDFILE, SIP_BUILD_DIR)
+    sip_inject_build_directory(SIP_BUILDFILE, SIP_BUILD_DIR_REL)
 
 def sanitized_env():
     """Return a santitized environment safe for running GNU Make
@@ -78,10 +79,13 @@ def build(ctx, config, targets='all'):
 
     run_sip(ctx)
 
-    init_sh = os.path.abspath(os.path.join(ROOT, "tools", "init_shell.py"))
-    gmake = os.path.abspath(os.path.join(ROOT, "third-party", "unxutils", "make.exe"))
-    venv = os.path.abspath(os.path.join(ROOT, 'venv'))
+    init_sh = os.path.join(ROOT, "tools", "init_shell.py")
+    gmake = os.path.join(ROOT, "third-party", "unxutils", "make.exe")
+    venv = os.path.join(ROOT, 'venv')
     cmd = [sys.executable, init_sh, venv, gmake]
     config_arg = { 'release': ['RELEASE=1'], 'debug': [] }[config.lower()]
     targets = targets.split(',')
-    subprocess.check_call(cmd + config_arg + targets, env=sanitized_env())
+    ctx.run(cmd + config_arg + targets, env=sanitized_env(), cwd=SIP_SRC)
+
+ns = Collection(*[obj for obj in vars().values() if isinstance(obj, Task)])
+ns.configure({'run': { 'runner': mev_build_utils.LightInvokeRunner }})

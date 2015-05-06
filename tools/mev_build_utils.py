@@ -297,6 +297,63 @@ def add_mev_to_path(at_beginning=False):
     else:
         sys.path.append(get_mev_path())
 
+
+class LightInvokeRunner:
+    """A lightweight invoke Runner that exits cleanly on errors
+
+    The default `invoke.runner.Local` runner has several drawbacks:
+    * It tries to capture and store command output, but this garbles it when
+      the console encoding doesn't match `locale.getpreferredencoding()`.
+      Also, all colorization of the output is lost, which makes finding
+      error messages harder in the msbuild output.
+    * An exception is raised by default if a non-zero exit status is
+      encountered. This gives a long traceback after a failed command,
+      which is usually not helpful.
+    * It doesn't support a `cwd=` argument to set the working directory.
+
+    This class is a lightweight replacement for the default invoke runner.
+    It does not capture the program output, it supports `cwd=` and
+    `env=` keyword arguments, and if `quickexit=True` (the default), command
+    failure leads program termination via `sys.exit(1)`.
+    """
+
+    def run(self, command, *, echo=False, hide=None, quickexit=True, **kwargs):
+        """Run the specified command
+
+        Supported keyword variables:
+
+         * `echo`: Echo the command output, same as the invoke Runner.
+         * `hide`: Currently, supports only triggering all output on/off.
+         * `quickexit`: Die with a brief failure message on command failures.
+         * `cwd`: Set the working dir for the called process.
+         * `env`: Set the environment for the called process.
+
+        Other keywords are accepted but are silently ignored for compatibility
+        with invoke.
+        """
+
+        if echo:
+            print("\033[1;37m{0}\033[0m".format(command))
+
+        callargs = {k: kwargs[k] for k in kwargs if k in set(['env', 'cwd'])}
+        if hide:
+            callargs.update({ 'stdout': subprocess.DEVNULL,
+                              'stderr': subprocess.DEVNULL })
+
+        try:
+            subprocess.check_call(command, shell=True, **callargs)
+        except subprocess.CalledProcessError as e:
+            if not quickexit:
+                raise
+            else:
+                is_str = isinstance(command, str)
+                printable_command = command if is_str else ' '.join(command)
+                msg = "Running child process failed returncode {}\n" \
+                      "Call: {}".format(e.returncode, printable_command)
+                print(msg, file=sys.stderr)
+                sys.exit(1)
+
+
 def main():
     git = find_git_executable()
     if not git:

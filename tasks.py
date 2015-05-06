@@ -4,9 +4,8 @@ import glob
 import shutil
 import tarfile
 import zipfile
-import subprocess
 
-from invoke import ctask
+from invoke import Collection, Task, ctask
 
 import mev_build_utils
 
@@ -49,9 +48,8 @@ def build_cpp(ctx, config=None, args=''):
              'targets': 'Comma-separated list of build targets (default:all)'})
 def build_sip(ctx, config, targets='all'):
     """Build pymaplib, after which MapsEvolved is ready to run"""
-    subprocess.check_call(['invoke', 'build', '--config', config,
-                                              '--targets', targets],
-                          cwd=SIP_SRC)
+    ctx.run(['invoke', 'build', '--config', config, '--targets', targets],
+            cwd=SIP_SRC)
 
 @ctask(help={'config': 'Which configuration to build: debug/release'})
 def build(ctx, config):
@@ -153,11 +151,10 @@ def sdist(ctx):
     os.makedirs('dist', exist_ok=True)
 
     print("Exporting from git...")
-    subprocess.check_call('git archive HEAD | tar -x -C {}'.format(BUILDDIR),
-                          shell=True)
+    ctx.run('git archive HEAD | tar -x -C {}'.format(BUILDDIR), shell=True)
 
     print("Generating metadata...")
-    subprocess.check_call([sys.executable, 'setup.py', 'egg_info', '--egg-base', BUILDDIR])
+    ctx.run([sys.executable, 'setup.py', 'egg_info', '--egg-base', BUILDDIR])
     shutil.copy(os.path.join(BUILDDIR, 'MapsEvolved.egg-info/PKG-INFO'),
                 os.path.join(BUILDDIR, 'PKG-INFO'))
 
@@ -178,7 +175,7 @@ def py2exe(ctx):
     """Create a binary distribution for running on Windows"""
 
     os.makedirs('dist', exist_ok=True)
-    subprocess.check_call([sys.executable, 'setup.py', 'py2exe'])
+    ctx.run([sys.executable, 'setup.py', 'py2exe'])
 
     # Copy MSVC runtime libraries into the dist folder
     redist = r'%VS100COMNTOOLS%..\..\VC\redist\x86\Microsoft.VC100.CRT'
@@ -195,3 +192,5 @@ def py2exe(ctx):
     print("Successfully created Windows binary distribution.",
           file=sys.stderr)
 
+ns = Collection(*[obj for obj in vars().values() if isinstance(obj, Task)])
+ns.configure({'run': { 'runner': mev_build_utils.LightInvokeRunner }})
