@@ -90,6 +90,29 @@ class OGLDisplayCoord {
 };
 
 
+class Texture {
+    public:
+        Texture(unsigned int width, unsigned int height,
+                const unsigned int *pixels, ODMPixelFormat format);
+        ~Texture();
+
+        void Activate();
+        void Deactivate();
+
+        unsigned int GetWidth() const { return m_width; };
+        unsigned int GetHeight() const { return m_height; };
+
+    private:
+        DISALLOW_COPY_AND_ASSIGN(Texture);
+
+        void MakeTexture(const unsigned int *pixels, ODMPixelFormat format);
+
+        unsigned int m_width;
+        unsigned int m_height;
+        unsigned int m_texhandle;
+};
+
+
 class TextureCache {
     public:
         TextureCache() : m_cache(), m_call_count() { };
