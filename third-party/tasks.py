@@ -52,7 +52,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
    ('boost', {
        'compression': 'zip',
        'url': 'file:./boost-mini.zip',
-       'sha256': 'd193179fc5a7dfd556e2b9b23dc5edc7f0f93fbc8c5597edfeea8655bd9ea456',
+       'sha256': '5382b84893d006d40c6d2f2dad1a05b49f0d93533548da4e31e6ef1661a4ed8f',
        'unpack_location': 'boost',
        # Publish only the debug/non-debug DLLs, depending on build configuration.
        'build': [('del build.cfg.* 2>nul; echo 1 > build.cfg.{config}')],
@@ -60,12 +60,15 @@ AVAILABLE_MODULES = collections.OrderedDict([
                   ['lib32-msvc-10.0\\boost_chrono-vc100-mt-1_58.dll',
                    'lib32-msvc-10.0\\boost_date_time-vc100-mt-1_58.dll',
                    'lib32-msvc-10.0\\boost_system-vc100-mt-1_58.dll',
-                   'lib32-msvc-10.0\\boost_thread-vc100-mt-1_58.dll',]
+                   'lib32-msvc-10.0\\boost_thread-vc100-mt-1_58.dll',
+                   'lib32-msvc-10.0\\boost_unit_test_framework-vc100-mt-1_58.dll',
+                  ]
                   if os.path.exists(os.path.join(THIS_DIR, 'boost\\build.cfg.release')) else
                   ['lib32-msvc-10.0\\boost_chrono-vc100-mt-gd-1_58.dll',
                    'lib32-msvc-10.0\\boost_date_time-vc100-mt-gd-1_58.dll',
                    'lib32-msvc-10.0\\boost_system-vc100-mt-gd-1_58.dll',
                    'lib32-msvc-10.0\\boost_thread-vc100-mt-gd-1_58.dll',
+                   'lib32-msvc-10.0\\boost_unit_test_framework-vc100-mt-gd-1_58.dll',
                   ],
    }),
    ('libjpeg-turbo', {
