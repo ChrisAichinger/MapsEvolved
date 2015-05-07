@@ -14,14 +14,15 @@ CompositeMap::CompositeMap(
     : m_num_x(num_x), m_num_y(num_y),
       m_overlap_pixel(has_overlap_pixel ? 1 : 0),
       m_submaps(submaps), m_width(0), m_height(0), m_fname(), m_title(),
-      m_description()
+      m_description(), m_concurrent_getregion(true)
 {
     init();
 }
 
 CompositeMap::CompositeMap(const std::wstring &fname_token)
     : m_num_x(0), m_num_y(0), m_overlap_pixel(0), m_submaps(),
-      m_width(0), m_height(0), m_fname(), m_title(), m_description()
+      m_width(0), m_height(0), m_fname(), m_title(), m_description(),
+      m_concurrent_getregion(true)
 {
     bool has_overlap_pixel;
     m_submaps = LoadFnameMaps(fname_token, &m_num_x, &m_num_y,
@@ -52,6 +53,10 @@ void CompositeMap::init() {
         ss << (*it)->GetTitle() << L"\n";
     }
     m_description = ss.str();
+
+    for (auto it = m_submaps.cbegin(); it != m_submaps.cend(); ++it) {
+        m_concurrent_getregion &= (*it)->SupportsConcurrentGetRegion();
+    }
 }
 
 template <typename T>
@@ -155,6 +160,16 @@ const std::wstring &CompositeMap::GetTitle() const {
 
 const std::wstring &CompositeMap::GetDescription() const {
     return m_description;
+}
+
+bool CompositeMap::SupportsConcurrentGetRegion() const {
+    // CompositeMap can safely be used from threads if each of the submaps can.
+    for (auto it=m_submaps.cbegin(); it != m_submaps.cend(); ++it) {
+        if (!(*it)->SupportsConcurrentGetRegion()) {
+            return false;
+        }
+    }
+    return true;
 }
 
 PixelBuf CompositeMap::GetRegion(

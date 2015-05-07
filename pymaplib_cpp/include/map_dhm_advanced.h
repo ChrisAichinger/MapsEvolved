@@ -3,6 +3,12 @@
 
 #include "rastermap.h"
 
+/** Construct a 3D gradient map from a DEM
+ *
+ * @locking Although concurrent `GetRegion` calls are enabled, no locking is
+ * performed. Requests are passed to the DEM and the results are transformed
+ * into a color image without modification of per-instance state.
+ */
 class EXPORT GradientMap : public RasterMap {
     public:
         explicit GradientMap(const std::shared_ptr<RasterMap> &orig_map);
@@ -26,10 +32,19 @@ class EXPORT GradientMap : public RasterMap {
         virtual ODMPixelFormat GetPixelFormat() const {
             return ODM_PIX_RGBX4;
         }
+        virtual bool SupportsConcurrentGetRegion() const {
+            return m_orig_map->SupportsConcurrentGetRegion();
+        }
     private:
         const std::shared_ptr<RasterMap> m_orig_map;
 };
 
+/** Construct a steepness map from a DEM
+ *
+ * @locking Although concurrent `GetRegion` calls are enabled, no locking is
+ * performed. Requests are passed to the DEM and the results are transformed
+ * into a color image without modification of per-instance state.
+ */
 class EXPORT SteepnessMap : public RasterMap {
     public:
         explicit SteepnessMap(const std::shared_ptr<RasterMap> &orig_map);
@@ -52,6 +67,9 @@ class EXPORT SteepnessMap : public RasterMap {
         virtual const std::wstring &GetDescription() const;
         virtual ODMPixelFormat GetPixelFormat() const {
             return ODM_PIX_RGBX4;
+        }
+        virtual bool SupportsConcurrentGetRegion() const {
+            return m_orig_map->SupportsConcurrentGetRegion();
         }
     private:
         const std::shared_ptr<RasterMap> m_orig_map;

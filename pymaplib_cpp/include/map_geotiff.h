@@ -4,6 +4,18 @@
 #include "rastermap.h"
 #include "projection.h"
 
+#include <boost/thread/mutex.hpp>
+
+/** A map in TIFF file format
+ *
+ * Can contain either normal topographic data or DEM data.
+ *
+ * @locking Concurrent `GetRegion` calls are enabled. Data access in
+ * `GetRegion` is protected by a per-instance mutex `m_getregion_mutex`.
+ * No external calls are made with this mutex held. Internally, the
+ * `CSVFileOverride` mutex may be taken with `m_getregion_mutex` held.
+ * Deadlocks are prevented by strict ordering `getregion > csv`.
+ */
 class EXPORT TiffMap : public RasterMap {
     public:
         explicit TiffMap(const wchar_t *fname);
@@ -28,7 +40,11 @@ class EXPORT TiffMap : public RasterMap {
         virtual ODMPixelFormat GetPixelFormat() const {
             return ODM_PIX_RGBX4;
         }
+        virtual bool SupportsConcurrentGetRegion() const { return true; }
     private:
+        DISALLOW_COPY_AND_ASSIGN(TiffMap);
+
+        mutable boost::mutex m_getregion_mutex;
         const std::shared_ptr<class GeoTiff> m_geotiff;
         Projection m_proj;
 

@@ -657,6 +657,7 @@ PixelBuf TiffMap::GetRegion(
     if (fixed_bounds_pb.GetData())
         return fixed_bounds_pb;
 
+    boost::lock_guard<boost::mutex> lock(m_getregion_mutex);
     return m_geotiff->GetRegion(pos, size);
 }
 

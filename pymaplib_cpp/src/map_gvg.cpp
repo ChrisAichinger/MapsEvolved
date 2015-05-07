@@ -9,6 +9,9 @@
 #include <regex>
 #include <sstream>
 
+#include <boost/thread/locks.hpp>
+#include <boost/thread/lock_types.hpp>
+
 #include "memjpeg.h"
 #include "util.h"
 
@@ -737,7 +740,8 @@ GMPImage MakeBestResolutionGmpImage(const GVGFile &gvgfile) {
 }
 
 GVGMap::GVGMap(const std::wstring &fname)
-    : m_gvgfile(fname), m_image(MakeBestResolutionGmpImage(m_gvgfile)),
+    : m_getregion_mutex(), m_gvgfile(fname),
+      m_image(MakeBestResolutionGmpImage(m_gvgfile)),
       m_gvgheader(&m_gvgfile.Header()),
       m_gvgmapinfo(&m_gvgfile.MapInfo(m_gvgfile.BestResolutionIndex())),
       m_tile_width(m_image.TileWidth()),
@@ -749,11 +753,7 @@ GVGMap::GVGMap(const std::wstring &fname)
       m_bpp(m_image.BitsPerPixel()),
       m_proj_str(MakeProjString()),
       m_proj(m_proj_str)
-{
-    // TODO: Add title and description information.
-    // gvgh->Title;
-    // gvgh->Description
-}
+{ }
 
 std::string GVGMap::MakeProjString() const {
     std::ostringstream ss;
@@ -801,6 +801,8 @@ GVGMap::GetRegion(const MapPixelCoordInt &pos,
     auto fixed_bounds_pb = GetRegion_BoundsHelper(*this, pos, size);
     if (fixed_bounds_pb.GetData())
         return fixed_bounds_pb;
+
+    boost::lock_guard<boost::mutex> lock(m_getregion_mutex);
 
     PixelBuf result(size.x, size.y);
     MapPixelCoordInt end = pos + size;

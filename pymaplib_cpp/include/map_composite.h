@@ -9,7 +9,10 @@
 #include "coordinates.h"
 #include "rastermap.h"
 
-/* Present multiple RasterMaps collectively as one map. The individual maps
+
+/** A composite of multiple, smaller maps
+ *
+ * Present multiple RasterMaps collectively as one map. The individual maps
  * are treated like tiles and placed directly next to each other.
  *
  * The mystery of has_overlap_pixel (aka m_overlap_pixel):
@@ -37,8 +40,11 @@
  *
  * So, for type (1) tiles, has_overlap_pixel is false and m_overlap_pixel == 0.
  * So, for type (2) tiles, has_overlap_pixel is true and m_overlap_pixel == 1.
+ *
+ * @locking Although concurrent `GetRegion` calls are enabled, no locking is
+ * performed. Requests are passed to the submaps and the results are stitched
+ * together without modification of per-instance state.
  */
-
 class EXPORT CompositeMap : public RasterMap {
     public:
         CompositeMap(unsigned int num_x, unsigned int num_y,
@@ -49,6 +55,7 @@ class EXPORT CompositeMap : public RasterMap {
         virtual unsigned int GetWidth() const;
         virtual unsigned int GetHeight() const;
         virtual MapPixelDeltaInt GetSize() const;
+
         virtual PixelBuf
             GetRegion(const MapPixelCoordInt &pos,
                       const MapPixelDeltaInt &size) const;
@@ -65,6 +72,7 @@ class EXPORT CompositeMap : public RasterMap {
         virtual ODMPixelFormat GetPixelFormat() const {
             return ODM_PIX_RGBX4;
         }
+        virtual bool SupportsConcurrentGetRegion() const;
         static std::vector<std::wstring>
         ParseFname(const std::wstring &fname,
                    unsigned int *num_maps_x, unsigned int *num_maps_y,
@@ -104,6 +112,8 @@ class EXPORT CompositeMap : public RasterMap {
         std::wstring m_fname;
         std::wstring m_title;
         std::wstring m_description;
+
+        bool m_concurrent_getregion;
 };
 
 #endif

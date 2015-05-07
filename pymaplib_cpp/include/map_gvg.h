@@ -8,6 +8,8 @@
 #include <fstream>
 #include <cstdint>
 
+#include <boost/thread/mutex.hpp>
+
 #include "odm_config.h"
 #include "pixelbuf.h"
 #include "rastermap.h"
@@ -214,9 +216,16 @@ EXPORT GMPImage MakeGmpImage(const std::wstring& path,
                              unsigned int gmp_image_idx);
 EXPORT GMPImage MakeBestResolutionGmpImage(const GVGFile &gvgfile);
 
+/** A map in GVG file format
+ *
+ * GVG files can in principle contain both normal topographic data and DEM
+ * data. DEM's are currently not supported, though.
+ *
+ * @locking Concurrent `GetRegion` calls are enabled. Data access in
+ * `GetRegion` is protected by a per-instance mutex `m_getregion_mutex`.
+ * No external calls are made with this mutex held.
+ */
 class EXPORT GVGMap : public RasterMap {
-    // Georeferenced pixels. Subclasses of this type support mapping
-    // pixel locations to world coordinates (LatLon) and vice versa.
     public:
         explicit GVGMap(const std::wstring &fname);
         virtual ~GVGMap();
@@ -254,6 +263,7 @@ class EXPORT GVGMap : public RasterMap {
         };
 
         virtual ODMPixelFormat GetPixelFormat() const;
+        virtual bool SupportsConcurrentGetRegion() const { return true; }
 
         virtual bool
         PixelToLatLon(const MapPixelCoord &pos, LatLon *result) const;
@@ -265,6 +275,10 @@ class EXPORT GVGMap : public RasterMap {
         const GVGHeader *GetGVGHeader() const { return m_gvgheader; };
         const GVGMapInfo *GetGVGMapInfo() const { return m_gvgmapinfo; };
     private:
+        DISALLOW_COPY_AND_ASSIGN(GVGMap);
+
+        mutable boost::mutex m_getregion_mutex;
+
         GVGFile m_gvgfile;
         GMPImage m_image;
         const GVGHeader* m_gvgheader;

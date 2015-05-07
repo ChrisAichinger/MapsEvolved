@@ -1,5 +1,5 @@
 
-class TiffMap : public RasterMap {
+class TiffMap : public RasterMap /NoDefaultCtors/ {
 %TypeHeaderCode
 #include "rastermap.h"
 #include "map_geotiff.h"
@@ -33,7 +33,7 @@ class TiffMap : public RasterMap {
         virtual ODMPixelFormat GetPixelFormat() const;
 };
 
-class GVGMap : public RasterMap {
+class GVGMap : public RasterMap /NoDefaultCtors/ {
 %TypeHeaderCode
 #include "rastermap.h"
 #include "map_gvg.h"
