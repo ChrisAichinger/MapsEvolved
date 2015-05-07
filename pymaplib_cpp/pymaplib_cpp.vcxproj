@@ -138,4 +138,17 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <PropertyGroup Label="StaticLinkerHelper">
+    <StaticLinkerArgs>$(IntDir)static-linker-args.txt</StaticLinkerArgs>
+  </PropertyGroup>
+  <Target Name="AfterBuild" Inputs="@(Link)" Outputs="$(TargetDir)$(TargetName)-static.lib">
+    <Message Text="Creating static library for testing." Importance="high" />
+    <Delete Files="$(StaticLinkerArgs)" />
+    <WriteLinesToFile
+                File="$(StaticLinkerArgs)"
+                Lines="@(Link)"
+                Overwrite="False"
+                Encoding="Unicode"/>
+    <Exec Command="lib /OUT:$(TargetDir)$(TargetName)-static.lib /MACHINE:X86 /NOLOGO @$(StaticLinkerArgs)" />
+  </Target>
 </Project>
