@@ -15,7 +15,7 @@ tasks_thirdparty = mev_build_utils.import_from_file('tasks_thirdparty',
 tasks_sip = mev_build_utils.import_from_file('tasks_sip',
                                              'pymaplib_cpp/sip/tasks.py')
 
-TARGETS = ['pymaplib_cpp\\dist', 'pymaplib_cpp\\tests', 'pymaplib']
+TARGETS = ['pymaplib_cpp\\dist', 'pymaplib']
 
 
 @ctask(help={'config': 'Which configuration to build: debug/release'})
