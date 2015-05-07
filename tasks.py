@@ -9,30 +9,30 @@ from invoke import Collection, Task, ctask
 
 import mev_build_utils
 
-TARGETS = ['pymaplib_cpp\\dist', 'pymaplib_cpp\\tests', 'pymaplib']
 
-SIP_SRC = 'pymaplib_cpp\\sip'
+tasks_thirdparty = mev_build_utils.import_from_file('tasks_thirdparty',
+                                                    'third-party/tasks.py')
+tasks_sip = mev_build_utils.import_from_file('tasks_sip',
+                                             'pymaplib_cpp/sip/tasks.py')
+
+TARGETS = ['pymaplib_cpp\\dist', 'pymaplib_cpp\\tests', 'pymaplib']
 
 
 @ctask(help={'config': 'Which configuration to build: debug/release'})
 def configure(ctx, config):
     """Setup libraries and perform an initial build"""
-    for target in TARGETS:
-        os.makedirs(target, exist_ok=True)
-
-    # Disable Python output buffering to get consistent log output.
-    os.environ['PYTHONUNBUFFERED'] = '1'
-    cmd = 'cd third-party && invoke distclean download build --config {config}'
-    ctx.run(cmd.format(config=config))
+    tasks_thirdparty.distclean(ctx)
+    tasks_thirdparty.download(ctx)
+    tasks_thirdparty.build(ctx, config=config)
     copy_thirdparty_libs(ctx)
 
 @ctask
 def copy_thirdparty_libs(ctx):
     """Extract built library files from the third-party directory"""
-    os.environ['PYTHONUNBUFFERED'] = '1'
-    cmd = ' '.join(['cd third-party && invoke publish "--targets={targets}"'])
-    targets = ';'.join(os.path.abspath(target) for target in TARGETS)
-    ctx.run(cmd.format(targets=targets))
+    for target in TARGETS:
+        os.makedirs(target, exist_ok=True)
+    targets = ';'.join(os.path.abspath(t) for t in TARGETS)
+    tasks_thirdparty.publish(ctx, targets=targets)
 
 @ctask(help={'config': 'Which configuration to build: debug/release (default: as last build)',
              'args': 'Additional arguments for msbuild'})
@@ -44,18 +44,11 @@ def build_cpp(ctx, config=None, args=''):
     cmd += args
     ctx.run(cmd.format(config=config))
 
-@ctask(help={'config': 'Which configuration to build: debug/release',
-             'targets': 'Comma-separated list of build targets (default:all)'})
-def build_sip(ctx, config, targets='all'):
-    """Build pymaplib, after which MapsEvolved is ready to run"""
-    ctx.run(['invoke', 'build', '--config', config, '--targets', targets],
-            cwd=SIP_SRC)
-
 @ctask(help={'config': 'Which configuration to build: debug/release'})
 def build(ctx, config):
     """Build pymaplib_cpp and its SIP bindings"""
     build_cpp(ctx, config)
-    build_sip(ctx, config)
+    tasks_sip.build(ctx, config)
     copy_thirdparty_libs(ctx)
     shutil.copy(os.path.join('pymaplib_cpp', 'dist', 'pymaplib_cpp.dll'), 'pymaplib')
     shutil.copy(os.path.join('pymaplib_cpp', 'dist', 'maplib_sip.pyd'), 'pymaplib')
@@ -78,8 +71,6 @@ def checkout_and_build(ctx, repository, target_dir, config):
     ctx.run([git, 'clone', repository, target_dir])
 
     with mev_build_utils.temporary_chdir(target_dir):
-        # Change codepage so we don't get errors printing to the console.
-        ctx.run(['chcp', '65001'])
         # Disable Python output buffering to get consistent log output.
         os.environ['PYTHONUNBUFFERED'] = '1'
         ctx.run(['python', "bootstrap.py"])
@@ -108,7 +99,7 @@ def clean(ctx):
 @ctask
 def distclean(ctx):
     """Delete generated and downloaded files"""
-    ctx.run('cd third-party && invoke distclean')
+    tasks_thirdparty.distclean(ctx)
     build_cpp(ctx, args='/t:Clean')
 
     paths = mev_build_utils.multiglob(
@@ -192,5 +183,8 @@ def py2exe(ctx):
     print("Successfully created Windows binary distribution.",
           file=sys.stderr)
 
+
 ns = Collection(*[obj for obj in vars().values() if isinstance(obj, Task)])
+ns.add_collection(Collection.from_module(tasks_thirdparty, name='third-party', loaded_from='.'))
+ns.add_collection(Collection.from_module(tasks_sip, name='sip', loaded_from='.'))
 ns.configure({'run': { 'runner': mev_build_utils.LightInvokeRunner }})

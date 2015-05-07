@@ -8,6 +8,7 @@ import shutil
 import hashlib
 import pathlib
 import functools
+import importlib
 import itertools
 import contextlib
 import subprocess
@@ -353,6 +354,8 @@ class LightInvokeRunner:
                 print(msg, file=sys.stderr)
                 sys.exit(1)
 
+def import_from_file(name, fpath):
+    return importlib.machinery.SourceFileLoader(name, fpath).load_module()
 
 def main():
     git = find_git_executable()

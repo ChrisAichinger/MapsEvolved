@@ -56,11 +56,12 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'unpack_location': 'boost',
        # Publish only the debug/non-debug DLLs, depending on build configuration.
        'build': [('del build.cfg.* 2>nul; echo 1 > build.cfg.{config}')],
-       'publish': ['lib32-msvc-10.0\\boost_chrono-vc100-mt-1_58.dll',
+       'publish': lambda:
+                  ['lib32-msvc-10.0\\boost_chrono-vc100-mt-1_58.dll',
                    'lib32-msvc-10.0\\boost_date_time-vc100-mt-1_58.dll',
                    'lib32-msvc-10.0\\boost_system-vc100-mt-1_58.dll',
                    'lib32-msvc-10.0\\boost_thread-vc100-mt-1_58.dll',]
-                  if os.path.exists('boost\\build.cfg.release') else
+                  if os.path.exists(os.path.join(THIS_DIR, 'boost\\build.cfg.release')) else
                   ['lib32-msvc-10.0\\boost_chrono-vc100-mt-gd-1_58.dll',
                    'lib32-msvc-10.0\\boost_date_time-vc100-mt-gd-1_58.dll',
                    'lib32-msvc-10.0\\boost_system-vc100-mt-gd-1_58.dll',
@@ -151,7 +152,6 @@ AVAILABLE_MODULES = collections.OrderedDict([
                 ],
    }),
 ])
-
 
 FLAGS = { 'debug': "-D_MT -MDd /Zi /RTC1 /Od",
           'release': "-D_MT -MD /Ox" }
@@ -282,7 +282,13 @@ def publish(ctx, targets, modules=None):
     "Publish built libraries to a target location"
     targets = targets.split(';')
     for modulename, module in select_modules(modules):
-        for src in module.get('publish', []):
+        # Allow boost to update it's publish list while actually running, otherwise the
+        # publish list is set on initialization and might be wrong if we built since then.
+        published = module.get('publish', [])
+        if callable(published):
+            published = published()
+
+        for src in published:
             src = os.path.join(THIS_DIR, modulename, src)
             if not os.path.exists(src):
                 raise RuntimeError("Publishing source doesn't exist: %s" % src)
