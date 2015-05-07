@@ -135,7 +135,7 @@ def run_in_venv(ctx, venv_dir, command, **kwargs):
     cmd += command
     return ctx.run(cmd, **kwargs)
 
-def resiliant_rename(src, dest, retries=3, delay=0.5):
+def resilient_rename(src, dest, retries=3, delay=0.5):
     """Rename src file to dest, retrying on temprary errors
 
     Rename src to dest. If a PermissionError is encountered, wait briefly,
@@ -144,6 +144,7 @@ def resiliant_rename(src, dest, retries=3, delay=0.5):
     This may be necessary on Windows where virus scanners, Dropbox, ... may
     briefly prevent us from renaming files.
     """
+
     for i in range(retries - 1):
         try:
             return os.rename(src, dest)
