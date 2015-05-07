@@ -152,6 +152,29 @@ def resilient_rename(src, dest, retries=3, delay=0.5):
             time.sleep(delay)
     return os.rename(src, dest)
 
+def resilient_delete(pathname, recursive=False, retries=3, delay=0.5):
+    """Delete pathname, retrying on temprary errors
+
+    Delete pathname. If `recursive` is `True`, call `shutil.rmtree`, otherwise
+    `os.unlink`. If a PermissionError is encountered, wait briefly, then retry
+    (for up to `retries` times).
+
+    This may be necessary on Windows where virus scanners, Dropbox, ... may
+    briefly prevent access to files.
+    """
+
+    for i in range(retries):
+        try:
+            if recursive:
+                shutil.rmtree(pathname)
+            else:
+                os.unlink(pathname)
+            return
+        except PermissionError as e:
+            if i == retries - 1:
+                raise
+            time.sleep(delay)
+
 @contextlib.contextmanager
 def temporary_chdir(path):
     "Context manager for cd'ing to path and back"

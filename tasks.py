@@ -61,9 +61,17 @@ def build(ctx, config):
 
 @ctask(help={'repository': 'Path to the git repo to build',
              'target_dir': 'Working directory for checkout and build',
-             'config': 'Which configuration to build: debug/release'})
-def checkout_and_build(ctx, repository, target_dir, config):
+             'config': 'Which configuration to build: debug/release',
+             'force': 'Delete target dir if it exists before starting'})
+def checkout_and_build(ctx, repository, target_dir, config, force=False):
     '''Perform GIT checkout and build'''
+    if os.path.exists(target_dir):
+        if not force:
+            print('Target dir already exists:', target_dir, file=sys.stderr)
+            sys.exit(2)
+        else:
+            mev_build_utils.resilient_delete(target_dir, recursive=True)
+
     git = mev_build_utils.find_git_executable()
     if not git:
         print('Could not find git executable', file=sys.stderr)
