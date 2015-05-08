@@ -317,6 +317,14 @@ Tiff::GetRegion(const MapPixelCoordInt &pos,
     if (strip_size < 0) {
         throw std::runtime_error("Stripped TIF image with strip height < 0?!");
     }
+    if (static_cast<unsigned int>(strip_size) > m_height) {
+        // TIFFRGBAImageGet crashes when reading from an image where
+        // rows_per_strip > total_rows_in_image if more than
+        // total_rows_in_image rows are requested.
+        //
+        // Cap the number of rows we try to read, in this case.
+        strip_size = m_height;
+    }
 
     int first_ty = pos.y / strip_size;
     int last_ty = (end.y - 1) / strip_size;
