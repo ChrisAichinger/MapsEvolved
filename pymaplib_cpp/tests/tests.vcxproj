@@ -79,8 +79,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="tests.cpp" />
+    <ClCompile Include="test_concurrency.cpp" />
     <ClCompile Include="test_coords.cpp" />
     <ClCompile Include="test_util.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tests.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
