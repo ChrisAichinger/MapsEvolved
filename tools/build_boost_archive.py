@@ -37,7 +37,7 @@ import mev_build_utils
 DEFAULT_DEST = 'boost-mini'
 
 HEADERS = ['boost\\thread.hpp', 'boost\\optional.hpp', 'boost\\atomic.hpp',
-           'boost\\test\\unit_test.hpp']
+           'boost\\test\\unit_test.hpp', 'boost\\algorithm\\string.hpp']
 LIBS = ['boost_chrono-*', 'boost_system-*', 'boost_thread-*',
         'boost_date_time-*', 'boost_atomic-*', 'boost_unit_test_framework-*']
 FILES = ['*.css', '*.png', '*.htm', '*.html', 'LICENSE*']
