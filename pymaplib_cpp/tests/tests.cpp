@@ -25,6 +25,22 @@
 #include <boost/test/debug.hpp>
 
 
+class Args {
+public:
+    Args(int argc, const char* const argv[])
+        : m_progname(argv[0]), m_args(argv + 1, argv + argc)
+    {}
+    bool want_test_list() const {
+        return m_args.size() == 1 &&
+               (m_args[0] == "-l" || m_args[0] == "--list");
+    }
+private:
+    const std::string m_progname;
+    const std::vector<std::string> m_args;
+};
+static const Args *args = nullptr;
+
+
 struct test_tree_reporter : boost::unit_test::test_tree_visitor {
 public:
     test_tree_reporter(std::ostream &stream)
@@ -52,17 +68,11 @@ private:
 };
 
 
-static std::vector<std::string> args;
-static bool want_test_list() {
-    return args.size() == 1 && (args[0] == "-l" || args[0] == "--list");
-}
-
-
 static bool init_maplib_tests() {
     if (!init_unit_test()) {
         return false;
     }
-    if (want_test_list()) {
+    if (args->want_test_list()) {
         auto& stream = boost::unit_test::results_reporter::get_stream();
         stream << "Available test suites and cases:" << std::endl;
 
@@ -83,7 +93,8 @@ static bool init_maplib_tests() {
 
 #ifdef BOOST_TEST_NO_MAIN
 int main(int argc, char* argv[]) {
-    args = std::vector<std::string>(argv + 1, argv + argc);
+    Args arguments(argc, argv);
+    args = &arguments;
     int ret = boost::unit_test::unit_test_main(&init_maplib_tests, argc, argv);
     return ret;  // Conditional breakpoint here.
 }
