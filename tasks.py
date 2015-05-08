@@ -212,8 +212,18 @@ def py2exe(ctx):
     print("Successfully created Windows binary distribution.",
           file=sys.stderr)
 
+@ctask
+def doxygen(ctx):
+    """Generate documentation for pymaplib_cpp"""
+    try:
+        doxygen = mev_build_utils.find_executable('doxygen')
+    except ValueError:
+        logger.error("Could not find doxygen executable. Is it installed?")
+        sys.exit(2)
+    ctx.run([doxygen, 'Doxyfile'], cwd='docs')
+
 
 ns = Collection(*[obj for obj in vars().values() if isinstance(obj, Task)])
-ns.add_collection(Collection.from_module(tasks_thirdparty, name='third-party', loaded_from='.'))
-ns.add_collection(Collection.from_module(tasks_sip, name='sip', loaded_from='.'))
+ns.add_collection(Collection.from_module(tasks_thirdparty), 'third-party')
+ns.add_collection(Collection.from_module(tasks_sip), 'sip')
 ns.configure({'run': { 'runner': mev_build_utils.LightInvokeRunner }})

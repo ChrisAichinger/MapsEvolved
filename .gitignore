@@ -29,11 +29,8 @@ Release/
 /pymaplib_cpp/dist
 /pymaplib_cpp/ipch/
 
-# Ignore the various stuff we need for testing
-/pymaplib_cpp/tests/*.dll
-/pymaplib_cpp/tests/*.exe
-/pymaplib_cpp/tests/build
-/pymaplib_cpp/tests/csv
+# Ignore generated documentation
+/docs/doxygen
 
 # Ignore generated SVG files but include the master SVG, the PNGs and the ICO.
 /mapsevolved/data/mapsevolved_icons/MapsEvolved-*.svg
