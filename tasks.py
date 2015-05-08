@@ -5,6 +5,10 @@ import shutil
 import tarfile
 import zipfile
 
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(message)s', level=logging.INFO)
+
 from invoke import Collection, Task, ctask
 
 import mev_build_utils
@@ -72,9 +76,10 @@ def checkout_and_build(ctx, repository, target_dir, config, force=False):
         else:
             mev_build_utils.resilient_delete(target_dir, recursive=True)
 
-    git = mev_build_utils.find_git_executable()
-    if not git:
-        print('Could not find git executable', file=sys.stderr)
+    try:
+        git = mev_build_utils.find_executable('git')
+    except ValueError:
+        logger.error("Could not find git executable. Is it installed?")
         sys.exit(2)
     ctx.run([git, 'clone', repository, target_dir])
 
@@ -137,37 +142,53 @@ def crtcheck(ctx):
 def sdist(ctx):
     """Create a source distribution of our code"""
     if not os.path.exists('.git'):
-        print("Can't build an sdist in this tree (need a git repository).")
+        logger.error("Could not find git executable. Is it installed?")
         sys.exit(1)
 
-    if sys.platform == 'win32':
-        # Add Git directory to %PATH% to get 'git' and 'tar'
-        gitdir = mev_build_utils.find_git_bindir()
-        os.environ['PATH'] = ';'.join([gitdir, os.environ['PATH']])
+    try:
+        git = mev_build_utils.find_executable('git')
+    except ValueError:
+        logger.error("Could not find git executable. Is it installed?")
+        sys.exit(2)
+
+    try:
+        tar = mev_build_utils.find_executable('tar')
+    except ValueError:
+        tar = os.path.join(os.path.dirname(git), 'tar')
+        if os.access(tar, os.X_OK):
+            logger.debug("Using the tar bundled with git: '%s'", tar)
+        else:
+            logger.error("Could not find tar executable.\n"
+                         "On Windows, it is installed with git, "
+                         "but it was not in the git folder?\n"
+                         "Expected: '%s'", tar)
+            sys.exit(2)
 
     BUILDDIR = os.path.join('build', 'sdist')
     os.makedirs(BUILDDIR, exist_ok=True)
     os.makedirs('dist', exist_ok=True)
 
-    print("Exporting from git...")
-    ctx.run('git archive HEAD | tar -x -C {}'.format(BUILDDIR), shell=True)
+    logger.info("Exporting from git...")
+    cmd = '"{git}" archive HEAD | "{tar}" -xC {bdir}'.format(git=git, tar=tar,
+                                                             bdir=BUILDDIR)
+    ctx.run(cmd, shell=True)
 
-    print("Generating metadata...")
+    logger.info("Generating metadata...")
     ctx.run([sys.executable, 'setup.py', 'egg_info', '--egg-base', BUILDDIR])
     shutil.copy(os.path.join(BUILDDIR, 'MapsEvolved.egg-info/PKG-INFO'),
                 os.path.join(BUILDDIR, 'PKG-INFO'))
 
     # Making sane tar.gz files on Windows is hard, just don't do it for now.
     # Cf. nedbatchelder.com/blog/201009/making_good_tar_files_on_windows.html
-    print("Creating zip file...")
+    logger.info("Creating zip file...")
     import setup
     basename = 'dist/{cfg[name]}-{cfg[version]}-src'.format(cfg=setup.cfg)
     zipname = shutil.make_archive(basename, 'zip', BUILDDIR)
 
-    print("Cleaning up...")
+    logger.info("Cleaning up...")
     shutil.rmtree(BUILDDIR)
 
-    print("Source distribution built in '{}'.".format(zipname))
+    logging.info("Source distribution built in '%s'.", zipname)
 
 @ctask
 def py2exe(ctx):

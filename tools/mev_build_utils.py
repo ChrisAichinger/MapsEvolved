@@ -13,6 +13,12 @@ import itertools
 import contextlib
 import subprocess
 
+try:
+    import winreg
+except ImportError:
+    winreg = None
+
+
 def multiglob(*patterns, unique=True):
     """Yield paths matching one or more of multiple pathname patterns
 
@@ -230,69 +236,116 @@ def save_mtime(dirname, globs=None):
         if new_hash == old_hash and new_mtime > old_mtime:
             os.utime(fname, (st.st_atime, old_mtime))
 
-def which(program):
-    def is_exe(fpath):
+def _which(program):
+    '''Search for a program on $PATH
+
+    Mimic the UNIX `which` utility.
+
+    If `program` is an absolute path, return `program` if the file exists and
+    can be executed. If `program` is not absolute, search every directory on
+    $PATH for an executable file named `program` and return the file name if
+    found. In either case, `None` is returned on failure.
+    '''
+
+    def is_executable(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
     fpath, fname = os.path.split(program)
     if fpath:
-        if is_exe(program):
+        if is_executable(program):
             return program
     else:
         for path in os.environ["PATH"].split(os.pathsep):
             path = path.strip('"')
             exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
+            if is_executable(exe_file):
                 return exe_file
+
+    if not program.endswith('.exe') and sys.platform == 'win32':
+        return _which(program + '.exe')
 
     return None
 
-def _find_git_registry(regbits):
-    try:
-        import winreg
-    except ImportError:
+
+def _app_from_registry(app, *, hkey=None, keyname=None, valname=None, fname=None):
+    """Try to find an application by examining the Windows registry
+
+    Search for `app` in the Windows registry and return an executable filename
+    if successful. If `app` is not found, return None.
+
+    `hkey`, `keyname`, `valname` can be used to override the search location
+    in the registry. The default values are appropriate for git and doxygen.
+
+    `fname` can be used to set the search path within the installation folder.
+    By default, `$INSTDIR\\app` and `$INSTDIR\\bin\\app` are searched.
+
+    Example:
+
+        >>> _app_from_registry('git')
+        "C:\\....\\git\\bin\\git.exe"
+    """
+
+    if not winreg:
         return None
 
-    hklm = winreg.HKEY_LOCAL_MACHINE
-    keystr = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1"
-    if regbits == 32:
-        access = winreg.KEY_READ | winreg.KEY_WOW64_32KEY
-    elif regbits == 64:
-        access = winreg.KEY_READ | winreg.KEY_WOW64_64KEY
-    else:
-        raise ValueError("regbits must be either 32 or 64")
+    if hkey is None:
+        hkey = winreg.HKEY_LOCAL_MACHINE
+    if keyname is None:
+        keyname = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{}_is1'
+        keyname = keyname.format(app)
+    if valname is None:
+        valname = 'InstallLocation'
+    if fname is None:
+        fname = app
+
+    bin_fname = 'bin\\' + fname
+    return (_app_from_registry_3264(32, hkey, keyname, valname, fname) or
+            _app_from_registry_3264(64, hkey, keyname, valname, fname) or
+            _app_from_registry_3264(32, hkey, keyname, valname, bin_fname) or
+            _app_from_registry_3264(64, hkey, keyname, valname, bin_fname)
+           )
+
+def _app_from_registry_3264(regbits, hkey, keyname, valname, fname):
+    """Internal helper function for _app_from_registry()
+
+    Search `hkey/keyname/value` in the Windows registry. If the result is a
+    string, append `fname` and check if the resulting file is executable.
+    Return a valid executable filename if successful, otherwise None.
+
+    `regbits` must be either 32 or 64 and determines whether the 32-bit or the
+    64-bit registry tree is opened..
+    """
+
+    if not winreg:
+        return None
+
+    access_dict = { 32: winreg.KEY_READ | winreg.KEY_WOW64_32KEY,
+                    64: winreg.KEY_READ | winreg.KEY_WOW64_64KEY }
+    access = access_dict[regbits]
 
     try:
-        with winreg.OpenKeyEx(hklm, keystr, access=access) as key:
-            path, valuetype = winreg.QueryValueEx(key, "InstallLocation")
+        with winreg.OpenKeyEx(hkey, keyname, access=access) as key:
+            path, valuetype = winreg.QueryValueEx(key, valname)
         if valuetype != winreg.REG_SZ:
             return None
     except OSError:
         return None
 
-    return which(os.path.join(path, 'bin\\git.exe'))
+    return _which(os.path.join(path, fname))
 
-def find_git_executable():
-    git = which('git')
-    if git:
-        return git
+def find_executable(name):
+    '''Find a program using any means available
 
-    git = which('git.exe')
-    if git:
-        return git
+    Search for `name` on $PATH and in the Windows registry if available.
+    On success, return the path of the desired executable.
+    If no file could be found, a `ValueError` is raised.
+    '''
 
-    git = _find_git_registry(32)
-    if git:
-        return git
-
-    git = _find_git_registry(64)
-    if git:
-        return git
-
-    return None
-
-def find_git_bindir():
-    return os.path.dirname(find_git_executable())
+    executable = _which(name) or _app_from_registry(name) or None
+    if not executable:
+        raise ValueError(
+            "Could not find executable '{}'. Is it installed?".format(name))
+    return executable
 
 def get_mev_path():
     """Get the main MapsEvolved directory
@@ -379,14 +432,8 @@ class LightInvokeRunner:
                 sys.exit(1)
 
 def import_from_file(name, fpath):
+    """Import a module given a filesystem path"""
     return importlib.machinery.SourceFileLoader(name, fpath).load_module()
-
-def main():
-    git = find_git_executable()
-    if not git:
-        print('Git not found', file=sys.stderr)
-        sys.exit(1)
-    print(git)
 
 if __name__ == '__main__':
     main()
