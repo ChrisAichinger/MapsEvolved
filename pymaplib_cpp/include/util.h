@@ -6,6 +6,9 @@
 #include <vector>
 #include <numeric>
 #include <sstream>
+#include <functional>
+#include <cstdint>
+#include <map>
 
 #include "odm_config.h"
 
@@ -151,20 +154,80 @@ extern const wchar_t *ODM_PathSep_wchar;
 
 std::pair<std::wstring, std::wstring> GetAbsPath(const std::wstring &rel_path);
 
-double GetTimeMilliSecs();
+/** Produce meaningful statistics from execution time samples.
+ *
+ * Collect data samples and produce a summary statistic when `report()` is
+ * called, or, optionally, on object destruction.
+ *
+ * The data is collected into groups, and a summary for each group is produced.
+ * Thus, multiple different data sources (e.g. profiling data from multiple
+ * functions) can be analyzed by a single `TimerStats` instance.
+ *
+ * Currently, the *mean*, the *95th percentile* and the *maximum value* are
+ * reported.
+ */
+class TimerStats {
+public:
+    /** Create the instance.
+     *
+     * The resulting statistical data will be output to `ostream`.
+     * `report_on_delete` specifies whether a report is generated when the
+     * object is deleted (useful for a global static `TimerStats` class.
+     */
+    TimerStats(std::ostream &ostream, bool report_on_delete);
+    ~TimerStats();
 
-class TimeCounter {
+    /** Add sample `val` to the data associated with group `group`. */
+    void add_sample(const std::string &group, int64_t val);
+
+    /** Write a report to the `ostream` passed to the constructor. */
+    void report();
+private:
+    void output(const std::string &caption, int64_t value_ns);
+
+    typedef std::map<std::string, std::vector<int64_t>> TimerMap;
+    TimerMap m_timermap;
+    std::ostream &m_ostream;
+    bool m_report_on_delete;
+};
+
+// Forward declare boost::timer::cpu_timer.
+namespace boost { namespace timer { class cpu_timer; } }
+
+/** Measure execution time of code blocks
+ *
+ * Measure execution time from the creation of this object to its destruction.
+ * Defining a `TimerProfile` local variable suffices to profile the containing
+ * code block.
+ *
+ * If a `report` function is given, it is called upon destruction to report
+ * elapsed time.
+ *
+ * Otherwise, the results of multiple invocations are stored and a statistic is
+ * printed on program exit.
+ */
+class TimerProfile {
     public:
-        void Start() { m_time_started = GetTimeMilliSecs(); }
-        void Stop() {
-            m_vec.push_back(GetTimeMilliSecs() - m_time_started);
-            double sum = std::accumulate(m_vec.cbegin(), m_vec.cend(), 0);
-            m_average = sum / m_vec.size();
-        }
+        /** The report callback function definition.
+         *
+         * This function is called with the `name` passed to `TimerProfile` on
+         * creation and with the elapsed time in nano seconds (`runtime_ns`).
+         */
+        typedef std::function<void(const std::string &name,
+                                   int64_t runtime_ns)> ReportFunction;
+
+        /** Create a profiler that reports elapsed time via a callback. */
+        TimerProfile(const std::string &name,
+                     const ReportFunction &report);
+
+        /** Create a profiler to print runtime statistics on program exit. */
+        explicit TimerProfile(const std::string &name);
+
+        ~TimerProfile();
     private:
-        double m_average;
-        double m_time_started;
-        std::vector<double> m_vec;
+        const std::unique_ptr<boost::timer::cpu_timer> m_timer;
+        const std::string m_name;
+        const ReportFunction m_report;
 };
 
 class TemporaryValue {

@@ -1,5 +1,6 @@
 #include "util.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cassert>
 #include <climits>
@@ -16,6 +17,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <wchar.h>
+
+#include <boost/timer/timer.hpp>
 
 #include "odm_config.h"
 
@@ -361,6 +364,65 @@ void SaveBufferAsBMP(const std::wstring &fname, void *buffer,
 }
 
 
+TimerStats::TimerStats(std::ostream &ostream, bool report_on_delete)
+    : m_timermap(), m_ostream(ostream), m_report_on_delete(report_on_delete)
+{}
+
+TimerStats::~TimerStats() {
+    if (m_report_on_delete) {
+        report();
+    }
+}
+
+void TimerStats::add_sample(const std::string &group, int64_t val) {
+    auto &values = m_timermap[group];
+    values.push_back(val);
+}
+
+void TimerStats::report() {
+    for (auto it = m_timermap.begin(); it != m_timermap.end(); ++it) {
+        auto &group = it->first;
+        auto &values = it->second;
+
+        std::sort(values.begin(), values.end());
+        auto median_ns =   values[values.size() * 50 / 500];
+        auto quantile_ns = values[values.size() * 95 / 100];
+        auto max_ns = values.back();
+
+        m_ostream << group
+                  << " (" << values.size() << " samples)" << std::endl;
+        output("  Median:    ", median_ns);
+        output("  95% Quant: ", quantile_ns);
+        output("  Max:       ", max_ns);
+    }
+}
+
+void TimerStats::output(const std::string &caption, int64_t value_ns) {
+    auto value_us = value_ns / 1000;
+    m_ostream << caption << std::setw(6) << value_us << " us" << std::endl;
+}
+
+
+/** A global, static `TimerStats` class for use by `TimerProfile` */
+static TimerStats timerstats(std::cerr, true);
+
+TimerProfile::TimerProfile(const std::string &name)
+    : m_timer(new boost::timer::cpu_timer()), m_name(name),
+      m_report([name](const std::string &name, int64_t val) {
+               timerstats.add_sample(name, val);
+      })
+{}
+
+TimerProfile::TimerProfile(const std::string &name,
+                           const TimerProfile::ReportFunction &report)
+    : m_timer(new boost::timer::cpu_timer()), m_name(name), m_report(report)
+{}
+
+TimerProfile::~TimerProfile() {
+    m_report(m_name, m_timer->elapsed().wall);
+}
+
+
 #include <Windows.h>
 
 #define ODM_GetProgramPath_imp(hmod, char_type, suffix)                   \
@@ -424,9 +486,6 @@ std::string GetModuleDir_char() {
 const char *ODM_PathSep_char = "\\";
 const wchar_t *ODM_PathSep_wchar = L"\\";
 
-double GetTimeMilliSecs() {
-    return timeGetTime();
-}
 
 std::pair<std::wstring, std::wstring>
 GetAbsPath(const std::wstring &rel_path) {
