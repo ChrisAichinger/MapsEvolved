@@ -10,7 +10,7 @@
     <OutDir>$(MEVDistDir)</OutDir>
   </PropertyGroup>
   <PropertyGroup>
-    <IntDir>$(MEVBuildDir)</IntDir>
+    <IntDir>$(MEVBuildDir)$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
