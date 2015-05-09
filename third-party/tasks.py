@@ -1,6 +1,7 @@
 import os
 import io
 import sys
+import glob
 import shutil
 import hashlib
 import inspect
@@ -9,6 +10,9 @@ import zipfile
 import functools
 import collections
 import urllib.request
+
+import logging
+logger = logging.getLogger(__name__)
 
 from invoke import Collection, Task, ctask
 
@@ -52,24 +56,14 @@ AVAILABLE_MODULES = collections.OrderedDict([
    ('boost', {
        'compression': 'zip',
        'url': 'file:./boost-mini.zip',
-       'sha256': 'f22f8dfa788d4385d60492b7662d63321eb2836731e0522156752f0be8c2023f',
+       'sha256': '29bc6b06c00d6f9fb7a18b99508bda403c8adb0939aab32ee4a480b126ad5157',
        'unpack_location': 'boost',
        # Publish only the debug/non-debug DLLs, depending on build configuration.
        'build': [('del build.cfg.* 2>nul; echo 1 > build.cfg.{config}')],
        'publish': lambda:
-                  ['lib32-msvc-10.0\\boost_chrono-vc100-mt-1_58.dll',
-                   'lib32-msvc-10.0\\boost_date_time-vc100-mt-1_58.dll',
-                   'lib32-msvc-10.0\\boost_system-vc100-mt-1_58.dll',
-                   'lib32-msvc-10.0\\boost_thread-vc100-mt-1_58.dll',
-                   'lib32-msvc-10.0\\boost_unit_test_framework-vc100-mt-1_58.dll',
-                  ]
+                  glob.glob(os.path.join(THIS_DIR, 'boost\\lib32-msvc-10.0\\*-mt-1_58.dll'))
                   if os.path.exists(os.path.join(THIS_DIR, 'boost\\build.cfg.release')) else
-                  ['lib32-msvc-10.0\\boost_chrono-vc100-mt-gd-1_58.dll',
-                   'lib32-msvc-10.0\\boost_date_time-vc100-mt-gd-1_58.dll',
-                   'lib32-msvc-10.0\\boost_system-vc100-mt-gd-1_58.dll',
-                   'lib32-msvc-10.0\\boost_thread-vc100-mt-gd-1_58.dll',
-                   'lib32-msvc-10.0\\boost_unit_test_framework-vc100-mt-gd-1_58.dll',
-                  ],
+                  glob.glob(os.path.join(THIS_DIR, 'boost\\lib32-msvc-10.0\\*-mt-gd-1_58.dll'))
    }),
    ('libjpeg-turbo', {
        'compression': 'tar',
@@ -284,6 +278,7 @@ def distclean(ctx, modules=None):
 def publish(ctx, targets, modules=None):
     "Publish built libraries to a target location"
     targets = targets.split(';')
+    logger.debug("Copying publishable files to targets: %r", targets)
     for modulename, module in select_modules(modules):
         # Allow boost to update it's publish list while actually running, otherwise the
         # publish list is set on initialization and might be wrong if we built since then.
@@ -295,6 +290,7 @@ def publish(ctx, targets, modules=None):
             src = os.path.join(THIS_DIR, modulename, src)
             if not os.path.exists(src):
                 raise RuntimeError("Publishing source doesn't exist: %s" % src)
+            logger.debug("Copying %s", src)
             for target in targets:
                 mev_build_utils.copy_any(src, target, overwrite=True)
 

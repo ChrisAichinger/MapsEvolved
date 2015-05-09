@@ -37,9 +37,14 @@ import mev_build_utils
 DEFAULT_DEST = 'boost-mini'
 
 HEADERS = ['boost\\thread.hpp', 'boost\\optional.hpp', 'boost\\atomic.hpp',
-           'boost\\test\\unit_test.hpp', 'boost\\algorithm\\string.hpp']
+           'boost\\test\\unit_test.hpp', 'boost\\algorithm\\string.hpp',
+           'boost\\timer\\timer.hpp', 'boost\\accumulators\\accumulators.hpp',
+           'boost\\accumulators\\statistics.hpp',
+           ]
 LIBS = ['boost_chrono-*', 'boost_system-*', 'boost_thread-*',
-        'boost_date_time-*', 'boost_atomic-*', 'boost_unit_test_framework-*']
+        'boost_date_time-*', 'boost_atomic-*', 'boost_unit_test_framework-*',
+        'boost_timer-*',
+       ]
 FILES = ['*.css', '*.png', '*.htm', '*.html', 'LICENSE*']
 
 
@@ -59,17 +64,20 @@ def _find_includes_recursive(fname, files=None):
     files.add(fname)
 
     l = []
-    with open(fname, 'r') as f:
-        for line in f:
-            m = re.match(r'#\s*include\s*[<"](.*?)[>"]', line)
-            if not m:
-                continue
-            inc = m.group(1).replace('/', '\\')
-            if not inc.startswith('boost'):
-                continue
-            l.append(inc)
-    for inc in l:
-        _find_includes_recursive(inc, files)
+    try:
+        with open(fname, 'r') as f:
+            for line in f:
+                m = re.match(r'#\s*include\s*[<"](.*?)[>"]', line)
+                if not m:
+                    continue
+                inc = m.group(1).replace('/', '\\')
+                if not inc.startswith('boost'):
+                    continue
+                l.append(inc)
+        for inc in l:
+            _find_includes_recursive(inc, files)
+    except FileNotFoundError as e:
+        logging.warn("File not found: '%s'", fname)
 
     return files
 
