@@ -114,47 +114,70 @@ class Texture {
 
 
 class TextureCache {
+    DISALLOW_COPY_AND_ASSIGN(TextureCache);
     public:
-        TextureCache() : m_cache(), m_call_count() { };
-        void Insert(const class TileCode& tc,
-                    const std::shared_ptr<class Texture> &texture) {
-            ++m_call_count;
-            struct LruTexture val = { m_call_count, texture };
-            m_cache[tc] = val;
+        typedef std::shared_ptr<unsigned int> key_type;
+        typedef std::shared_ptr<Texture> mapped_type;
 
-            if (m_cache.size() > TEXCACHE_SIZE) {
-                // Too many elements, drop one
-                auto oldest = *std::max_element(
-                          m_cache.begin(), m_cache.end(),
-                          [=](const CachePair& lhs, const CachePair& rhs) {
-                                 return (m_call_count - lhs.second.last_used) <
-                                        (m_call_count - rhs.second.last_used);
-                          });
-                m_cache.erase(oldest.first);
+        TextureCache() : m_cache() { };
+
+        /** Insert a texture into the cache. */
+        void Insert(const key_type &key, const mapped_type &texture) {
+            auto v = cache_type::value_type(internal_key_type(key), texture);
+            m_cache.insert(v);
+        }
+
+        /** Try to get a cached texture for a PixelBuf. */
+        mapped_type Get(const key_type& key) {
+            auto it = m_cache.find(internal_key_type(key));
+            if (it == m_cache.end()) {
+                return mapped_type();
+            }
+
+            // internal_key_type sorts by the address of its pointee.
+            // Lock the weak_ptr and check against the requested key to
+            // ensure a reused address doesn't result in bogus lookups.
+            if (it->first.lock() != key) {
+                m_cache.erase(it);
+                return mapped_type();
+            }
+
+            return it->second;
+        }
+
+        /** Remove Textures for expired PixelBuf's objects from the cache. */
+        void Clean() {
+            for(auto it = m_cache.begin(); it != m_cache.end();) {
+                if (it->first.expired()) {
+                    m_cache.erase(it++);
+                } else {
+                    ++it;
+                }
             }
         }
 
-        // The internal texture may be dropped at any time, so return by value
-        std::shared_ptr<class Texture> Get(const class TileCode& tc) {
-            ++m_call_count;
-            if (m_cache.count(tc) == 0)
-                return std::shared_ptr<class Texture>();
-            m_cache[tc].last_used = m_call_count;
-            return m_cache[tc].texture;
-        }
-
     private:
-        DISALLOW_COPY_AND_ASSIGN(TextureCache);
+        /** A sortable wrapper around of `weak_ptr` */
+        class SortableWeakPtr {
+        public:
+            explicit SortableWeakPtr(const key_type &p)
+                : m_ptr(p), m_sortkey(p.get())
+            {}
+            bool operator<(const TextureCache::SortableWeakPtr& rhs) const {
+                return m_sortkey < rhs.m_sortkey;
+            }
+            bool expired() const { return m_ptr.expired(); }
+            std::shared_ptr<unsigned int> lock() const { return m_ptr.lock(); }
 
-        static const int TEXCACHE_SIZE = 200;
-        struct LruTexture {
-            unsigned int last_used;
-            std::shared_ptr<class Texture> texture;
+        private:
+            std::weak_ptr<unsigned int> m_ptr;
+            void *m_sortkey;
         };
-        typedef std::pair<const class TileCode, struct LruTexture> CachePair;
 
-        std::map<const class TileCode, struct LruTexture> m_cache;
-        unsigned int m_call_count;
+        typedef SortableWeakPtr internal_key_type;
+        typedef std::map<const SortableWeakPtr, mapped_type> cache_type;
+
+        cache_type m_cache;
 };
 
 
@@ -300,6 +323,7 @@ DispOpenGL::Render(const std::list<std::shared_ptr<DisplayOrder>> &orders) {
 }
 
 void DispOpenGL::Redraw() {
+    m_texcache->Clean();
     DisplayDelta target_size(GetDisplaySize());
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -308,20 +332,21 @@ void DispOpenGL::Redraw() {
     for (auto it=m_orders.cbegin(); it != m_orders.cend(); ++it) {
         auto dorder = *it;
         const PixelPromise &promise = dorder->GetPixelBufPromise();
-        auto cachekey = promise.GetCacheKey();
+        auto pixels = promise.GetPixels();
+        auto pixeldata = pixels.GetData();
+
         std::shared_ptr<Texture> tex;
-        if (cachekey) {
-            tex = m_texcache->Get(*cachekey);
+        if (pixeldata) {
+            tex = m_texcache->Get(pixels.GetData());
         }
 
         if (!tex) {
-            PixelBuf pixbuf = promise.GetPixels();
-            tex.reset(new Texture(pixbuf.GetWidth(),
-                                  pixbuf.GetHeight(),
-                                  pixbuf.GetRawData(),
+            tex.reset(new Texture(pixels.GetWidth(),
+                                  pixels.GetHeight(),
+                                  pixeldata.get(),
                                   promise.GetPixelFormat()));
-            if (cachekey) {
-                m_texcache->Insert(*cachekey, tex);
+            if (pixeldata) {
+                m_texcache->Insert(pixels.GetData(), tex);
             }
         }
 
