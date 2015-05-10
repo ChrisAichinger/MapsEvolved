@@ -1,8 +1,24 @@
+# Copyright 2015 Christian Aichinger <Greek0@gmx.net>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Pymaplib - A C++/Python library for reading and drawing maps"""
 
 import os
 import re
 import contextlib
+
+import sip
 
 # Load all the SIP wrappers into here
 from . import maplib_sip as maplib_sip
@@ -269,3 +285,39 @@ def _other_scale_maps(current_drawable, latlon, maplist, mpp_selector):
         viable_maps.append((mpp, drawable))
     return [drawable for mpp, drawable in sorted(viable_maps)]
 
+
+def _install_sip_object_copy_handler():
+    """Make SIP objects copyable using copy.copy()
+
+    Normally, SIP objects can not be copied with `copy.copy()` because
+    SIP doesn't define a `__copy__()` method and the default copy
+    implementation doesn't initialize the C++ objects correctly.
+
+    Ideally, SIP would generate a `__copy__()` for classes that have a copy
+    constructor declared. It doesn't do that, so manually add a `__copy__()`
+    method that just calls the class's copy constructor.
+
+    If the class is not copyable, a `TypeError` will be raised when trying
+    to copy the object.
+    """
+
+    def _copy_function(self):
+        return self.__class__(self)
+
+    for name, obj in maplib_sip.__dict__.items():
+        # Only copy SIP-generated classes, skip private classes.
+        if type(obj) != sip.wrappertype or name.startswith('_'):
+            continue
+
+        # Can't set attributes on SmartptrProxy.
+        if obj is maplib_sip.SmartptrProxy:
+            continue
+
+        # Don't make any shared_ptr's copyable.
+        # It would be surprising that the underlaying object is not copied.
+        if maplib_sip.SmartptrProxy in obj.__bases__:
+            continue
+
+        obj.__copy__ = _copy_function
+
+_install_sip_object_copy_handler()
