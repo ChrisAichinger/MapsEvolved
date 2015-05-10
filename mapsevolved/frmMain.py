@@ -1,3 +1,17 @@
+# Copyright 2015 Christian Aichinger <Greek0@gmx.net>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import sys
 import os
 import datetime
@@ -105,13 +119,16 @@ class MainFrame(wx.Frame):
             self.filelist.add_file(DEFAULT_MAP, ftype='MAP',
                                    title=_("Default World Map"))
 
-        util.bind_decorator_events(self)
+        util.bind_decorator_events(self, post_event_hook=self.updateui)
         util.bind_decorator_pubsubs(self)
 
         self.ogldisplay = pymaplib.CreateOGLDisplay(self.panel.GetHandle())
 
+        self.mapview = pymaplib.MapView(self.ogldisplay)
         self.mapdisplay = pymaplib.MapDisplayManager(
-                self.ogldisplay, self.filelist.maplist[0].drawable)
+                self.filelist.maplist[0].drawable,
+                self.ogldisplay.GetDisplaySize())
+        self.mapdisplay_changectr = None
         self.heightfinder = pymaplib.HeightFinder(self.filelist.maplist)
 
         # If initializing with our pre-supplied default map, zoom out to
@@ -136,6 +153,11 @@ class MainFrame(wx.Frame):
         self.uimode = uimodes.BaseUIMode(frame=self,
                                          mapdisplay=self.mapdisplay)
 
+    def updateui(self, evt):
+        if self.mapdisplay_changectr != self.mapdisplay.GetChangeCtr():
+            self.mapdisplay_changectr = self.mapdisplay.GetChangeCtr()
+            self.mapview.ForceFullRepaint()
+
     @util.EVENT(wx.EVT_CLOSE, id=xrc.XRCID('MainFrame'))
     def on_close_window(self, evt):
         evt.Skip()
@@ -150,11 +172,12 @@ class MainFrame(wx.Frame):
     @util.EVENT(wx.EVT_PAINT, id=xrc.XRCID('MapPanel'))
     def on_repaint_mappanel(self, evt):
         dc = wx.PaintDC(self.panel)
-        self.mapdisplay.Paint(self.overlays)
+        self.mapview.Paint(self.mapdisplay)
 
     @util.EVENT(wx.EVT_SIZE, id=xrc.XRCID('MapPanel'))
     def on_size_mappanel(self, evt):
-        self.mapdisplay.Resize(evt.Size.x, evt.Size.y)
+        new_size = pymaplib.DisplayDeltaInt(evt.Size.x, evt.Size.y)
+        self.mapdisplay.SetDisplaySize(new_size)
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ManageMapsMenuItem'))
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ManageMapsTBButton'))
@@ -190,11 +213,14 @@ class MainFrame(wx.Frame):
                               "the filename."))
             return
 
-        zoom = self.mapdisplay.GetZoom()
-        w = int(self.ogldisplay.GetDisplayWidth() / zoom)
-        h = int(self.ogldisplay.GetDisplayHeight() / zoom)
-        mr = self.mapdisplay.PaintToBuffer(pymaplib.ODM_PIX_RGBA4, w, h,
-                                           self.overlays)
+        # PaintToBuffer extracts its parameters from the MapDisplayManager.
+        # Create a temporary instance to hold the data.
+        mdm = pymaplib.MapDisplayManager(self.mapdisplay)
+        w = int(self.ogldisplay.GetDisplayWidth()  / mdm.GetZoom())
+        h = int(self.ogldisplay.GetDisplayHeight() / mdm.GetZoom())
+        mdm.SetDisplaySize(pymaplib.DisplayDeltaInt(w, h))
+        mdm.SetZoomOneToOne()
+        mr = self.mapview.PaintToBuffer(pymaplib.ODM_PIX_RGBA4, mdm)
         # Copy the image data to a modifyable buffer and set the alpha
         # values to 255. wx.Bitmap multiplies R,G,B by alpha on Win32, leading
         # to an all-black bitmap otherwise.
@@ -349,6 +375,7 @@ class MainFrame(wx.Frame):
         self.drag_suppress = True
         self.uimode.on_drag_end(evt)
 
+    # FIXME code duplication
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ZoomInTBButton'))
     def on_zoom_in(self, evt):
         self.mapdisplay.StepZoom(+1)
@@ -387,7 +414,7 @@ class MainFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('GPSTrackAnalyzerTBButton'))
     def on_show_gpstrackanalyzer(self, evt):
-        for overlay in self.overlays:
+        for overlay in self.overlays: # FIXME -> mdm-ize me
             maptype = overlay.GetMap().GetType()
             if maptype == pymaplib.GeoDrawable.TYPE_GPSTRACK:
                 gpstrack = overlay.GetMap()
@@ -401,7 +428,7 @@ class MainFrame(wx.Frame):
     @util.PUBSUB('gpsanalyzer.gps_point_hl_update')
     def on_track_hl_update(self, track, gpx):
         # Force redrawing all GPS tracks.
-        self.mapdisplay.ForceFullRepaint();
+        self.mapview.ForceFullRepaint()
 
     def show_gpstrackanalyzer(self, gpstrack):
         if self.gpstrackanalyzer_window:
@@ -643,6 +670,7 @@ class MainFrame(wx.Frame):
     def set_basemap(self, rastermap):
         self.mapdisplay.ChangeMap(rastermap)
         self.overlays = list(reversed(self.special_layers))
+        self.mapdisplay.SetOverlayList(self.overlays)
         self.update_layerlist_from_map()
 
     def add_overlay(self, rastermap):
@@ -651,7 +679,7 @@ class MainFrame(wx.Frame):
                 del self.overlays[i]
                 break
         self.overlays.append(pymaplib.OverlaySpec(rastermap))
-        self.mapdisplay.ForceFullRepaint();
+        self.mapdisplay.SetOverlayList(self.overlays)
         if not self.have_shown_layermgr_once:
             # Show the layer manager the first time the user adds an overlay.
             # Demonstrate the functionality without bothering the user again if
@@ -732,7 +760,7 @@ class MainFrame(wx.Frame):
         size = self.layerlistbox.Count - 1
         layers.extend(self.layerlistbox.GetClientData(i) for i in range(size))
         self.overlays = list(reversed(layers))
-        self.mapdisplay.ForceFullRepaint();
+        self.mapdisplay.SetOverlayList(self.overlays)
 
     def set_initial_size(self):
         disp = wx.Display(wx.Display.GetFromWindow(self))

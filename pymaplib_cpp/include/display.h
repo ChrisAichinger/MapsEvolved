@@ -14,6 +14,7 @@ class EXPORT Display {
         virtual unsigned int GetDisplayWidth() const = 0;
         virtual unsigned int GetDisplayHeight() const = 0;
         virtual DisplayDeltaInt GetDisplaySize() const = 0;
+        virtual void SetDisplaySize(const DisplayDeltaInt &new_size) = 0;
 
         // Render a new set of display orders.
         virtual void Render(
@@ -21,7 +22,6 @@ class EXPORT Display {
 
         // Redraw the current display orders.
         virtual void Redraw() = 0;
-        virtual void Resize(unsigned int width, unsigned int height) = 0;
         virtual void ForceRepaint() = 0;
 
         virtual PixelBuf

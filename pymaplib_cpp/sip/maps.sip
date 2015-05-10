@@ -50,9 +50,9 @@ class Display /Abstract/ {
         virtual unsigned int GetDisplayWidth() const = 0;
         virtual unsigned int GetDisplayHeight() const = 0;
         virtual DisplayDeltaInt GetDisplaySize() const = 0;
+        virtual void SetDisplaySize(const DisplayDeltaInt &new_size) = 0;
 
         //virtual void Render(class std::list<class DisplayOrder> &orders) = 0;
-        virtual void Resize(unsigned int width, unsigned int height) = 0;
         virtual void ForceRepaint() = 0;
 };
 
@@ -66,9 +66,9 @@ class DispOpenGL : public Display /NoDefaultCtors/ {
         virtual unsigned int GetDisplayWidth() const;
         virtual unsigned int GetDisplayHeight() const;
         virtual DisplayDelta GetDisplaySize() const;
+        virtual void SetDisplaySize(const DisplayDeltaInt &new_size);
 
         //virtual void Render(class std::list<class DisplayOrder> &orders);
-        virtual void Resize(unsigned int width, unsigned int height);
         virtual void ForceRepaint();
 };
 
@@ -130,46 +130,41 @@ enum ODMPixelFormat {
     ODM_PIX_RGBX4,
 };
 
-class MapDisplayManager /NoDefaultCtors/ {
+class MapDisplayManager {
 %TypeHeaderCode
 #include "rastermap.h"
 #include "mapdisplay.h"
 %End
     public:
-        MapDisplayManager(const DisplayShPtr &display,
-                          const GeoDrawableShPtr &initial_map);
-        MapDisplayManager(const DisplayShPtr &display,
-                          const RasterMapShPtr &initial_map);
+        MapDisplayManager(const GeoDrawableShPtr &initial_map,
+                          const DisplayDeltaInt &display_size);
+        MapDisplayManager(const RasterMapShPtr &initial_map,
+                          const DisplayDeltaInt &display_size);
 
 
-        GeoDrawableShPtr GetBaseMap() const;
         double GetZoom() const;
-        double GetCenterX() const;
-        double GetCenterY() const;
+        void StepZoom(double steps);
+        void StepZoom(double steps, const DisplayCoord &mouse_pos);
+        void SetZoomOneToOne();
+
+        const BaseMapCoord &GetCenter() const;
         void SetCenter(const BaseMapCoord &center);
         void SetCenter(const LatLon &center);
-        const BaseMapCoord &GetCenter() const;
 
+        GeoDrawableShPtr GetBaseMap() const;
         void ChangeMap(const GeoDrawableShPtr &new_map,
                        bool try_preserve_pos=true);
         void ChangeMap(const RasterMapShPtr &new_map,
                        bool try_preserve_pos=true);
-        void ForceFullRepaint();
 
-        void Resize(unsigned int width, unsigned int height);
-        void StepZoom(double steps);
-        // The map location under the mouse is held constant
-        void StepZoom(double steps, const DisplayCoord &mouse_pos);
-        void SetZoomOneToOne();
+        const DisplayDeltaInt &GetDisplaySize() const;
+        void SetDisplaySize(const DisplayDeltaInt &new_size);
+
+        const OverlayList &GetOverlayList() const;
+        void SetOverlayList(const OverlayList &overlay_list);
+
         void DragMap(const DisplayDelta &delta);
         void CenterToDisplayCoord(const DisplayCoord &center);
-        void Paint();
-        void Paint(const OverlayList &overlays);
-        PixelBuf PaintToBuffer(ODMPixelFormat format,
-                               unsigned int width, unsigned int height);
-        PixelBuf PaintToBuffer(ODMPixelFormat format,
-                               unsigned int width, unsigned int height,
-                               const OverlayList &overlays);
 
         BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp) const;
         BaseMapCoord
@@ -177,18 +172,20 @@ class MapDisplayManager /NoDefaultCtors/ {
 
         BaseMapDelta BaseDeltaFromDisplay(const DisplayDelta &disp) const;
 
-        DisplayCoordCentered
-        DisplayCoordCenteredFromBase(const BaseMapCoord &mpc) const;
+        unsigned int GetChangeCtr() const;
+};
 
-        DisplayCoordCentered
-        DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
-                                         const GeoDrawableShPtr &map) const;
-        DisplayCoordCentered
-        DisplayCoordCenteredFromMapPixel(const MapPixelCoordInt &mpc,
-                                         const GeoDrawableShPtr &map) const;
+class MapView /NoDefaultCtors/ {
+%TypeHeaderCode
+#include "mapdisplay.h"
+%End
+public:
+    MapView(const DisplayShPtr &display);
+
+    void Paint(const MapDisplayManager &mdm);
+    PixelBuf PaintToBuffer(ODMPixelFormat format,
+                           const MapDisplayManager &mdm);
+    void ForceFullRepaint();
 };
 
 std::wstring CompassPointFromDirection(double degrees);
-PixelBuf CalcPanorama(const GeoDrawableShPtr &map,
-                      const LatLon &pos);
-PixelBuf CalcPanorama(const RasterMapShPtr &map, const LatLon &pos);

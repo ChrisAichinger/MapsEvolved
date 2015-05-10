@@ -308,8 +308,8 @@ DispOpenGL::DispOpenGL(const std::shared_ptr<OGLContext> &ogl_context)
     LoadOGLEntryPoints();
 }
 
-void DispOpenGL::Resize(unsigned int width, unsigned int height) {
-    glViewport(0, 0, width, height);
+void DispOpenGL::SetDisplaySize(const DisplayDeltaInt &new_size) {
+    glViewport(0, 0, new_size.x, new_size.y);
 }
 
 void DispOpenGL::ForceRepaint() {
