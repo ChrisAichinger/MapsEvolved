@@ -75,8 +75,17 @@ OPERATORS_COORD_MULDIV(DisplayCoordCentered, x, y)
 
 
 // DisplayDelta
+DisplayDelta::DisplayDelta(const DisplayDeltaInt &src)
+    : x(src.x), y(src.y) {}
 OPERATORS_DELTA_ADDSUB(DisplayDelta, x, y)
 OPERATORS_DELTA_MULDIV(DisplayDelta, double, x, y)
+
+
+// DisplayDeltaInt
+DisplayDeltaInt::DisplayDeltaInt(const DisplayDelta &src)
+    : x(round_to_int(src.x)), y(round_to_int(src.y)) {}
+OPERATORS_DELTA_ADDSUB(DisplayDeltaInt, x, y)
+OPERATORS_DELTA_MULDIV(DisplayDeltaInt, int, x, y)
 
 
 // MapPixelCoord
@@ -209,6 +218,7 @@ double MapBezierGradient::Abs() const {
 OPERATORS_COORD_MULDIV(MapBezierGradient, x, y)
 
 
+// BorderIterator
 BorderIterator::BorderIterator(const MapPixelCoordInt &rect_tl,
                               const MapPixelCoordInt &rect_br)
     : m_tl(rect_tl), m_br(rect_br), m_value(rect_tl), m_pos(0)

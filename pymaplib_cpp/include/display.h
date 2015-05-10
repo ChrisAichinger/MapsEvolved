@@ -13,7 +13,7 @@ class EXPORT Display {
     public:
         virtual unsigned int GetDisplayWidth() const = 0;
         virtual unsigned int GetDisplayHeight() const = 0;
-        virtual DisplayDelta GetDisplaySize() const = 0;
+        virtual DisplayDeltaInt GetDisplaySize() const = 0;
 
         // Render a new set of display orders.
         virtual void Render(

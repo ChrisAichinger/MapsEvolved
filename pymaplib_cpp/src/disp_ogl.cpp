@@ -392,10 +392,10 @@ unsigned int DispOpenGL::GetDisplayHeight() const {
     return rect[GLR_HEIGHT];
 }
 
-DisplayDelta DispOpenGL::GetDisplaySize() const {
+DisplayDeltaInt DispOpenGL::GetDisplaySize() const {
     int rect[GLR_ARRAYLEN];
     glGetIntegerv(GL_VIEWPORT, rect);
-    return DisplayDelta(rect[GLR_WIDTH], rect[GLR_HEIGHT]);
+    return DisplayDeltaInt(rect[GLR_WIDTH], rect[GLR_HEIGHT]);
 }
 
 PixelBuf DispOpenGL::RenderToBuffer(

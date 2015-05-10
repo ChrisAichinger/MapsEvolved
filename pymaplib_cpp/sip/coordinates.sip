@@ -157,6 +157,30 @@ class DisplayDelta {
         %End
 };
 
+class DisplayDeltaInt {
+%TypeHeaderCode
+#include "coordinates.h"
+%End
+    public:
+        DisplayDeltaInt();
+        DisplayDeltaInt(int x_, int y_);
+
+        DisplayDeltaInt& operator+=(const DisplayDeltaInt &rhs);
+        DisplayDeltaInt& operator-=(const DisplayDeltaInt &rhs);
+        DisplayDelta& operator*=(int factor);
+        DisplayDelta& operator/=(int divisor);
+
+        int x;
+        int y;
+
+        SIP_PYOBJECT __repr__();
+        %MethodCode
+            sipRes = repr_helper(sipSelf, sipCpp->x, sipCpp->y);
+            if (!sipRes)
+                sipIsErr = 1;
+        %End
+};
+
 
 class MapPixelCoord {
 %TypeHeaderCode
@@ -422,6 +446,8 @@ bool operator==(const DisplayCoordCentered& lhs, const DisplayCoordCentered& rhs
 bool operator!=(const DisplayCoordCentered& lhs, const DisplayCoordCentered& rhs);
 bool operator==(const DisplayDelta& lhs, const DisplayDelta& rhs);
 bool operator!=(const DisplayDelta& lhs, const DisplayDelta& rhs);
+bool operator==(const DisplayDeltaInt& lhs, const DisplayDeltaInt& rhs);
+bool operator!=(const DisplayDeltaInt& lhs, const DisplayDeltaInt& rhs);
 
 bool operator==(const MapPixelCoord& lhs, const MapPixelCoord& rhs);
 bool operator!=(const MapPixelCoord& lhs, const MapPixelCoord& rhs);
@@ -446,6 +472,14 @@ bool operator!=(const BaseMapDelta& lhs, const BaseMapDelta& rhs);
 DisplayDelta operator*(DisplayDelta lhs, double rhs);
 DisplayDelta operator*(double lhs, DisplayDelta rhs);
 DisplayDelta operator/(DisplayDelta lhs, double rhs);
+// Don't define these for now, as they have the same Python signature
+// as the int version below.
+//DisplayDelta operator*(DisplayDeltaInt lhs, double rhs);
+//DisplayDelta operator*(double lhs, DisplayDeltaInt rhs);
+//DisplayDelta operator/(DisplayDeltaInt lhs, double rhs);
+DisplayDeltaInt operator*(DisplayDeltaInt lhs, int rhs);
+DisplayDeltaInt operator*(int lhs, DisplayDeltaInt rhs);
+DisplayDeltaInt operator/(DisplayDeltaInt lhs, int rhs);
 DisplayCoordCentered operator*(DisplayCoordCentered lhs, double rhs);
 DisplayCoordCentered operator*(double lhs, DisplayCoordCentered rhs);
 DisplayCoordCentered operator/(DisplayCoordCentered lhs, double rhs);
@@ -486,6 +520,9 @@ PixelBufDelta operator-(PixelBufDelta lhs, const PixelBufDelta &rhs);
 
 DisplayDelta operator+(DisplayDelta lhs, const DisplayDelta &rhs);
 DisplayDelta operator-(DisplayDelta lhs, const DisplayDelta &rhs);
+
+DisplayDeltaInt operator+(DisplayDeltaInt lhs, const DisplayDeltaInt &rhs);
+DisplayDeltaInt operator-(DisplayDeltaInt lhs, const DisplayDeltaInt &rhs);
 
 MapPixelDelta operator+(MapPixelDelta lhs, const MapPixelDelta &rhs);
 MapPixelDelta operator-(MapPixelDelta lhs, const MapPixelDelta &rhs);

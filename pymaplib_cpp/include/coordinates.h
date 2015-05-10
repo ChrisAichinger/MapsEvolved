@@ -71,6 +71,7 @@ class EXPORT DisplayDelta {
     public:
         DisplayDelta() : x(0), y(0) {};
         DisplayDelta(double x_, double y_) : x(x_), y(y_) {};
+        explicit DisplayDelta(const class DisplayDeltaInt &src);
 
         DisplayDelta& operator+=(const class DisplayDelta &rhs);
         DisplayDelta& operator-=(const class DisplayDelta &rhs);
@@ -78,6 +79,20 @@ class EXPORT DisplayDelta {
         DisplayDelta& operator/=(double divisor);
 
         double x, y;
+};
+
+class EXPORT DisplayDeltaInt {
+    public:
+        DisplayDeltaInt() : x(0), y(0) {};
+        DisplayDeltaInt(int x_, int y_) : x(x_), y(y_) {};
+        DisplayDeltaInt::DisplayDeltaInt(const DisplayDelta &src);
+
+        DisplayDeltaInt& operator+=(const class DisplayDeltaInt &rhs);
+        DisplayDeltaInt& operator-=(const class DisplayDeltaInt &rhs);
+        DisplayDeltaInt& operator*=(int factor);
+        DisplayDeltaInt& operator/=(int divisor);
+
+        int x, y;
 };
 
 class EXPORT DisplayRectCentered {
@@ -303,11 +318,26 @@ class EXPORT MapBezierGradient {
         return lhs;                                                           \
     }
 
+#define OPERATORS_MULDIV_INT_WITH_DOUBLE(IntClass, DoubleClass)               \
+inline DoubleClass                                                            \
+operator*(const IntClass &lhs, double rhs) {                                  \
+    return DoubleClass(lhs.x * rhs, lhs.y * rhs);                             \
+}                                                                             \
+inline DoubleClass                                                            \
+operator*(double lhs, const IntClass &rhs) {                                  \
+    return DoubleClass(lhs * rhs.x, lhs * rhs.y);                             \
+}                                                                             \
+inline DoubleClass                                                            \
+operator/(const IntClass &lhs, double rhs) {                                  \
+    return DoubleClass(lhs.x / rhs, lhs.y / rhs);                             \
+}
+
 OPERATORS_EQ_STREAM(PixelBufCoord)
 OPERATORS_EQ_STREAM(PixelBufDelta)
 OPERATORS_EQ_STREAM(DisplayCoord)
 OPERATORS_EQ_STREAM(DisplayCoordCentered)
 OPERATORS_EQ_STREAM(DisplayDelta)
+OPERATORS_EQ_STREAM(DisplayDeltaInt)
 OPERATORS_EQ_STREAM(MapPixelCoord)
 OPERATORS_EQ_STREAM(MapPixelDelta)
 OPERATORS_EQ_STREAM(MapPixelCoordInt)
@@ -317,6 +347,7 @@ OPERATORS_EQ_STREAM(BaseMapCoord)
 OPERATORS_EQ_STREAM(BaseMapDelta)
 
 OPERATORS_MULDIV(DisplayDelta, double)
+OPERATORS_MULDIV(DisplayDeltaInt, int)
 OPERATORS_MULDIV(DisplayCoordCentered, double)
 OPERATORS_MULDIV(MapPixelDelta, double)
 OPERATORS_MULDIV(BaseMapDelta, double)
@@ -332,10 +363,14 @@ OPERATORS_ADDSUB(BaseMapCoord, BaseMapDelta)
 
 OPERATORS_ADDSUB1(PixelBufDelta)
 OPERATORS_ADDSUB1(DisplayDelta)
+OPERATORS_ADDSUB1(DisplayDeltaInt)
 OPERATORS_ADDSUB1(MapPixelDelta)
 OPERATORS_ADDSUB1(MapPixelDeltaInt)
 OPERATORS_ADDSUB1(LatLonDelta)
 OPERATORS_ADDSUB1(BaseMapDelta)
+
+OPERATORS_MULDIV_INT_WITH_DOUBLE(DisplayDeltaInt, DisplayDelta)
+OPERATORS_MULDIV_INT_WITH_DOUBLE(MapPixelDeltaInt, MapPixelDelta)
 
 inline DisplayDelta
 operator-(const DisplayCoord &lhs, const DisplayCoord &rhs) {
@@ -360,22 +395,6 @@ operator-(const MapPixelCoordInt &lhs, const MapPixelCoordInt &rhs) {
 inline BaseMapDelta
 operator-(const BaseMapCoord &lhs, const BaseMapCoord &rhs) {
     return BaseMapDelta(lhs.x - rhs.x, lhs.y - rhs.y);
-}
-
-
-inline MapPixelDelta
-operator*(const MapPixelDeltaInt &lhs, double rhs) {
-    return MapPixelDelta(lhs.x * rhs, lhs.y * rhs);
-}
-
-inline MapPixelDelta
-operator*(double lhs, const MapPixelDeltaInt &rhs) {
-    return MapPixelDelta(lhs * rhs.x, lhs * rhs.y);
-}
-
-inline MapPixelDelta
-operator/(const MapPixelDeltaInt &lhs, double rhs) {
-    return MapPixelDelta(lhs.x / rhs, lhs.y / rhs);
 }
 
 

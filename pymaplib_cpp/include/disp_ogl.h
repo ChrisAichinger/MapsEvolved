@@ -22,7 +22,7 @@ class EXPORT DispOpenGL : public Display {
 
         virtual unsigned int GetDisplayWidth() const;
         virtual unsigned int GetDisplayHeight() const;
-        virtual DisplayDelta GetDisplaySize() const;
+        virtual DisplayDeltaInt GetDisplaySize() const;
 
         virtual void Render(
                 const class std::list<std::shared_ptr<DisplayOrder>> &orders);

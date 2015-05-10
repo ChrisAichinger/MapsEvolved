@@ -49,7 +49,7 @@ class Display /Abstract/ {
     public:
         virtual unsigned int GetDisplayWidth() const = 0;
         virtual unsigned int GetDisplayHeight() const = 0;
-        virtual DisplayDelta GetDisplaySize() const = 0;
+        virtual DisplayDeltaInt GetDisplaySize() const = 0;
 
         //virtual void Render(class std::list<class DisplayOrder> &orders) = 0;
         virtual void Resize(unsigned int width, unsigned int height) = 0;
