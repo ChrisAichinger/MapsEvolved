@@ -1,15 +1,30 @@
+# Copyright 2015 Christian Aichinger <Greek0@gmx.net>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import sys
 import os
 import imp
 import math
-import contextlib
 import functools
+import contextlib
+import collections
 
 import wx
 import wx.xrc as xrc
 import wx.lib.pubsub
 
-from mapsevolved import xh_gizmos
+from . import xh_gizmos
 
 def main_is_frozen():
     """Determine if run via py2exe or a similar tool"""
@@ -55,32 +70,123 @@ _command_events = {
     wx.EVT_COMMAND_KILL_FOCUS, wx.EVT_COMMAND_ENTER,
 }
 
-def EVENT(event, id=wx.ID_ANY, id2=wx.ID_ANY, bind_on_parent=False):
+def register_command_event(event_type):
+    """Register `event_type` as command event with the EVENT mechanism.
+
+    For non-command events, only the control that caused the event to occur is
+    searched for event handlers. In contrast, command events are passed up to
+    the parent object if the control doesn't define a handler itself.
+
+    The EVENT mechanism allows binding events on parents only if it knows
+    a specific event to be a command event. Doing otherwise would be a pitfall
+    for users.
+
+    The list of command events is currently hardcoded. This call can be used
+    to extend this list at runtime to register events unknown to the EVENT
+    framework.
+    """
+
+    _command_events.add(evt_type)
+
+class EventSpec:
+    """Internal data store for the EVENT mechanism."""
+    def __init__(self, event_type, id, id2, bind_on_parent):
+        self.event_type = event_type
+        self.id = id
+        self.id2 = id2
+        self.bind_on_parent = bind_on_parent
+
+def EVENT(event_type, id=wx.ID_ANY, id2=wx.ID_ANY, bind_on_parent=False):
+    """Decorator to make the decorated function an event handler.
+
+    Designate the decorated function as wx handler for `event_type` events.
+    The event binding does not occur immediately. Instead, the binding is
+    created when `bind_decorator_events()` is called during initialization of
+    a wx control.
+
+    Both, the `id` and `id2` parameters are forwarded to `Bind()`. If
+    `bind_on_parent` is set to `True`, the event is bound on the control's
+    parent instead of on the control itself. This is only valid for
+    command events, because non-command events don't percolate upwards
+    to the parent at all.
+    """
+
     def func(f):
         if not hasattr(f, 'wxevent'):
             f.wxevent = []
-        f.wxevent.append((event, id, id2, bind_on_parent))
+        f.wxevent.append(EventSpec(event_type, id, id2, bind_on_parent))
         return f
     return func
 
-def bind_decorator_events(eventhandler, wxcontainer=None):
-    if wxcontainer is None:
-        wxcontainer = eventhandler
+def _hook_function(func, pre_func_hook=None, post_func_hook=None):
+    """Wrap a function with pre- and post-processing hooks.
 
-    for funcname in dir(eventhandler):
-        func = getattr(eventhandler, funcname)
-        if hasattr(func, 'wxevent'):
-            for event, id, id2, bind_on_parent in func.wxevent:
-                source = wxcontainer.FindWindowById(id)
-                if bind_on_parent or not source:
-                    # Allow binding on parents only if the event is a
-                    # CommandEvent, since normal Events do not propagate
-                    # upwards!
-                    assert(event in _command_events)
-                    wxcontainer.Bind(event, func, id=id, id2=id2)
-                else:
-                    source.Bind(event, func, id=id, id2=id2)
+    Return a new function that calls `pre_func_hook()`, `func()`,
+    `post_func_hook()`.
 
+    All functions receive the same arguments as the wrapper was called with.
+    The return value of the wrapper is the return value of `func()`.
+
+    Both hooks are optional and can be omitted.
+    """
+    if not pre_func_hook and not post_func_hook:
+        return func
+
+    @functools.wraps(func)
+    def f(*args, **kwargs):
+        if pre_func_hook:
+            pre_func_hook(*args, **kwargs)
+        result = func(*args, **kwargs)
+        if post_func_hook:
+            post_func_hook(*args, **kwargs)
+        return result
+
+    return f
+
+def bind_decorator_events(handlerobj, wxcontrol=None, *,
+                          pre_event_hook=None, post_event_hook=None):
+    """Bind event handlers registered with util.EVENT
+
+    Bind all event handler functions declared in `handlerobj` with the
+    util.EVENT decorator to receive events from `wxcontrol`.
+
+    Arguments:
+
+    * `handlerobj` is an object that contains the `util.EVENT` handler
+      function definitions.
+    * `wxcontrol` is the wx control to receive events from. If not specified,
+      events are bound to `handlerobj` instead. This entails that `handlerobj`
+      must be a valid wx control itself, in this case.
+
+    Keyword-only arguments:
+
+    * `pre_event_hook` is a callback to be invoked every time before any event
+      handler is called.
+    * `post_event_hook` is a callback to be invoked every time after any event
+      handler is called.
+
+    Both `pre_event_hook` and `post_event_hook` receive same arguments as the
+    handler: a single event parameter. Their return value is ignored.
+    """
+
+    if wxcontrol is None:
+        wxcontrol = handlerobj
+
+    for funcname in dir(handlerobj):
+        func = getattr(handlerobj, funcname)
+        func = _hook_function(func, pre_event_hook, post_event_hook)
+        if not hasattr(func, 'wxevent'):
+            continue
+        for spec in func.wxevent:
+            source = wxcontrol.FindWindowById(spec.id)
+            if spec.bind_on_parent or not source:
+                # Allow binding on parents only if the event is a
+                # CommandEvent, since normal Events do not propagate
+                # upwards!
+                assert spec.event_type in _command_events
+                wxcontrol.Bind(spec.event_type, func, id=spec.id, id2=spec.id2)
+            else:
+                source.Bind(spec.event_type, func, id=spec.id, id2=spec.id2)
 
 def PUBSUB(topicName):
     def func(f):
@@ -96,6 +202,7 @@ def bind_decorator_pubsubs(eventhandler):
         if hasattr(func, 'wxpubsub'):
             for topic_name in func.wxpubsub:
                 wx.lib.pubsub.pub.subscribe(func, topic_name)
+
 
 
 def YesNo(parent, question, caption='Maps Evolved'):

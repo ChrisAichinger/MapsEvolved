@@ -28,7 +28,7 @@ class ItemInfoPanel:
         self.desc_tb = xrc.XRCCTRL(panel, 'ItemDescTextCtrl')
         self.proj_tb = xrc.XRCCTRL(panel, 'ItemProjTextCtrl')
 
-        util.bind_decorator_events(self, wxcontainer=panel)
+        util.bind_decorator_events(self, wxcontrol=panel)
         self.set_info(None)
 
     def set_info(self, container, drawable=None):

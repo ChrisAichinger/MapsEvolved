@@ -114,7 +114,7 @@ class GPSDrawUIMode(BaseUIMode):
             raise RuntimeError("Could not load GPS drawing " +
                                "popup menu from XRC.")
 
-        util.bind_decorator_events(self, wxcontainer=self.frame)
+        util.bind_decorator_events(self, wxcontrol=self.frame)
 
     def try_exit_mode(self):
         # Only ask to save if the user actually created a track.
