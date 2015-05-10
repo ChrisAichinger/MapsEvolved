@@ -82,7 +82,7 @@ def build(ctx, config, targets='all'):
     init_sh = os.path.join(ROOT, "tools", "init_shell.py")
     gmake = os.path.join(ROOT, "third-party", "unxutils", "make.exe")
     venv = os.path.join(ROOT, 'venv')
-    cmd = [sys.executable, init_sh, venv, gmake]
+    cmd = [sys.executable, init_sh, venv, gmake, '-j', '4']
     config_arg = { 'release': ['RELEASE=1'], 'debug': [] }[config.lower()]
     targets = targets.split(',')
     ctx.run(cmd + config_arg + targets, env=sanitized_env(), cwd=SIP_SRC)

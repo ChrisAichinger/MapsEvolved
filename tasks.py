@@ -42,7 +42,7 @@ def copy_thirdparty_libs(ctx):
              'args': 'Additional arguments for msbuild'})
 def build_cpp(ctx, config=None, args=''):
     """Build the pymaplib_cpp library"""
-    cmd = 'call "%VS100COMNTOOLS%\\vsvars32.bat" && cd pymaplib_cpp && msbuild '
+    cmd = 'call "%VS100COMNTOOLS%\\vsvars32.bat" && cd pymaplib_cpp && msbuild /m '
     if config is not None:
         cmd += '/p:Configuration={config} '
     cmd += args

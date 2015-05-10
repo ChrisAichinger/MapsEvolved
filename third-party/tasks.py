@@ -72,7 +72,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'rename': [('libjpeg-turbo-1.4.0', 'libjpeg-turbo')],
        'build': [('{cmake} -DNASM="{nasm}"  -DCMAKE_INSTALL_PREFIX=instdir '
                           '-G "{cmake_generator}"'),
-                 ('{cmake} --build . --target install --config {cmake_config}')],
+                 ('{cmake} --build . --target install --config {cmake_config} -- /m')],
        'publish': ['instdir\\bin\\jpeg62.dll'],
    }),
    ('proj4', {
@@ -85,7 +85,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
                           '-DINCLUDEDIR=instdir\\include -DLIBDIR=instdir\\lib '
                           '-DPROJ_CORE_TARGET_OUTPUT_NAME=proj '
                           '-G "{cmake_generator}"'),
-                 ('{cmake} --build . --target install --config {cmake_config}'),
+                 ('{cmake} --build . --target install --config {cmake_config} -- /m'),
                 ],
        'publish': ['instdir\\bin\\proj.dll'],
    }),
