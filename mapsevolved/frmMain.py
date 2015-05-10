@@ -163,7 +163,7 @@ class MainFrame(wx.Frame):
             util.force_show_window(self.manage_maps_window)
         else:
             self.manage_maps_window = frmMapManager.MapManagerFrame(
-                    self, self.filelist, self.mapdisplay)
+                    self, self.filelist)
             self.manage_maps_window.Show()
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('SaveBitmapMenuItem'))
@@ -204,7 +204,7 @@ class MainFrame(wx.Frame):
         for i in range(w*h):
             data[4*i + 3] = 0xFF
         bmp = wx.Bitmap.FromBufferRGBA(w, h, data)
-        # Mirror image horizontally - PaintToBuffer produces the wrong
+        # Mirror image vertically - PaintToBuffer produces the wrong
         # top-down/bottom-up orientation for us.
         img = bmp.ConvertToImage().Mirror(horizontally=False)
         img.SaveFile(saveFileDialog.GetPath(), ftype)

@@ -105,7 +105,7 @@ class FileDropTargetEventPoster(wx.FileDropTarget):
 
 
 class MapManagerFrame(wx.Frame):
-    def __init__(self, parent, filelist, mapdisplay):
+    def __init__(self, parent, filelist):
         wx.Frame.__init__(self)
         # 3-argument LoadFrame() calls self.Create(), so skip 2-phase creation.
         res = util.get_resources("main")
@@ -132,7 +132,6 @@ class MapManagerFrame(wx.Frame):
 
         self.parent = parent
         self.filelist = filelist
-        self.mapdisplay = mapdisplay
         self.maptreectrl = xrc.XRCCTRL(self, 'MapTreeList')
         self.type_filter = xrc.XRCCTRL(self, 'TypeFilterTree')
         self.iteminfo_panel = xrc.XRCCTRL(self, 'ItemInfoPanel')
