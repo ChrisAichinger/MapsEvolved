@@ -69,7 +69,7 @@ class BaseUIMode(UIMode):
 
     def on_mouse_l_dblclick(self, evt):
         pos = pymaplib.DisplayCoord(evt.x, evt.y)
-        self.mapdisplay.CenterToDisplayCoord(pos)
+        self.mapdisplay.SetCenter(pos)
 
     def on_mouse_vert_wheel(self, evt):
         pos = evt.GetPosition()
@@ -82,7 +82,7 @@ class BaseUIMode(UIMode):
 
     def on_drag(self, evt, last_pos):
         pos_delta = evt.GetPosition() - last_pos
-        self.mapdisplay.DragMap(
+        self.mapdisplay.MoveCenter(
                 pymaplib.DisplayDelta(pos_delta.x, pos_delta.y))
         self.panel.Refresh(eraseBackground=False)
 

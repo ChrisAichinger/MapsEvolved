@@ -668,7 +668,7 @@ class MainFrame(wx.Frame):
                _("Steepness: %.1f°") % ti.steepness_deg, i=3)
 
     def set_basemap(self, rastermap):
-        self.mapdisplay.ChangeMap(rastermap)
+        self.mapdisplay.SetBaseMap(rastermap)
         self.overlays = list(reversed(self.special_layers))
         self.mapdisplay.SetOverlayList(self.overlays)
         self.update_layerlist_from_map()

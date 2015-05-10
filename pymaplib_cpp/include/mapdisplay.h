@@ -69,49 +69,106 @@ class EXPORT MapDisplayManager {
         /** Make one map pixel show up as one pixel on the screen. */
         void SetZoomOneToOne();
 
-        /** Return the location currently centered on the display
+        /** Return the location currently centered on the display.
          *
-         *  In `BaseMapCoord`'s, that is in pixel coordinates on the base map.
+         *  In `BaseMapCoord`'s, that is in pixel coordinates on the basemap.
          */
         const BaseMapCoord &GetCenter() const;
 
-        /** Set the center location on display
+        /** Set the center location on display.
          *
-         *  In `BaseMapCoord`'s, that is in pixel coordinates on the base map.
+         *  In `BaseMapCoord`'s, that is in pixel coordinates on the basemap.
          */
         void SetCenter(const BaseMapCoord &center);
 
-        /** Set the center location on display
+        /** Set the center location on display.
          *
          *  In `LatLon`'s, that is in geographical coordinates on the world.
          */
         void SetCenter(const LatLon &center);
 
-        // FIXME: Should move to the controller, instead have a MoveCenter(BaseMapCoord)
-        void DragMap(const DisplayDelta &delta);
-        // FIXME: Should become SetCenter(DisplayCoord)
-        void CenterToDisplayCoord(const DisplayCoord &center);
+        /** Set the center location on display.
+         *
+         *  In `DisplayCoord`'s, i.e. move the map so that the pixel location
+         *  on the screen `center` becomes the new map center.
+         */
+        void SetCenter(const DisplayCoord &center);
 
+        /** Set the map center relative to the old center.
+         *
+         * The offset is given in `DisplayDelta` units, i.e. as number of
+         * pixels on the user's screen.
+         */
+        void MoveCenter(const DisplayDelta &delta);
 
+        /** Get the current basemap.
+         *
+         * The basemap is special because it defines the projection used for
+         * all other maps. It is drawn so that one map pixel is exactly
+         * on one display pixel (disregarding zoom for the moment) and "up" on
+         * the map is the same as "up" on the display.
+         *
+         * Other maps (drawn as overlays) may have different projections. To
+         * make the maps show the same real-world coordinate at the same
+         * display location, the overlaid maps are reprojected to fit the
+         * projection established by the basemap. This generally results in
+         * lower-quality display (due to scaling/stretching/rotating).
+         *
+         * The basemap is also the lowest map in the z-order on display, all
+         * overlays draw over it.
+         */
         std::shared_ptr<GeoDrawable> GetBaseMap() const;
-        void ChangeMap(const std::shared_ptr<GeoDrawable> &new_map,
-                       bool try_preserve_pos=true);
 
+        /** Set a new basemap.
+         *
+         * If `try_preserve_pos` is `false`, the display is centered to the
+         * center of the new basemap.
+         *
+         * If try_preserve_pos is `true` (the default), the world location
+         * (LatLon) currently displayed is preserved, if possible. Preserving
+         * the current world position will succeed if that location is within
+         * the new basemap.
+         */
+        void SetBaseMap(const std::shared_ptr<GeoDrawable> &new_map,
+                        bool try_preserve_pos=true);
+
+        /** Get the size of the map display area, in screen pixels. */
         const DisplayDeltaInt &GetDisplaySize() const { return m_display_size; }
+
+        /** Set the size of the map display area, in screen pixels.
+         *
+         * This does not actively update the screen by itself,
+         * `MapDisplayManager` has no knowledge of how or where the output is
+         * shown. However, display engines may react if they see a new value
+         * here.
+         */
         void SetDisplaySize(const DisplayDeltaInt &new_size);
 
+        /** Get the list of overlays drawn over the basemap.
+         *
+         * This can include other maps, GPS tracks, gridlines, ...
+         */
         const OverlayList &GetOverlayList() const { return m_overlays; }
+
+        /** Get the list of overlays drawn over the basemap. */
         void SetOverlayList(const OverlayList &overlay_list);
 
+        /** A generation counter updated on every data modification.
+         *
+         * A change in the reported value indicates that the display should
+         * likely be updated.
+         */
+        unsigned int GetChangeCtr() const { return m_change_ctr; }
+
         // Utility functions
-        BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp) const;
+        BaseMapCoord
+        BaseCoordFromDisplay(const DisplayCoord &disp) const;
+
         BaseMapCoord
         BaseCoordFromDisplay(const DisplayCoordCentered &disp) const;
 
-        BaseMapDelta BaseDeltaFromDisplay(const DisplayDelta &disp) const;
-
-        DisplayCoordCentered
-        DisplayCoordCenteredFromBase(const BaseMapCoord &mpc) const;
+        BaseMapDelta
+        BaseDeltaFromDisplay(const DisplayDelta &disp) const;
 
         DisplayCoordCentered
         DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
@@ -120,42 +177,40 @@ class EXPORT MapDisplayManager {
         DisplayCoordCenteredFromMapPixel(const MapPixelCoordInt &mpc,
                          const std::shared_ptr<GeoDrawable> &map) const;
 
-        unsigned int GetChangeCtr() const { return m_change_ctr; }
 
     private:
+        /** Try a location-preserving basemap change, fail if not possible. */
         bool TryChangeMapPreservePos(
                 const std::shared_ptr<GeoDrawable> &new_map);
 
+        /** Factor by how much the zoom is changed on one zoom 'step'. */
         static const double ZOOM_STEP;
 
         std::shared_ptr<GeoDrawable> m_base_map;
         OverlayList m_overlays;
-
-        // The base map pixel currently shown at the center of the display.
         BaseMapCoord m_center;
-
-        // Zoom of the base map. Larger values indicate higher "zoom".
-        // Basemap pixels take up m_zoom display pixels on screen.
         double m_zoom;
-
-        // Size of the map display on screen.
         DisplayDeltaInt m_display_size;
-
-        // Change counter that is increased on every modification.
         unsigned int m_change_ctr;
 };
 
 
+/** A view object responsible for painting the current data model. */
 class EXPORT MapView {
 DISALLOW_COPY_AND_ASSIGN(MapView);
 public:
     MapView(const std::shared_ptr<class Display> &display);
 
+    /** Repaint the display based on data from a `MapDisplayManager`. */
     void Paint(const MapDisplayManager &mdm);
+
+    /** Paint to a buffer based on data from a `MapDisplayManager`. */
     PixelBuf PaintToBuffer(ODMPixelFormat format,
                            const MapDisplayManager &mdm);
 
+    /** Schedule a full repaint of the display. */
     void ForceFullRepaint();
+
 private:
     static const int TILE_SIZE = 512;
 
@@ -166,14 +221,23 @@ private:
     std::map<const TileCode, std::shared_ptr<class PixelPromise>
             > m_old_promise_cache, m_new_promise_cache;
 
-    // Generate a list of DisplayOrders for the current position and zoom
-    // level. This encompasses the basemap as well as all overlays.
+
+    // IMPLEMENTATION FUNCTIONS
+    ///////////////////////////
+
+    /** Generate a `DisplayOrder` list for the current position and zoom.
+     *
+     * This encompasses the basemap as well as all overlays.
+     */
     std::list<std::shared_ptr<class DisplayOrder>>
     GenerateDisplayOrders(const MapDisplayManager &mdm);
 
-    // Calculate the map tiles required for filligng the display region,
-    // and add display orders to show those tiles.
-    // This is the default for most maps.
+    /** Generate display orders for a `GetRegion()` map layer, based on tiling.
+     *
+     * Calculate the map tiles required for filligng the display region,
+     * and add display orders to show those tiles.
+     * This is the default for most maps.
+     */
     void PaintLayerTiled(
         const MapDisplayManager &mdm,
         std::list<std::shared_ptr<class DisplayOrder>> *orders,
@@ -183,14 +247,17 @@ private:
         const MapPixelDeltaInt &tile_size,
         double transparency);
 
-    // Add an order effecting GetRegionDirect(), which takes information
-    // about the current projection, and returns a PixelBuf with the size
-    // of the current display. That region is then shown directly on the
-    // display without the need for rotation, stretching, ...
-    // This is impractical for typical maps, as it requires re-reading the
-    // image each time, it is however useful for displaying GPS Tracks and
-    // other overlays. Moving overlays through the tile mechanism would
-    // cause stretching, compromising display quality.
+    /** Generate display orders for a `GetRegionDirect()` map layer.
+     *
+     * Add an order effecting GetRegionDirect(), which takes information
+     * about the current projection, and returns a PixelBuf with the size
+     * of the current display. That region is then shown directly on the
+     * display without the need for rotation, stretching, ...
+     * This is impractical for typical maps, as it requires re-reading the
+     * image each time, it is however useful for displaying GPS Tracks and
+     * other overlays. Moving overlays through the tile mechanism would
+     * cause stretching, compromising display quality.
+     */
     void PaintLayerDirect(
         const MapDisplayManager &mdm,
         std::list<std::shared_ptr<DisplayOrder>> *orders,
@@ -199,7 +266,21 @@ private:
         const MapPixelDelta &half_disp_size,
         double transparency);
 
-    bool CalcOverlayTiles(
+    /** Get the map region of an overlay map required to fill the display area.
+     *
+     * Overlays may have any spatial relation to the base map, they can be
+     * compressed, stretched, rotated, with transformation possibly varying
+     * from point to point.
+     *
+     * Find out which region of the overlay map must be drawn so that the whole
+     * display area is covered. The result is rounded to a full tile size and
+     * returned in `overlay_tl` and `overlay_br`.
+     *
+     * Returning a rect may be suboptimal for oddly oriented maps, as it can
+     * cause loading lots of tiles that do not actually end up on the screen.
+     * It's good enough for now, though.
+     */
+    bool CalcOverlayRect(
         const std::shared_ptr<GeoDrawable> &base_map,
         const std::shared_ptr<GeoDrawable> &overlay_map,
         const MapPixelDeltaInt &tile_size,

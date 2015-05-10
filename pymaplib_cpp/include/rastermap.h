@@ -102,10 +102,12 @@ class EXPORT GeoDrawable : public GeoPixels {
         virtual bool SupportsConcurrentGetRegion() const { return false; }
 };
 
-// Helper function for GetRegion():
-// Checks if pos and size are within bounds and crops the region if necessary.
-// It may call drawable.GetRegion() again with updated pos and size!
-// If the return value is valid, it can be returned directly from GetRegion().
+/** Helper function for `GetRegion()`
+ *
+ * Checks if pos and size are within bounds and crops the region if necessary.
+ * It may call `drawable.GetRegion()` again with updated `pos` and `size`!
+ * If the return value is valid, it can be returned directly from `GetRegion()`.
+ */
 PixelBuf EXPORT GetRegion_BoundsHelper(const GeoDrawable &drawable,
                                        const MapPixelCoordInt &pos,
                                        const MapPixelDeltaInt &size);

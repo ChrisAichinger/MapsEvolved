@@ -72,7 +72,7 @@ bool MapDisplayManager::TryChangeMapPreservePos(
     return true;
 }
 
-void MapDisplayManager::ChangeMap(
+void MapDisplayManager::SetBaseMap(
         const std::shared_ptr<class GeoDrawable> &new_map,
         bool try_preserve_pos)
 {
@@ -136,7 +136,7 @@ void MapDisplayManager::StepZoom(double steps, const DisplayCoord &mouse_pos) {
     StepZoom(steps);
 
     DisplayCoordCentered new_pos = old_pos * m_zoom / m_zoom_before;
-    DragMap(old_pos - new_pos);
+    MoveCenter(old_pos - new_pos);
 }
 
 void MapDisplayManager::SetZoomOneToOne() {
@@ -160,11 +160,12 @@ MapDisplayManager::BaseDeltaFromDisplay(const DisplayDelta &disp) const {
     return BaseMapDelta(disp.x / m_zoom, disp.y / m_zoom);
 }
 
-DisplayCoordCentered
-MapDisplayManager::DisplayCoordCenteredFromBase(const BaseMapCoord &mpc) const
+DisplayCoordCentered DisplayCoordCenteredFromBase(
+    const BaseMapCoord &mpc, const MapDisplayManager &mdm)
 {
-    BaseMapDelta diff = mpc - m_center;
-    return DisplayCoordCentered(diff.x * m_zoom, diff.y * m_zoom);
+    BaseMapDelta diff = mpc - mdm.GetCenter();
+    return DisplayCoordCentered(diff.x * mdm.GetZoom(),
+                                diff.y * mdm.GetZoom());
 }
 
 DisplayCoordCentered
@@ -172,8 +173,9 @@ MapDisplayManager::DisplayCoordCenteredFromMapPixel(
         const MapPixelCoord &mpc,
         const std::shared_ptr<class GeoDrawable> &map) const
 {
-    if (map == m_base_map)
-        return DisplayCoordCenteredFromBase(BaseMapCoord(mpc));
+    if (map == m_base_map) {
+        return DisplayCoordCenteredFromBase(BaseMapCoord(mpc), *this);
+    }
 
     LatLon world_pos;
     if (!map->PixelToLatLon(mpc, &world_pos)) {
@@ -184,7 +186,7 @@ MapDisplayManager::DisplayCoordCenteredFromMapPixel(
     if (!m_base_map->LatLonToPixel(world_pos, &base_pos)) {
         assert(false);
     }
-    return DisplayCoordCenteredFromBase(base_pos);
+    return DisplayCoordCenteredFromBase(base_pos, *this);
 }
 
 DisplayCoordCentered
@@ -195,12 +197,12 @@ MapDisplayManager::DisplayCoordCenteredFromMapPixel(
     return DisplayCoordCenteredFromMapPixel(MapPixelCoord(mpc), map);
 }
 
-void MapDisplayManager::CenterToDisplayCoord(const DisplayCoord &center) {
+void MapDisplayManager::SetCenter(const DisplayCoord &center) {
     m_center = BaseCoordFromDisplay(center);
     m_change_ctr++;
 }
 
-void MapDisplayManager::DragMap(const DisplayDelta &disp_delta) {
+void MapDisplayManager::MoveCenter(const DisplayDelta &disp_delta) {
     m_center = m_center - BaseDeltaFromDisplay(disp_delta);
     m_center.ClampToRect(MapPixelCoordInt(0,0),
                          MapPixelCoordInt(m_base_map->GetSize()));
@@ -315,9 +317,9 @@ void MapView::PaintLayerTiled(
     double transparency)
 {
     MapPixelCoordInt tile_topleft, tile_botright;
-    if (!CalcOverlayTiles(mdm.GetBaseMap(), map, tile_size,
-        base_pixel_topleft, base_pixel_botright,
-        &tile_topleft, &tile_botright))
+    if (!CalcOverlayRect(mdm.GetBaseMap(), map, tile_size,
+                         base_pixel_topleft, base_pixel_botright,
+                         &tile_topleft, &tile_botright))
     {
         // Failed to paint overlay
         assert(false);
@@ -380,7 +382,7 @@ void MapView::PaintLayerTiled(
     }
 }
 
-bool MapView::CalcOverlayTiles(
+bool MapView::CalcOverlayRect(
     const std::shared_ptr<class GeoDrawable> &base_map,
     const std::shared_ptr<class GeoDrawable> &overlay_map,
     const MapPixelDeltaInt &tile_size,

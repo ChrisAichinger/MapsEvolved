@@ -150,12 +150,14 @@ class MapDisplayManager {
         const BaseMapCoord &GetCenter() const;
         void SetCenter(const BaseMapCoord &center);
         void SetCenter(const LatLon &center);
+        void SetCenter(const DisplayCoord &center);
+        void MoveCenter(const DisplayDelta &delta);
 
         GeoDrawableShPtr GetBaseMap() const;
-        void ChangeMap(const GeoDrawableShPtr &new_map,
-                       bool try_preserve_pos=true);
-        void ChangeMap(const RasterMapShPtr &new_map,
-                       bool try_preserve_pos=true);
+        void SetBaseMap(const GeoDrawableShPtr &new_map,
+                        bool try_preserve_pos=true);
+        void SetBaseMap(const RasterMapShPtr &new_map,
+                        bool try_preserve_pos=true);
 
         const DisplayDeltaInt &GetDisplaySize() const;
         void SetDisplaySize(const DisplayDeltaInt &new_size);
@@ -163,16 +165,17 @@ class MapDisplayManager {
         const OverlayList &GetOverlayList() const;
         void SetOverlayList(const OverlayList &overlay_list);
 
-        void DragMap(const DisplayDelta &delta);
-        void CenterToDisplayCoord(const DisplayCoord &center);
-
-        BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp) const;
-        BaseMapCoord
-            BaseCoordFromDisplay(const DisplayCoordCentered &disp) const;
-
-        BaseMapDelta BaseDeltaFromDisplay(const DisplayDelta &disp) const;
-
         unsigned int GetChangeCtr() const;
+
+
+        BaseMapCoord
+        BaseCoordFromDisplay(const DisplayCoord &disp) const;
+
+        BaseMapCoord
+        BaseCoordFromDisplay(const DisplayCoordCentered &disp) const;
+
+        BaseMapDelta
+        BaseDeltaFromDisplay(const DisplayDelta &disp) const;
 };
 
 class MapView /NoDefaultCtors/ {
