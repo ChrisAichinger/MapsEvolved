@@ -7,3 +7,6 @@ py2exe==0.9.2.2
 --allow-unverified wxPython-Phoenix
 --find-links http://wxpython.org/Phoenix/snapshot-builds/
 wxPython-Phoenix==3.0.3.dev1820+49a8884
+
+# Install this package in editable mode.
+-e .

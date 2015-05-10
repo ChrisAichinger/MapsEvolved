@@ -87,7 +87,7 @@ cfg = dict(
     long_description=read('README.mkd'),
     author='Christian Aichinger',
     author_email='Greek0@gmx.net',
-    install_requires=['wxPython-Phoenix>=3.0.3', 'gpxpy>=0.9.8'],
+    install_requires=['wxPython-Phoenix>=3.0.3.dev0', 'gpxpy>=0.9.8'],
     extras_require={
         'convert_amapv5_poi': ['pyodbc'],
     },
@@ -144,7 +144,7 @@ cfg = dict(
         },
     ],
     #test_suite='sandman.test.test_sandman',
-    #tests_require=['pytest'],
+    tests_require=['pytest'],
     classifiers=[
         'Programming Language :: Python',
         'Development Status :: 4 - Beta',
