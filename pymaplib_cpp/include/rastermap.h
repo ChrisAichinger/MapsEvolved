@@ -153,21 +153,6 @@ MetersPerPixel(const std::shared_ptr<class GeoDrawable> &map,
                const MapPixelCoordInt &pos,
                double *mpp);
 
-bool EXPORT
-GetMapDistance(const std::shared_ptr<class RasterMap> &map,
-               const MapPixelCoord &pos,
-               double dx, double dy, double *distance);
-bool EXPORT
-MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
-               const MapPixelCoord &pos,
-               double *mpp);
-bool EXPORT
-MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
-               const MapPixelCoordInt &pos,
-               double *mpp);
-
-PixelBuf EXPORT
-CalcPanorama(const std::shared_ptr<GeoDrawable> &map, const LatLon &pos);
 
 /** Convert `MapPixelCoord`'s from one map to another.
  *

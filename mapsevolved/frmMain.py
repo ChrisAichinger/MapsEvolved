@@ -23,7 +23,7 @@ from wx.lib.wordwrap import wordwrap
 
 import pymaplib
 import mapsevolved
-from mapsevolved import frmMapManager, frmPanorama, frmGPSAnalyzer
+from mapsevolved import frmMapManager, frmGPSAnalyzer
 from mapsevolved import dlgGotoCoord, util, config, uimodes
 
 def _(s): return s
@@ -397,20 +397,8 @@ class MainFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('PanoramaTBButton'))
     def on_show_panorama(self, evt):
-        if self.panorama_window:
-            util.force_show_window(self.panorama_window)
-        else:
-            ok, center_ll = basemap.PixelToLatLon(self.mapdisplay.GetCenter())
-            if not ok:
-                util.Warn(self, _("The current map is not georeferenced."))
-                return
-            dhms = self.heightfinder.find_best_dhms(center_ll)
-            if not dhms:
-                util.Warn(self, _("No digital height information available."))
-                return
-            self.panorama_window = frmPanorama.PanoramaFrame(self,
-                                                             dhms[0].drawable)
-            self.panorama_window.Show()
+        # Not yet implemented.
+        pass
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('GPSTrackAnalyzerTBButton'))
     def on_show_gpstrackanalyzer(self, evt):
