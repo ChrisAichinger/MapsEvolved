@@ -402,3 +402,25 @@ CalcPanorama(const std::shared_ptr<GeoDrawable> &map, const LatLon &pos) {
     return result;
 }
 
+MapPixelCoord MapPixelToMapPixel(const MapPixelCoord &pos,
+                                 const GeoPixels &from_map,
+                                 const GeoPixels &to_map)
+{
+    if (&from_map == &to_map) {
+        return pos;
+    }
+
+    LatLon world_pos;
+    if (!from_map.PixelToLatLon(pos, &world_pos)) {
+        throw std::runtime_error(
+                "MapPixelToMapPixel: Couldn't convert MapPixel to LatLon.");
+    }
+
+    MapPixelCoord to_pos;
+    if (!to_map.LatLonToPixel(world_pos, &to_pos)) {
+        throw std::runtime_error(
+                "MapPixelToMapPixel: Couldn't convert LatLon to MapPixel.");
+    }
+    return to_pos;
+}
+

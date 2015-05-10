@@ -23,6 +23,9 @@
     <ClCompile Include="test_concurrency.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test_rastermap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tests.h">

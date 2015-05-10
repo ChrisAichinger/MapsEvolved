@@ -177,16 +177,8 @@ MapDisplayManager::DisplayCoordCenteredFromMapPixel(
         return DisplayCoordCenteredFromBase(BaseMapCoord(mpc), *this);
     }
 
-    LatLon world_pos;
-    if (!map->PixelToLatLon(mpc, &world_pos)) {
-        assert(false);
-    }
-
-    BaseMapCoord base_pos;
-    if (!m_base_map->LatLonToPixel(world_pos, &base_pos)) {
-        assert(false);
-    }
-    return DisplayCoordCenteredFromBase(base_pos, *this);
+    auto base_pos = MapPixelToMapPixel(mpc, *map, *m_base_map);
+    return DisplayCoordCenteredFromBase(BaseMapCoord(base_pos), *this);
 }
 
 DisplayCoordCentered

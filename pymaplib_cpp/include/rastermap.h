@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 
+#include <boost/optional.hpp>
+
 #include "odm_config.h"
 #include "util.h"
 #include "coordinates.h"
@@ -166,5 +168,16 @@ MetersPerPixel(const std::shared_ptr<class RasterMap> &map,
 
 PixelBuf EXPORT
 CalcPanorama(const std::shared_ptr<GeoDrawable> &map, const LatLon &pos);
+
+/** Convert `MapPixelCoord`'s from one map to another.
+ *
+ * Find the point (as `MapPixelCoord`) on `to_map` that represents the same
+ * physical location as `pos` on `from_map`.
+ *
+ * If such a point can not be found, a `std::runtime_error` is raised.
+ */
+MapPixelCoord EXPORT MapPixelToMapPixel(const MapPixelCoord &pos,
+                                        const GeoPixels &from_map,
+                                        const GeoPixels &to_map);
 
 #endif
