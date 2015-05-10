@@ -63,7 +63,7 @@ static std::wstring get_test_tif() {
 BOOST_AUTO_TEST_CASE(rastermap_getregion)
 {
     // By default run for only 1 second to not slow down the tests.
-    auto duration = testconfig.concurrency_test_msecs().value_or(1000);
+    auto duration = testconfig.concurrency_test_msecs().value_or(100);
     auto map = LoadMap(get_test_tif());
     auto image = map->GetRegion(MapPixelCoordInt(0,0), map->GetSize());
     auto num_threads = boost::thread::hardware_concurrency();
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(rastermap_getregion)
 BOOST_AUTO_TEST_CASE(rastermap_getregion_multiple_maps)
 {
     // By default run for only 1 second to not slow down the tests.
-    auto duration = testconfig.concurrency_test_msecs().value_or(1000);
+    auto duration = testconfig.concurrency_test_msecs().value_or(100);
     auto mapfile = get_test_tif();
     auto map = LoadMap(mapfile);
     auto image = map->GetRegion(MapPixelCoordInt(0,0), map->GetSize());
