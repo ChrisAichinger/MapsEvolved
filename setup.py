@@ -8,7 +8,12 @@ import glob
 import importlib
 
 from setuptools import setup
-import py2exe
+
+try:
+    import py2exe
+except ImportError:
+    print("Py2exe package not found - binary generation will be disabled",
+          file=sys.stderr)
 
 # Allow setup.py to be run from any path.
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
