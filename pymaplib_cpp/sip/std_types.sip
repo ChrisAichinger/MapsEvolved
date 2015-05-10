@@ -403,3 +403,53 @@ template<TYPE>
                });
 %End
 };
+
+template<TYPE>
+%MappedType boost::optional<TYPE>
+{
+%TypeHeaderCode
+#include <boost/optional.hpp>
+%End
+
+// Only define a one-way C++ -> Python conversion for now.
+%ConvertFromTypeCode
+    if (sipCpp) {
+        TYPE *cpp = new TYPE(*sipCpp);
+
+        PyObject *pobj = sipConvertFromInstance((void*)cpp, sipClass_TYPE, sipTransferObj);
+        // The object on success, NULL on failure.
+        return pobj;
+    }
+    Py_INCREF(Py_None);
+    return Py_None;
+%End
+%ConvertToTypeCode
+    throw std::runtime_error(
+        "ConverToTypeCode not implemented for boost::optional");
+
+    if (sipIsErr == NULL) {
+        // Report if type is compatible.
+        return sipCanConvertToType(sipPy, sipType_TYPE, 0);
+    }
+
+    // Use the SIP API to convert the Python object to the
+    // corresponding C++ instance.  Note that we apply any ownership
+    // transfer to the list itself, not the individual elements.
+    TYPE *t = reinterpret_cast<TYPE *>(sipConvertToType(
+                                        sipPy,
+                                        sipType_TYPE, 0, 0, 0,
+                                        sipIsErr));
+    // FIXME: Must release t!
+
+    if (*sipIsErr) {
+        return 0;
+    }
+    *sipCppPtr = new boost::optional<TYPE>(TYPE(*t));
+
+    // The instance should be regarded as temporary (and be destroyed as
+    // soon as it has been used) unless it has been transferred from
+    // Python.  sipGetState() is a convenience function that implements
+    // this common transfer behaviour.
+    return sipGetState(sipTransferObj);
+%End
+};
