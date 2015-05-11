@@ -9,7 +9,7 @@ environment:
     - PYTHON: "C:\\Python34"
 
 platform:
-  - x86
+  - Win32
 
 configuration:
   - Debug
