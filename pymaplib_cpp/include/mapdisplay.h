@@ -209,16 +209,26 @@ private:
 
     /** Generate a `DisplayOrder` list for the current position and zoom.
      *
-     * This encompasses the basemap as well as all overlays.
+     * This handles the basemap as well as all overlays in a single function
+     * call.
+     *
+     * Async (threaded) `PixelPromise` classes will be used if
+     * `allow_async_promises` is `true`. This is generally a good thing, but
+     * has to be disabled when rendering to a buffer, otherwise
+     * not-yet-finished tiles will be drawn.
      */
     std::list<std::shared_ptr<class DisplayOrder>>
-    GenerateDisplayOrders(const MapViewModel &mdm);
+    GenerateDisplayOrders(const MapViewModel &mdm,
+                          bool allow_async_promises);
 
     /** Generate display orders for a `GetRegion()` map layer, based on tiling.
      *
      * Calculate the map tiles required for filligng the display region,
      * and add display orders to show those tiles.
      * This is the default for most maps.
+     *
+     * Async (threaded) `PixelPromise` classes will be used if
+     * `allow_async_promises` is `true`.
      */
     void PaintLayerTiled(
         const MapViewModel &mdm,
@@ -227,7 +237,7 @@ private:
         const MapPixelCoordInt &base_pixel_topleft,
         const MapPixelCoordInt &base_pixel_botright,
         const MapPixelDeltaInt &tile_size,
-        double transparency);
+        double transparency, bool allow_async_promises);
 
     /** Generate display orders for a `GetRegionDirect()` map layer.
      *

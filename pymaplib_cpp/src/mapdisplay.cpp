@@ -207,7 +207,7 @@ void MapView::Paint(const MapViewModel &mdm) {
     }
 
     if (m_need_full_repaint) {
-        auto orders = GenerateDisplayOrders(mdm);
+        auto orders = GenerateDisplayOrders(mdm, true);
         m_display->Render(orders);
         m_need_full_repaint = false;
     } else {
@@ -219,7 +219,7 @@ PixelBuf MapView::PaintToBuffer(ODMPixelFormat format,
                                 const MapViewModel &mdm)
 {
     auto size = mdm.GetDisplaySize();
-    auto orders = GenerateDisplayOrders(mdm);
+    auto orders = GenerateDisplayOrders(mdm, false);
     return m_display->RenderToBuffer(format, size.x, size.y, orders);
 }
 
@@ -231,7 +231,8 @@ void MapView::ForceFullRepaint() {
 
 
 std::list<std::shared_ptr<class DisplayOrder>>
-MapView::GenerateDisplayOrders(const MapViewModel &mdm)
+MapView::GenerateDisplayOrders(const MapViewModel &mdm,
+                               bool allow_async_promises)
 {
     std::list<std::shared_ptr<DisplayOrder>> orders;
     MapPixelDeltaInt tile_size(TILE_SIZE, TILE_SIZE);
@@ -245,7 +246,7 @@ MapView::GenerateDisplayOrders(const MapViewModel &mdm)
     // We can't PaintLayerDirect() the base map, which is fine for now since we
     // only use Direct for overlays (e.g. GPS tracks).
     PaintLayerTiled(mdm, &orders, mdm.GetBaseMap(), base_pixel_tl, base_pixel_br,
-        tile_size, 0.0);
+                    tile_size, 0.0, allow_async_promises);
     auto &overlays = mdm.GetOverlayList();
     for (auto ci = overlays.cbegin(); ci != overlays.cend(); ++ci) {
         if (!ci->GetEnabled()) {
@@ -259,7 +260,7 @@ MapView::GenerateDisplayOrders(const MapViewModel &mdm)
         else {
             PaintLayerTiled(mdm, &orders, ci->GetMap(),
                 base_pixel_tl, base_pixel_br,
-                tile_size, ci->GetTransparency());
+                tile_size, ci->GetTransparency(), allow_async_promises);
         }
     }
     m_old_promise_cache.clear();
@@ -298,7 +299,7 @@ void MapView::PaintLayerTiled(
     const MapPixelCoordInt &base_pixel_topleft,
     const MapPixelCoordInt &base_pixel_botright,
     const MapPixelDeltaInt &tile_size,
-    double transparency)
+    double transparency, bool allow_async_promises)
 {
     MapPixelCoordInt tile_topleft, tile_botright;
     if (!CalcOverlayRect(mdm.GetBaseMap(), map, tile_size,
@@ -332,9 +333,10 @@ void MapView::PaintLayerTiled(
             auto old_promise = m_old_promise_cache.find(tilecode);
             if (old_promise != m_old_promise_cache.end()) {
                 promise = old_promise->second;
-            }
-            else {
-                if (map->SupportsConcurrentGetRegion()) {
+            } else {
+                if (allow_async_promises &&
+                    map->SupportsConcurrentGetRegion())
+                {
                     // Load tiles on a background thread, if the map
                     // implementation can handle it.
                     //
