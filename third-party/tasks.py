@@ -188,6 +188,9 @@ def unpack(url, sha256, compression, unpack_location='.'):
     with compressor(f, 'r') as cf:
         cf.extractall(os.path.join(THIS_DIR, unpack_location))
 
+def git_patch_path():
+    git_dir = os.path.dirname(mev_build_utils.find_executable('git'))
+    return os.path.join(git_dir, '..', 'bin', 'patch')
 
 @functools.lru_cache()
 def get_provides():
@@ -199,9 +202,8 @@ def get_provides():
     Executable names are absolute paths.
     """
 
-    git_dir = os.path.dirname(mev_build_utils.find_executable('git'))
     provides = {
-        'patch': os.path.join(git_dir, 'patch'),
+        'patch': git_patch_path(),
     }
     for modulename, module in AVAILABLE_MODULES.items():
         for name, cmd in module.get('provides', []):
