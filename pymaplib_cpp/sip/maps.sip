@@ -124,16 +124,16 @@ enum ODMPixelFormat {
     ODM_PIX_RGBX4,
 };
 
-class MapDisplayManager {
+class MapViewModel {
 %TypeHeaderCode
 #include "rastermap.h"
 #include "mapdisplay.h"
 %End
     public:
-        MapDisplayManager(const GeoDrawableShPtr &initial_map,
-                          const DisplayDeltaInt &display_size);
-        MapDisplayManager(const RasterMapShPtr &initial_map,
-                          const DisplayDeltaInt &display_size);
+        MapViewModel(const GeoDrawableShPtr &initial_map,
+                     const DisplayDeltaInt &display_size);
+        MapViewModel(const RasterMapShPtr &initial_map,
+                     const DisplayDeltaInt &display_size);
 
         double GetZoom() const;
         void StepZoom(double steps);
@@ -168,36 +168,36 @@ class MapView /NoDefaultCtors/ {
 public:
     MapView(const DisplayShPtr &display);
 
-    void Paint(const MapDisplayManager &mdm);
+    void Paint(const MapViewModel &mdm);
     PixelBuf PaintToBuffer(ODMPixelFormat format,
-                           const MapDisplayManager &mdm);
+                           const MapViewModel &mdm);
     void ForceFullRepaint();
 };
 
 
 BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp,
-                                  const MapDisplayManager &mdm);
+                                  const MapViewModel &mdm);
 BaseMapCoord BaseCoordFromDisplay(const DisplayCoordCentered &disp,
-                                  const MapDisplayManager &mdm);
+                                  const MapViewModel &mdm);
 BaseMapDelta BaseDeltaFromDisplay(const DisplayDelta &disp,
-                                  const MapDisplayManager &mdm);
+                                  const MapViewModel &mdm);
 
 DisplayCoordCentered DisplayCoordCenteredFromMapPixel(
                         const MapPixelCoord &mpc,
                         const GeoDrawableShPtr &map,
-                        const MapDisplayManager &mdm);
+                        const MapViewModel &mdm);
 DisplayCoordCentered DisplayCoordCenteredFromMapPixel(
                         const MapPixelCoordInt &mpc,
                         const GeoDrawableShPtr &map,
-                        const MapDisplayManager &mdm);
+                        const MapViewModel &mdm);
 DisplayCoordCentered DisplayCoordCenteredFromMapPixel(
                         const MapPixelCoord &mpc,
                         const RasterMapShPtr &map,
-                        const MapDisplayManager &mdm);
+                        const MapViewModel &mdm);
 DisplayCoordCentered DisplayCoordCenteredFromMapPixel(
                         const MapPixelCoordInt &mpc,
                         const RasterMapShPtr &map,
-                        const MapDisplayManager &mdm);
+                        const MapViewModel &mdm);
 
 
 std::wstring CompassPointFromDirection(double degrees);

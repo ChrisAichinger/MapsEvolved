@@ -42,10 +42,10 @@ typedef std::vector<OverlaySpec> OverlayList;
  * Encapsulte what should be displayed without knowing how it is brought to the
  * screen.
  */
-class EXPORT MapDisplayManager {
+class EXPORT MapViewModel {
     public:
-        MapDisplayManager(const std::shared_ptr<GeoDrawable> &initial_map,
-                          const DisplayDeltaInt &display_size);
+        MapViewModel(const std::shared_ptr<GeoDrawable> &initial_map,
+                     const DisplayDeltaInt &display_size);
 
         /** Get the current zoom level.
          *
@@ -138,7 +138,7 @@ class EXPORT MapDisplayManager {
         /** Set the size of the map display area, in screen pixels.
          *
          * This does not actively update the screen by itself,
-         * `MapDisplayManager` has no knowledge of how or where the output is
+         * `MapViewModel` has no knowledge of how or where the output is
          * shown. However, display engines may react if they see a new value
          * here.
          */
@@ -183,12 +183,12 @@ DISALLOW_COPY_AND_ASSIGN(MapView);
 public:
     MapView(const std::shared_ptr<class Display> &display);
 
-    /** Repaint the display based on data from a `MapDisplayManager`. */
-    void Paint(const MapDisplayManager &mdm);
+    /** Repaint the display based on data from a `MapViewModel`. */
+    void Paint(const MapViewModel &mdm);
 
-    /** Paint to a buffer based on data from a `MapDisplayManager`. */
+    /** Paint to a buffer based on data from a `MapViewModel`. */
     PixelBuf PaintToBuffer(ODMPixelFormat format,
-                           const MapDisplayManager &mdm);
+                           const MapViewModel &mdm);
 
     /** Schedule a full repaint of the display. */
     void ForceFullRepaint();
@@ -212,7 +212,7 @@ private:
      * This encompasses the basemap as well as all overlays.
      */
     std::list<std::shared_ptr<class DisplayOrder>>
-    GenerateDisplayOrders(const MapDisplayManager &mdm);
+    GenerateDisplayOrders(const MapViewModel &mdm);
 
     /** Generate display orders for a `GetRegion()` map layer, based on tiling.
      *
@@ -221,7 +221,7 @@ private:
      * This is the default for most maps.
      */
     void PaintLayerTiled(
-        const MapDisplayManager &mdm,
+        const MapViewModel &mdm,
         std::list<std::shared_ptr<class DisplayOrder>> *orders,
         const std::shared_ptr<GeoDrawable> &map,
         const MapPixelCoordInt &base_pixel_topleft,
@@ -241,7 +241,7 @@ private:
      * cause stretching, compromising display quality.
      */
     void PaintLayerDirect(
-        const MapDisplayManager &mdm,
+        const MapViewModel &mdm,
         std::list<std::shared_ptr<DisplayOrder>> *orders,
         const std::shared_ptr<GeoDrawable> &map,
         const DisplayDelta &disp_size_d,
@@ -277,27 +277,27 @@ private:
 
 /** Get the basemap coordinate of an on-screen location. */
 BaseMapCoord EXPORT BaseCoordFromDisplay(const DisplayCoord &disp,
-                                         const MapDisplayManager &mdm);
+                                         const MapViewModel &mdm);
 
 /** Get the basemap coordinate of an on-screen location. */
 BaseMapCoord EXPORT BaseCoordFromDisplay(const DisplayCoordCentered &disp,
-                                         const MapDisplayManager &mdm);
+                                         const MapViewModel &mdm);
 
 /** Convert an on-screen coordinate delta to basemap coordinate space. */
 BaseMapDelta EXPORT BaseDeltaFromDisplay(const DisplayDelta &disp,
-                                         const MapDisplayManager &mdm);
+                                         const MapViewModel &mdm);
 
 
 /** Find the on-screen location of a map coordinate on an arbitrary map. */
 DisplayCoordCentered EXPORT DisplayCoordCenteredFromMapPixel(
                         const MapPixelCoord &mpc,
                         const std::shared_ptr<GeoDrawable> &map,
-                        const MapDisplayManager &mdm);
+                        const MapViewModel &mdm);
 
 /** Convert an on-screen location to a map coordinate on an arbitrary map. */
 DisplayCoordCentered EXPORT DisplayCoordCenteredFromMapPixel(
                         const MapPixelCoordInt &mpc,
                         const std::shared_ptr<GeoDrawable> &map,
-                        const MapDisplayManager &mdm);
+                        const MapViewModel &mdm);
 
 #endif

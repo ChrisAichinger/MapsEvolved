@@ -125,17 +125,17 @@ class MainFrame(wx.Frame):
         self.ogldisplay = pymaplib.CreateOGLDisplay(self.panel.GetHandle())
 
         self.mapview = pymaplib.MapView(self.ogldisplay)
-        self.mapdisplay = pymaplib.MapDisplayManager(
+        self.mapviewmodel = pymaplib.MapViewModel(
                 self.filelist.maplist[0].drawable,
                 self.ogldisplay.GetDisplaySize())
-        self.mapdisplay_changectr = None
+        self.mapviewmodel_changectr = None
         self.heightfinder = pymaplib.HeightFinder(self.filelist.maplist)
 
         # If initializing with our pre-supplied default map, zoom out to
         # show the whole map. Otherwise only a blue blotch (a small part of the
         # Atlantic) is shown.
         if self.filelist.maplist[0].basename == os.path.basename(DEFAULT_MAP):
-            self.mapdisplay.StepZoom(DEFAULT_MAP_ZOOM)
+            self.mapviewmodel.StepZoom(DEFAULT_MAP_ZOOM)
 
         self.drag_enabled = False
         self.drag_suppress = False
@@ -151,11 +151,11 @@ class MainFrame(wx.Frame):
         self.expand_to_fit_sizer()
 
         self.uimode = uimodes.BaseUIMode(frame=self,
-                                         mapdisplay=self.mapdisplay)
+                                         mapviewmodel=self.mapviewmodel)
 
     def updateui(self, evt):
-        if self.mapdisplay_changectr != self.mapdisplay.GetChangeCtr():
-            self.mapdisplay_changectr = self.mapdisplay.GetChangeCtr()
+        if self.mapviewmodel_changectr != self.mapviewmodel.GetChangeCtr():
+            self.mapviewmodel_changectr = self.mapviewmodel.GetChangeCtr()
             self.mapview.ForceFullRepaint()
 
     @util.EVENT(wx.EVT_CLOSE, id=xrc.XRCID('MainFrame'))
@@ -172,12 +172,12 @@ class MainFrame(wx.Frame):
     @util.EVENT(wx.EVT_PAINT, id=xrc.XRCID('MapPanel'))
     def on_repaint_mappanel(self, evt):
         dc = wx.PaintDC(self.panel)
-        self.mapview.Paint(self.mapdisplay)
+        self.mapview.Paint(self.mapviewmodel)
 
     @util.EVENT(wx.EVT_SIZE, id=xrc.XRCID('MapPanel'))
     def on_size_mappanel(self, evt):
         new_size = pymaplib.DisplayDeltaInt(evt.Size.x, evt.Size.y)
-        self.mapdisplay.SetDisplaySize(new_size)
+        self.mapviewmodel.SetDisplaySize(new_size)
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ManageMapsMenuItem'))
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ManageMapsTBButton'))
@@ -213,14 +213,14 @@ class MainFrame(wx.Frame):
                               "the filename."))
             return
 
-        # PaintToBuffer extracts its parameters from the MapDisplayManager.
+        # PaintToBuffer extracts its parameters from the MapViewModel.
         # Create a temporary instance to hold the data.
-        mdm = pymaplib.MapDisplayManager(self.mapdisplay)
-        w = int(self.ogldisplay.GetDisplayWidth()  / mdm.GetZoom())
-        h = int(self.ogldisplay.GetDisplayHeight() / mdm.GetZoom())
-        mdm.SetDisplaySize(pymaplib.DisplayDeltaInt(w, h))
-        mdm.SetZoomOneToOne()
-        mr = self.mapview.PaintToBuffer(pymaplib.ODM_PIX_RGBA4, mdm)
+        mvm = pymaplib.MapViewModel(self.mapviewmodel)
+        w = int(self.ogldisplay.GetDisplayWidth()  / mvm.GetZoom())
+        h = int(self.ogldisplay.GetDisplayHeight() / mvm.GetZoom())
+        mvm.SetDisplaySize(pymaplib.DisplayDeltaInt(w, h))
+        mvm.SetZoomOneToOne()
+        mr = self.mapview.PaintToBuffer(pymaplib.ODM_PIX_RGBA4, mvm)
         # Copy the image data to a modifyable buffer and set the alpha
         # values to 255. wx.Bitmap multiplies R,G,B by alpha on Win32, leading
         # to an all-black bitmap otherwise.
@@ -241,17 +241,17 @@ class MainFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ZoomInMenuItem'))
     def on_zoom_in_menu(self, evt):
-        self.mapdisplay.StepZoom(+1)
+        self.mapviewmodel.StepZoom(+1)
         self.update_statusbar()
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ZoomOutMenuItem'))
     def on_zoom_out_menu(self, evt):
-        self.mapdisplay.StepZoom(-1)
+        self.mapviewmodel.StepZoom(-1)
         self.update_statusbar()
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ZoomResetMenuItem'))
     def on_zoom_reset_menu(self, evt):
-        self.mapdisplay.SetZoomOneToOne()
+        self.mapviewmodel.SetZoomOneToOne()
         self.update_statusbar()
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('ToggleGridMenuItem'))
@@ -378,17 +378,17 @@ class MainFrame(wx.Frame):
     # FIXME code duplication
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ZoomInTBButton'))
     def on_zoom_in(self, evt):
-        self.mapdisplay.StepZoom(+1)
+        self.mapviewmodel.StepZoom(+1)
         self.update_statusbar()
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ZoomOutTBButton'))
     def on_zoom_out(self, evt):
-        self.mapdisplay.StepZoom(-1)
+        self.mapviewmodel.StepZoom(-1)
         self.update_statusbar()
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ZoomResetTBButton'))
     def on_zoom_reset(self, evt):
-        self.mapdisplay.SetZoomOneToOne()
+        self.mapviewmodel.SetZoomOneToOne()
         self.update_statusbar()
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('ToggleLayerMgrTBButton'))
@@ -402,7 +402,7 @@ class MainFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('GPSTrackAnalyzerTBButton'))
     def on_show_gpstrackanalyzer(self, evt):
-        for overlay in self.overlays: # FIXME -> mdm-ize me
+        for overlay in self.overlays: # FIXME -> mapviewmodel-ize me
             maptype = overlay.GetMap().GetType()
             if maptype == pymaplib.GeoDrawable.TYPE_GPSTRACK:
                 gpstrack = overlay.GetMap()
@@ -447,8 +447,8 @@ class MainFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('LargerScaleMapTBButton'))
     def on_larger_scale_map(self, evt):
-        basemap = self.mapdisplay.GetBaseMap()
-        ok, center_ll = basemap.PixelToLatLon(self.mapdisplay.GetCenter())
+        basemap = self.mapviewmodel.GetBaseMap()
+        ok, center_ll = basemap.PixelToLatLon(self.mapviewmodel.GetCenter())
         if not ok:
             util.Warn(_("Could not retrieve map center position.\n" +
                         "Is the current map georeferenced?"))
@@ -458,12 +458,12 @@ class MainFrame(wx.Frame):
                                                 self.filelist.maplist)
         if viable_maps:
             self.set_basemap(viable_maps[-1])
-            self.mapdisplay.SetZoomOneToOne()
+            self.mapviewmodel.SetZoomOneToOne()
 
     @util.EVENT(wx.EVT_TOOL, id=xrc.XRCID('SmallerScaleMapTBButton'))
     def on_smaller_scale_map(self, evt):
-        basemap = self.mapdisplay.GetBaseMap()
-        ok, center_ll = basemap.PixelToLatLon(self.mapdisplay.GetCenter())
+        basemap = self.mapviewmodel.GetBaseMap()
+        ok, center_ll = basemap.PixelToLatLon(self.mapviewmodel.GetCenter())
         if not ok:
             util.Warn(_("Could not retrieve map center position.\n" +
                         "Is the current map georeferenced?"))
@@ -473,7 +473,7 @@ class MainFrame(wx.Frame):
                                                   self.filelist.maplist)
         if viable_maps:
             self.set_basemap(viable_maps[0])
-            self.mapdisplay.SetZoomOneToOne()
+            self.mapviewmodel.SetZoomOneToOne()
 
     @util.EVENT(wx.EVT_SCROLL, id=xrc.XRCID('OpacitySlider'))
     def on_opacity_slider(self, evt):
@@ -500,7 +500,7 @@ class MainFrame(wx.Frame):
                 dlg.Destroy()
 
             if res == wx.ID_OK:
-                self.mapdisplay.SetCenter(dlg.latlon)
+                self.mapviewmodel.SetCenter(dlg.latlon)
         finally:
             self.drag_suppress = False
 
@@ -508,12 +508,12 @@ class MainFrame(wx.Frame):
     def on_create_new_gpstrack(self, evt):
         if evt.IsChecked():
             self.uimode = uimodes.GPSDrawUIMode(
-                    frame=self, mapdisplay=self.mapdisplay,
+                    frame=self, mapviewmodel=self.mapviewmodel,
                     heightfinder=self.heightfinder)
         else:
             if self.uimode.try_exit_mode():
-                self.uimode = uimodes.BaseUIMode(frame=self,
-                                                 mapdisplay=self.mapdisplay)
+                self.uimode = uimodes.BaseUIMode(
+                        frame=self, mapviewmodel=self.mapviewmodel)
             else:
                 self.toolbar.ToggleTool(evt.Id, True)
 
@@ -521,7 +521,7 @@ class MainFrame(wx.Frame):
     def on_uimode_wants_exit(self, evt):
         if self.uimode.try_exit_mode():
             self.uimode = uimodes.BaseUIMode(frame=self,
-                                             mapdisplay=self.mapdisplay)
+                                             mapviewmodel=self.mapviewmodel)
 
     @util.EVENT(wx.EVT_RIGHT_UP, id=xrc.XRCID('MainStatusBar'))
     def on_statusbar_rclick(self, evt):
@@ -533,8 +533,8 @@ class MainFrame(wx.Frame):
 
     @util.EVENT(wx.EVT_MENU, id=xrc.XRCID('CopyCoordMenuItem'))
     def on_copy_coord(self, evt):
-        center = self.mapdisplay.GetCenter()
-        ok, ll = self.mapdisplay.GetBaseMap().PixelToLatLon(center)
+        center = self.mapviewmodel.GetCenter()
+        ok, ll = self.mapviewmodel.GetBaseMap().PixelToLatLon(center)
         if not ok:
             util.Warn(_("Could not retrieve map center position.\n" +
                         "Is this map georeferenced?"))
@@ -621,18 +621,18 @@ class MainFrame(wx.Frame):
         pos = self.panel.ScreenToClient(wx.GetMousePosition())
         display_point = pymaplib.DisplayCoord(pos.x, pos.y)
         base_point = pymaplib.BaseCoordFromDisplay(display_point,
-                                                   self.mapdisplay)
+                                                   self.mapviewmodel)
 
-        zoom_percent = self.mapdisplay.GetZoom() * 100
+        zoom_percent = self.mapviewmodel.GetZoom() * 100
         self.statusbar.SetStatusText(_("Zoom: %.0f %%") % zoom_percent, i=5)
-        ok, mpp = pymaplib.MetersPerPixel(self.mapdisplay.GetBaseMap(),
+        ok, mpp = pymaplib.MetersPerPixel(self.mapviewmodel.GetBaseMap(),
                                           base_point)
         if ok:
             self.statusbar.SetStatusText(_("Map: %.1f m/pix") % mpp, i=4)
         else:
             self.statusbar.SetStatusText(_("Unknown m/pix"), i=4)
 
-        ok, ll = self.mapdisplay.GetBaseMap().PixelToLatLon(base_point)
+        ok, ll = self.mapviewmodel.GetBaseMap().PixelToLatLon(base_point)
         if not ok:
             self.statusbar.SetStatusText(_("lat/lon unknown"), i=0)
             self.statusbar.SetStatusText(_("Elevation unknown"), i=1)
@@ -657,9 +657,9 @@ class MainFrame(wx.Frame):
                _("Steepness: %.1f°") % ti.steepness_deg, i=3)
 
     def set_basemap(self, rastermap):
-        self.mapdisplay.SetBaseMap(rastermap)
+        self.mapviewmodel.SetBaseMap(rastermap)
         self.overlays = list(reversed(self.special_layers))
-        self.mapdisplay.SetOverlayList(self.overlays)
+        self.mapviewmodel.SetOverlayList(self.overlays)
         self.update_layerlist_from_map()
 
     def add_overlay(self, rastermap):
@@ -668,7 +668,7 @@ class MainFrame(wx.Frame):
                 del self.overlays[i]
                 break
         self.overlays.append(pymaplib.OverlaySpec(rastermap))
-        self.mapdisplay.SetOverlayList(self.overlays)
+        self.mapviewmodel.SetOverlayList(self.overlays)
         if not self.have_shown_layermgr_once:
             # Show the layer manager the first time the user adds an overlay.
             # Demonstrate the functionality without bothering the user again if
@@ -733,7 +733,7 @@ class MainFrame(wx.Frame):
             self.layerlistbox.Check(idx, overlayspec.Enabled)
             self.layerlistbox.SetClientData(idx, overlayspec)
 
-        rastermap = self.mapdisplay.GetBaseMap()
+        rastermap = self.mapviewmodel.GetBaseMap()
         name = self.name_from_map(rastermap, is_basemap=True)
         idx = self.layerlistbox.Append(name)
         self.layerlistbox.Check(idx)
@@ -749,7 +749,7 @@ class MainFrame(wx.Frame):
         size = self.layerlistbox.Count - 1
         layers.extend(self.layerlistbox.GetClientData(i) for i in range(size))
         self.overlays = list(reversed(layers))
-        self.mapdisplay.SetOverlayList(self.overlays)
+        self.mapviewmodel.SetOverlayList(self.overlays)
 
     def set_initial_size(self):
         disp = wx.Display(wx.Display.GetFromWindow(self))

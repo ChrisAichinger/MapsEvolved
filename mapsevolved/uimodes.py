@@ -58,22 +58,22 @@ class UIMode:
 
 
 class BaseUIMode(UIMode):
-    def __init__(self, frame, mapdisplay, *args, **kwargs):
+    def __init__(self, frame, mapviewmodel, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.frame = frame
         self.panel = frame.panel
-        self.mapdisplay = mapdisplay
+        self.mapviewmodel = mapviewmodel
 
     def try_exit_mode(self):
         return False
 
     def on_mouse_l_dblclick(self, evt):
         pos = pymaplib.DisplayCoord(evt.x, evt.y)
-        self.mapdisplay.SetCenter(pos)
+        self.mapviewmodel.SetCenter(pos)
 
     def on_mouse_vert_wheel(self, evt):
         pos = evt.GetPosition()
-        self.mapdisplay.StepZoom(evt.GetWheelRotation() / evt.GetWheelDelta(),
+        self.mapviewmodel.StepZoom(evt.GetWheelRotation() / evt.GetWheelDelta(),
                                  pymaplib.DisplayCoord(pos.x, pos.y))
         self.frame.update_statusbar()
 
@@ -82,7 +82,7 @@ class BaseUIMode(UIMode):
 
     def on_drag(self, evt, last_pos):
         pos_delta = evt.GetPosition() - last_pos
-        self.mapdisplay.MoveCenter(
+        self.mapviewmodel.MoveCenter(
                 pymaplib.DisplayDelta(pos_delta.x, pos_delta.y))
         self.panel.Refresh(eraseBackground=False)
 
@@ -91,12 +91,12 @@ class BaseUIMode(UIMode):
 
 
 class GPSDrawUIMode(BaseUIMode):
-    def __init__(self, frame, mapdisplay, heightfinder, *args, **kwargs):
-        super().__init__(frame=frame, mapdisplay=mapdisplay,
+    def __init__(self, frame, mapviewmodel, heightfinder, *args, **kwargs):
+        super().__init__(frame=frame, mapviewmodel=mapviewmodel,
                          heightfinder=heightfinder, *args, **kwargs)
         self.frame = frame
         self.panel = frame.panel
-        self.mapdisplay = mapdisplay
+        self.mapviewmodel = mapviewmodel
         self.heightfinder = heightfinder
 
         self.gpx = gpxpy.gpx.GPX()
@@ -140,8 +140,9 @@ class GPSDrawUIMode(BaseUIMode):
 
     def on_mouse_l_up(self, evt):
         disp_coord = pymaplib.DisplayCoord(evt.x, evt.y)
-        base_coord = pymaplib.BaseCoordFromDisplay(disp_coord, self.mapdisplay)
-        ok, ll = self.mapdisplay.GetBaseMap().PixelToLatLon(base_coord)
+        base_coord = pymaplib.BaseCoordFromDisplay(disp_coord,
+                                                   self.mapviewmodel)
+        ok, ll = self.mapviewmodel.GetBaseMap().PixelToLatLon(base_coord)
         if not ok:
             return True
         ok, ti = self.heightfinder.calc_terrain(ll)
