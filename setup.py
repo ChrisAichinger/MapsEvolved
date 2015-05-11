@@ -44,6 +44,8 @@ def microsoftize_version(version):
     return '.'.join(re.sub(r'\D', '', v) for v in version)
 
 
+version = os.environ.get('APPVEYOR_BUILD_VERSION') or mapsevolved.__version__
+msversion = microsoftize_version(version)
 
 windows_manifest = """
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -72,7 +74,7 @@ windows_manifest = """
     </dependentAssembly>
   </dependency>
 </assembly>
-""".format(version=microsoftize_version(mapsevolved.__version__))
+""".format(version=msversion)
 
 
 def read(*filenames, encoding='utf-8', filesep='\n'):
@@ -85,7 +87,7 @@ def read(*filenames, encoding='utf-8', filesep='\n'):
 
 cfg = dict(
     name='MapsEvolved',
-    version=mapsevolved.__version__,
+    version=version,
     url='',
     license='TBD',
     description='Map Viewer Optimized for Hiking and Ski Touring',
@@ -137,7 +139,7 @@ cfg = dict(
     windows=[{
         "script": "MapsEvolved.py",
         "dest_base": "MapsEvolved",  # Output executable name (MapsEvolved.exe)
-        "version": microsoftize_version(mapsevolved.__version__),
+        "version": msversion,
         "company_name": u"",
         "copyright": u"Copyright 2012-2015 Christian Aichinger",
         "name": "MapsEvolved",

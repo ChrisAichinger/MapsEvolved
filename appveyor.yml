@@ -1,0 +1,26 @@
+# Use an obvious not-really-a-version version number for appveyor builds.
+version: 0.0.0.{build}
+
+environment:
+  matrix:
+    - PYTHON: "C:\\Python34"
+
+platform:
+  - x86
+
+configuration:
+  - Debug
+  - Release
+
+init:
+  - "echo Testing with %PYTHON%"
+
+install:
+  - "%PYTHON%\\python.exe bootstrap.py"
+
+build_script:
+  - "venv/scripts/activate && invoke configure -c %CONFIGURATION% build -c %CONFIGURATION% crtcheck py2exe"
+
+test_script:
+  - "pymaplib_cpp\\dist\\tests.exe"
+  - "venv/scripts/activate && py.test tests"
