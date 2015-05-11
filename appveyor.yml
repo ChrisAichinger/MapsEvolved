@@ -2,6 +2,9 @@
 version: 0.0.0.{build}
 
 environment:
+  # Disable Python output buffering to get a cleanly ordered build log.
+  PYTHONUNBUFFERED: 1
+
   matrix:
     - PYTHON: "C:\\Python34"
 
