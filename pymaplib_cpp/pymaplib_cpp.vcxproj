@@ -52,7 +52,6 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -77,7 +76,6 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -144,11 +142,7 @@
   <Target Name="AfterBuild" Inputs="@(Link)" Outputs="$(TargetDir)$(TargetName)-static.lib">
     <Message Text="Creating static library for testing." Importance="high" />
     <Delete Files="$(StaticLinkerArgs)" />
-    <WriteLinesToFile
-                File="$(StaticLinkerArgs)"
-                Lines="@(Link)"
-                Overwrite="False"
-                Encoding="Unicode"/>
+    <WriteLinesToFile File="$(StaticLinkerArgs)" Lines="@(Link)" Overwrite="False" Encoding="Unicode" />
     <Exec Command="lib /OUT:$(TargetDir)$(TargetName)-static.lib /MACHINE:X86 /NOLOGO @$(StaticLinkerArgs)" />
   </Target>
 </Project>

@@ -16,6 +16,8 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(MEVThirdPartyDir)libgeotiff;$(MEVThirdPartyDir)libtiff\libtiff;$(MEVThirdPartyDir)proj4\instdir\include;$(MEVThirdPartyDir)geographiclib\include;$(MEVThirdPartyDir)libjpeg-turbo\instdir\include;$(MEVThirdPartyDir)boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BOOST_ALL_DYN_LINK=1;BOOST_ASSERT_CONFIG=1;BOOST_THREAD_PROVIDES_THREAD_DESTRUCTOR_CALLS_TERMINATE_IF_JOINABLE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(MEVThirdPartyDir)proj4\instdir\lib;$(MEVThirdPartyDir)libgeotiff;$(MEVThirdPartyDir)libtiff\libtiff;$(MEVThirdPartyDir)geographiclib\src;$(MEVThirdPartyDir)libjpeg-turbo\instdir\lib;$(MEVThirdPartyDir)boost\lib32-msvc-10.0;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
