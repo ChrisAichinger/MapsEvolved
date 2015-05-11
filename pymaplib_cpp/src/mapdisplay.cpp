@@ -117,21 +117,10 @@ void MapDisplayManager::StepZoom(double steps) {
     m_change_ctr++;
 }
 
-DisplayCoordCentered CenteredCoordFromDisplay(const DisplayCoord& dc,
-    const DisplayDeltaInt& disp)
-{
-    return DisplayCoordCentered(dc.x - disp.x / 2.0, dc.y - disp.y / 2.0);
-}
-DisplayCoord DisplayCoordFromCentered(const DisplayCoordCentered& dc,
-    const DisplayDeltaInt& disp)
-{
-    return DisplayCoord(dc.x + disp.x / 2.0, dc.y + disp.y / 2.0);
-}
-
 void MapDisplayManager::StepZoom(double steps, const DisplayCoord &mouse_pos) {
     double m_zoom_before = m_zoom;
-    DisplayCoordCentered old_pos = CenteredCoordFromDisplay(mouse_pos,
-                                                            m_display_size);
+    auto old_pos = DisplayCoordCentered::FromDisplayCoord(mouse_pos,
+                                                          m_display_size);
 
     StepZoom(steps);
 
@@ -144,20 +133,27 @@ void MapDisplayManager::SetZoomOneToOne() {
     m_change_ctr++;
 }
 
-BaseMapCoord
-MapDisplayManager::BaseCoordFromDisplay(const DisplayCoord &disp) const {
-    return BaseCoordFromDisplay(CenteredCoordFromDisplay(disp, m_display_size));
-}
 
-BaseMapCoord
-MapDisplayManager::BaseCoordFromDisplay(const DisplayCoordCentered &disp) const
+BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp,
+                                  const MapDisplayManager &mdm)
 {
-    return m_center + BaseMapDelta(disp.x / m_zoom, disp.y / m_zoom);
+    auto centered = DisplayCoordCentered::FromDisplayCoord(
+                                    disp, mdm.GetDisplaySize());
+    return BaseCoordFromDisplay(centered, mdm);
 }
 
-BaseMapDelta
-MapDisplayManager::BaseDeltaFromDisplay(const DisplayDelta &disp) const {
-    return BaseMapDelta(disp.x / m_zoom, disp.y / m_zoom);
+BaseMapCoord BaseCoordFromDisplay(const DisplayCoordCentered &disp,
+                                  const MapDisplayManager &mdm)
+{
+    return mdm.GetCenter() + BaseMapDelta(disp.x / mdm.GetZoom(),
+                                          disp.y / mdm.GetZoom());
+}
+
+BaseMapDelta BaseDeltaFromDisplay(const DisplayDelta &disp,
+                                  const MapDisplayManager &mdm)
+{
+    return BaseMapDelta(disp.x / mdm.GetZoom(),
+                        disp.y / mdm.GetZoom());
 }
 
 DisplayCoordCentered DisplayCoordCenteredFromBase(
@@ -168,34 +164,30 @@ DisplayCoordCentered DisplayCoordCenteredFromBase(
                                 diff.y * mdm.GetZoom());
 }
 
-DisplayCoordCentered
-MapDisplayManager::DisplayCoordCenteredFromMapPixel(
-        const MapPixelCoord &mpc,
-        const std::shared_ptr<class GeoDrawable> &map) const
+DisplayCoordCentered DisplayCoordCenteredFromMapPixel(
+                        const MapPixelCoord &mpc,
+                        const std::shared_ptr<GeoDrawable> &map,
+                        const MapDisplayManager &mdm)
 {
-    if (map == m_base_map) {
-        return DisplayCoordCenteredFromBase(BaseMapCoord(mpc), *this);
-    }
-
-    auto base_pos = MapPixelToMapPixel(mpc, *map, *m_base_map);
-    return DisplayCoordCenteredFromBase(BaseMapCoord(base_pos), *this);
+    auto base_pos = MapPixelToMapPixel(mpc, *map, *mdm.GetBaseMap());
+    return DisplayCoordCenteredFromBase(BaseMapCoord(base_pos), mdm);
 }
 
-DisplayCoordCentered
-MapDisplayManager::DisplayCoordCenteredFromMapPixel(
+DisplayCoordCentered DisplayCoordCenteredFromMapPixel(
                         const MapPixelCoordInt &mpc,
-                        const std::shared_ptr<class GeoDrawable> &map) const
+                        const std::shared_ptr<class GeoDrawable> &map,
+                        const MapDisplayManager &mdm)
 {
-    return DisplayCoordCenteredFromMapPixel(MapPixelCoord(mpc), map);
+    return DisplayCoordCenteredFromMapPixel(MapPixelCoord(mpc), map, mdm);
 }
 
 void MapDisplayManager::SetCenter(const DisplayCoord &center) {
-    m_center = BaseCoordFromDisplay(center);
+    m_center = BaseCoordFromDisplay(center, *this);
     m_change_ctr++;
 }
 
 void MapDisplayManager::MoveCenter(const DisplayDelta &disp_delta) {
-    m_center = m_center - BaseDeltaFromDisplay(disp_delta);
+    m_center = m_center - BaseDeltaFromDisplay(disp_delta, *this);
     m_center.ClampToRect(MapPixelCoordInt(0,0),
                          MapPixelCoordInt(m_base_map->GetSize()));
     m_change_ctr++;
@@ -325,14 +317,14 @@ void MapView::PaintLayerTiled(
             MapPixelCoordInt map_pos(x, y);
             TileCode tilecode(map, map_pos, tile_size);
 
-            DisplayCoordCentered disp_tl = mdm.DisplayCoordCenteredFromMapPixel(
-                map_pos, map);
-            DisplayCoordCentered disp_tr = mdm.DisplayCoordCenteredFromMapPixel(
-                map_pos + tile_size_h, map);
-            DisplayCoordCentered disp_bl = mdm.DisplayCoordCenteredFromMapPixel(
-                map_pos + tile_size_v, map);
-            DisplayCoordCentered disp_br = mdm.DisplayCoordCenteredFromMapPixel(
-                map_pos + tile_size, map);
+            DisplayCoordCentered disp_tl = DisplayCoordCenteredFromMapPixel(
+                map_pos, map, mdm);
+            DisplayCoordCentered disp_tr = DisplayCoordCenteredFromMapPixel(
+                map_pos + tile_size_h, map, mdm);
+            DisplayCoordCentered disp_bl = DisplayCoordCenteredFromMapPixel(
+                map_pos + tile_size_v, map, mdm);
+            DisplayCoordCentered disp_br = DisplayCoordCenteredFromMapPixel(
+                map_pos + tile_size, map, mdm);
             DisplayRectCentered rect(disp_tl, disp_tr, disp_bl, disp_br);
 
             // Take an already created promise, if available.

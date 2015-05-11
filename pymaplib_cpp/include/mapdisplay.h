@@ -160,24 +160,6 @@ class EXPORT MapDisplayManager {
          */
         unsigned int GetChangeCtr() const { return m_change_ctr; }
 
-        // Utility functions
-        BaseMapCoord
-        BaseCoordFromDisplay(const DisplayCoord &disp) const;
-
-        BaseMapCoord
-        BaseCoordFromDisplay(const DisplayCoordCentered &disp) const;
-
-        BaseMapDelta
-        BaseDeltaFromDisplay(const DisplayDelta &disp) const;
-
-        DisplayCoordCentered
-        DisplayCoordCenteredFromMapPixel(const MapPixelCoord &mpc,
-                         const std::shared_ptr<GeoDrawable> &map) const;
-        DisplayCoordCentered
-        DisplayCoordCenteredFromMapPixel(const MapPixelCoordInt &mpc,
-                         const std::shared_ptr<GeoDrawable> &map) const;
-
-
     private:
         /** Try a location-preserving basemap change, fail if not possible. */
         bool TryChangeMapPreservePos(
@@ -290,5 +272,32 @@ private:
         MapPixelCoordInt *overlay_br);
 };
 
+
+// Utility functions
+
+/** Get the basemap coordinate of an on-screen location. */
+BaseMapCoord EXPORT BaseCoordFromDisplay(const DisplayCoord &disp,
+                                         const MapDisplayManager &mdm);
+
+/** Get the basemap coordinate of an on-screen location. */
+BaseMapCoord EXPORT BaseCoordFromDisplay(const DisplayCoordCentered &disp,
+                                         const MapDisplayManager &mdm);
+
+/** Convert an on-screen coordinate delta to basemap coordinate space. */
+BaseMapDelta EXPORT BaseDeltaFromDisplay(const DisplayDelta &disp,
+                                         const MapDisplayManager &mdm);
+
+
+/** Find the on-screen location of a map coordinate on an arbitrary map. */
+DisplayCoordCentered EXPORT DisplayCoordCenteredFromMapPixel(
+                        const MapPixelCoord &mpc,
+                        const std::shared_ptr<GeoDrawable> &map,
+                        const MapDisplayManager &mdm);
+
+/** Convert an on-screen location to a map coordinate on an arbitrary map. */
+DisplayCoordCentered EXPORT DisplayCoordCenteredFromMapPixel(
+                        const MapPixelCoordInt &mpc,
+                        const std::shared_ptr<GeoDrawable> &map,
+                        const MapDisplayManager &mdm);
 
 #endif

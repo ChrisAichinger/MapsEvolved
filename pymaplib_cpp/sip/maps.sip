@@ -72,12 +72,6 @@ class DispOpenGL : public Display /NoDefaultCtors/ {
         virtual void ForceRepaint();
 };
 
-DisplayCoordCentered CenteredCoordFromDisplay(const DisplayCoord& dc,
-                                              const Display& disp);
-DisplayCoord DisplayCoordFromCentered(const DisplayCoordCentered& dc,
-                                      const Display& disp);
-
-
 class DisplayShPtr /NoDefaultCtors,Supertype=maplib_sip.SmartptrProxy/ {
 %TypeHeaderCode
 #include <memory>
@@ -141,7 +135,6 @@ class MapDisplayManager {
         MapDisplayManager(const RasterMapShPtr &initial_map,
                           const DisplayDeltaInt &display_size);
 
-
         double GetZoom() const;
         void StepZoom(double steps);
         void StepZoom(double steps, const DisplayCoord &mouse_pos);
@@ -166,16 +159,6 @@ class MapDisplayManager {
         void SetOverlayList(const OverlayList &overlay_list);
 
         unsigned int GetChangeCtr() const;
-
-
-        BaseMapCoord
-        BaseCoordFromDisplay(const DisplayCoord &disp) const;
-
-        BaseMapCoord
-        BaseCoordFromDisplay(const DisplayCoordCentered &disp) const;
-
-        BaseMapDelta
-        BaseDeltaFromDisplay(const DisplayDelta &disp) const;
 };
 
 class MapView /NoDefaultCtors/ {
@@ -190,5 +173,31 @@ public:
                            const MapDisplayManager &mdm);
     void ForceFullRepaint();
 };
+
+
+BaseMapCoord BaseCoordFromDisplay(const DisplayCoord &disp,
+                                  const MapDisplayManager &mdm);
+BaseMapCoord BaseCoordFromDisplay(const DisplayCoordCentered &disp,
+                                  const MapDisplayManager &mdm);
+BaseMapDelta BaseDeltaFromDisplay(const DisplayDelta &disp,
+                                  const MapDisplayManager &mdm);
+
+DisplayCoordCentered DisplayCoordCenteredFromMapPixel(
+                        const MapPixelCoord &mpc,
+                        const GeoDrawableShPtr &map,
+                        const MapDisplayManager &mdm);
+DisplayCoordCentered DisplayCoordCenteredFromMapPixel(
+                        const MapPixelCoordInt &mpc,
+                        const GeoDrawableShPtr &map,
+                        const MapDisplayManager &mdm);
+DisplayCoordCentered DisplayCoordCenteredFromMapPixel(
+                        const MapPixelCoord &mpc,
+                        const RasterMapShPtr &map,
+                        const MapDisplayManager &mdm);
+DisplayCoordCentered DisplayCoordCenteredFromMapPixel(
+                        const MapPixelCoordInt &mpc,
+                        const RasterMapShPtr &map,
+                        const MapDisplayManager &mdm);
+
 
 std::wstring CompassPointFromDirection(double degrees);

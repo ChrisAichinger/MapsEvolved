@@ -140,7 +140,7 @@ class GPSDrawUIMode(BaseUIMode):
 
     def on_mouse_l_up(self, evt):
         disp_coord = pymaplib.DisplayCoord(evt.x, evt.y)
-        base_coord = self.mapdisplay.BaseCoordFromDisplay(disp_coord)
+        base_coord = pymaplib.BaseCoordFromDisplay(disp_coord, self.mapdisplay)
         ok, ll = self.mapdisplay.GetBaseMap().PixelToLatLon(base_coord)
         if not ok:
             return True

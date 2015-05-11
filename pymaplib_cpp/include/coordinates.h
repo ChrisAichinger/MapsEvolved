@@ -43,21 +43,32 @@ class EXPORT PixelBufDelta {
         int x, y;
 };
 
+class DisplayCoordCentered;
+class DisplayDeltaInt;
 
 class EXPORT DisplayCoord {
     public:
         DisplayCoord() : x(0), y(0) {};
         DisplayCoord(double x_, double y_) : x(x_), y(y_) {};
-        double x, y;
+
+        static DisplayCoord FromCentered(
+                            const DisplayCoordCentered& dc,
+                            const DisplayDeltaInt& disp);
 
         DisplayCoord& operator+=(const class DisplayDelta &rhs);
         DisplayCoord& operator-=(const class DisplayDelta &rhs);
+
+        double x, y;
 };
 
 class EXPORT DisplayCoordCentered {
     public:
         DisplayCoordCentered() : x(0), y(0) {};
         DisplayCoordCentered(double x_, double y_) : x(x_), y(y_) {};
+
+        static DisplayCoordCentered FromDisplayCoord(
+                                    const DisplayCoord& dc,
+                                    const DisplayDeltaInt& disp);
 
         DisplayCoordCentered& operator+=(const class DisplayDelta &rhs);
         DisplayCoordCentered& operator-=(const class DisplayDelta &rhs);
@@ -85,7 +96,7 @@ class EXPORT DisplayDeltaInt {
     public:
         DisplayDeltaInt() : x(0), y(0) {};
         DisplayDeltaInt(int x_, int y_) : x(x_), y(y_) {};
-        DisplayDeltaInt::DisplayDeltaInt(const DisplayDelta &src);
+        DisplayDeltaInt(const DisplayDelta &src);
 
         DisplayDeltaInt& operator+=(const class DisplayDeltaInt &rhs);
         DisplayDeltaInt& operator-=(const class DisplayDeltaInt &rhs);

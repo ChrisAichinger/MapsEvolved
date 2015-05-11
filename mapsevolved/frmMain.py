@@ -620,7 +620,8 @@ class MainFrame(wx.Frame):
     def update_statusbar(self):
         pos = self.panel.ScreenToClient(wx.GetMousePosition())
         display_point = pymaplib.DisplayCoord(pos.x, pos.y)
-        base_point = self.mapdisplay.BaseCoordFromDisplay(display_point)
+        base_point = pymaplib.BaseCoordFromDisplay(display_point,
+                                                   self.mapdisplay)
 
         zoom_percent = self.mapdisplay.GetZoom() * 100
         self.statusbar.SetStatusText(_("Zoom: %.0f %%") % zoom_percent, i=5)

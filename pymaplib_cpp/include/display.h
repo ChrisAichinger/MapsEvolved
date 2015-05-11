@@ -30,10 +30,4 @@ class EXPORT Display {
                        std::list<std::shared_ptr<DisplayOrder>> &orders) = 0;
 };
 
-EXPORT DisplayCoordCentered CenteredCoordFromDisplay(
-    const DisplayCoord& dc, const Display& disp);
-
-EXPORT DisplayCoord DisplayCoordFromCentered(
-    const DisplayCoordCentered& dc, const Display& disp);
-
 #endif

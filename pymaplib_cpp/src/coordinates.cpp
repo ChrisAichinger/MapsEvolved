@@ -66,10 +66,23 @@ OPERATORS_DELTA_ADDSUB(PixelBufDelta, x, y)
 
 
 // DisplayCoord
+DisplayCoord DisplayCoord::FromCentered(
+                           const DisplayCoordCentered& dc,
+                           const DisplayDeltaInt& disp)
+{
+    return DisplayCoord(dc.x + disp.x / 2.0, dc.y + disp.y / 2.0);
+}
 OPERATORS_COORD_ADDSUB(DisplayCoord, DisplayDelta, x, y);
 
 
 // DisplayCoordCentered
+DisplayCoordCentered DisplayCoordCentered::FromDisplayCoord(
+                                           const DisplayCoord& dc,
+                                           const DisplayDeltaInt& disp)
+
+{
+    return DisplayCoordCentered(dc.x - disp.x / 2.0, dc.y - disp.y / 2.0);
+}
 OPERATORS_COORD_ADDSUB(DisplayCoordCentered, DisplayDelta, x, y)
 OPERATORS_COORD_MULDIV(DisplayCoordCentered, x, y)
 

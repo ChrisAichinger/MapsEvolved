@@ -56,20 +56,6 @@ void LoadOGLEntryPoints() {
 }
 
 
-DisplayCoordCentered CenteredCoordFromDisplay(const DisplayCoord& dc,
-                                              const Display& disp)
-{
-    return DisplayCoordCentered(dc.x - disp.GetDisplayWidth() / 2.0,
-                                dc.y - disp.GetDisplayHeight() / 2.0);
-}
-DisplayCoord DisplayCoordFromCentered(const DisplayCoordCentered& dc,
-                                      const Display& disp)
-{
-    return DisplayCoord(dc.x + disp.GetDisplayWidth() / 2.0,
-                        dc.y + disp.GetDisplayHeight() / 2.0);
-}
-
-
 class OGLDisplayCoord {
     public:
         OGLDisplayCoord() : x(0), y(0) {};
