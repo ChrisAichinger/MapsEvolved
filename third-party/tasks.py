@@ -34,10 +34,7 @@ AVAILABLE_MODULES = collections.OrderedDict([
        'rename': [('unxutils2/usr/local/wbin', 'unxutils'),
                   ('unxutils2/bin/sh.exe', 'unxutils/sh.exe'),
                   ('unxutils2', 'unxutils/misc'),
-                  ('unxutils/patch.exe', 'unxutils/p_a_t_c_h.exe'),],
-       # We rename patch.exe so Windows doesn't treat it as RunAsAdmin binary.
-       # Cf. http://stackoverflow.com/questions/533939
-       'provides': [('patch', 'p_a_t_c_h.exe')],
+                 ],
    }),
    ('cmake', {
        'compression': 'zip',
@@ -202,7 +199,10 @@ def get_provides():
     Executable names are absolute paths.
     """
 
-    provides = {}
+    git_dir = os.path.dirname(mev_build_utils.find_executable('git'))
+    provides = {
+        'patch': os.path.join(git_dir, 'patch'),
+    }
     for modulename, module in AVAILABLE_MODULES.items():
         for name, cmd in module.get('provides', []):
             provides[name] = os.path.join(THIS_DIR, modulename, cmd)
